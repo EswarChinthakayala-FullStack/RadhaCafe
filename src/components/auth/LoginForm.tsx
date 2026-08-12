@@ -11,7 +11,7 @@ import { Label } from '../ui/label';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { AppLogo } from '../brand/AppLogo';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { ViewIcon, ViewOffIcon, LockedIcon, Mail01Icon, LockKeyIcon } from '@hugeicons/core-free-icons';
+import { ViewIcon, ViewOffIcon, LockedIcon, Mail01Icon } from '@hugeicons/core-free-icons';
 
 export function LoginForm() {
   const navigate = useNavigate();
@@ -54,10 +54,6 @@ export function LoginForm() {
       <CardHeader className="text-center flex flex-col items-center pb-2 pt-4">
         <div className="lg:hidden mb-3">
           <AppLogo size="md" lightText />
-        </div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E5A88B]/10 border border-[#E5A88B]/20 text-[#E5A88B] text-[11px] font-bold uppercase tracking-wider mb-2">
-          <HugeiconsIcon icon={LockKeyIcon} size={12} />
-          <span>ADMIN AUTHENTICATION</span>
         </div>
         <h2 className="font-heading text-2xl sm:text-3xl font-bold text-cream">
           Welcome Back
