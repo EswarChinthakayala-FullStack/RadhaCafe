@@ -14,6 +14,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
@@ -76,8 +77,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation()
   const navigate = useNavigate()
   const { logout } = useAuth()
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  const handleNavClick = () => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }
 
   const handleSignOut = async () => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
     try {
       await logout()
       navigate(ROUTES.PUBLIC.LOGIN, { replace: true })
@@ -99,8 +110,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full">
             <SidebarMenuButton
               size="lg"
+              onClick={handleNavClick}
               className="h-10 hover:bg-transparent active:bg-transparent data-active:bg-transparent p-0 group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center [&_svg]:size-9 group-data-[collapsible=icon]:[&_svg]:!size-7 group-data-[collapsible=icon]:[&_svg]:!w-7 group-data-[collapsible=icon]:[&_svg]:!h-7"
-              render={<Link to={ROUTES.ADMIN.DASHBOARD} />}
+              render={<Link to={ROUTES.ADMIN.DASHBOARD} onClick={handleNavClick} />}
             >
               <RadhaCafeLogo className="size-9 group-data-[collapsible=icon]:!size-7 group-data-[collapsible=icon]:!w-7 group-data-[collapsible=icon]:!h-7 shrink-0 drop-shadow-md" />
               <div className="flex flex-col leading-none ml-2.5 group-data-[collapsible=icon]:hidden">
@@ -130,12 +142,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <SidebarMenuButton
                       isActive={isActive}
                       tooltip={item.title}
+                      onClick={handleNavClick}
                       className={
                         isActive
                           ? "bg-cinnamon text-white font-semibold shadow-sm"
                           : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground font-medium text-cream/85"
                       }
-                      render={<Link to={item.url} />}
+                      render={<Link to={item.url} onClick={handleNavClick} />}
                     >
                       <HugeiconsIcon
                         icon={item.icon}
