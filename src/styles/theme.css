@@ -1,0 +1,7 @@
+/* Theme specific CSS utilities for RadhaCafe */
+.cafe-card {
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}

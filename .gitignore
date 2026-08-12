@@ -1,0 +1,56 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node dependencies
+node_modules/
+
+# Production output
+dist/
+dist-ssr/
+build/
+
+# Vite cache
+.vite/
+
+# Environment variables & local configuration secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# Supabase CLI local workspace, temporary directories, schema & migrations
+.supabase/
+supabase/.temp/
+supabase/.branches/
+supabase/.env
+supabase/schema.sql
+supabase/migrations/
+*.sql
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# System & OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini

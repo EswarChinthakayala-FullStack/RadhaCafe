@@ -1,0 +1,11 @@
+# Ignore temporary Supabase CLI state and local environment overrides
+.temp/
+.branches/
+.env
+.env.local
+*.log
+
+# Ignore schema SQL and migration scripts
+schema.sql
+migrations/
+*.sql
