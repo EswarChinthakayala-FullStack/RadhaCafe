@@ -1,15 +1,30 @@
 {
   "short_name": "RadhaCafe",
-  "name": "RadhaCafe - Order Management & Cafe Brand",
+  "name": "RadhaCafe — Modern POS & Cafe Management System",
   "icons": [
     {
-      "src": "favicon.svg",
-      "sizes": "64x64 32x32 24x24 16x16",
+      "src": "/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
       "type": "image/svg+xml"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
-  "theme_color": "#6F4E37",
-  "background_color": "#FFF8F0"
+  "theme_color": "#3E2318",
+  "background_color": "#170B06"
 }
