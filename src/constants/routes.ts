@@ -6,6 +6,7 @@ export const ROUTES = {
     DISCUSSIONS: '/discussions',
     MENU: '/menu',
     CONTACT: '/contact',
+    WATER: '/water',
   },
   ADMIN: {
     DASHBOARD: '/admin/dashboard',
@@ -19,5 +20,16 @@ export const ROUTES = {
     DISCUSSIONS: '/admin/discussions',
     PRINTER: '/admin/printer',
     SETTINGS: '/admin/settings',
+    WATER: {
+      DASHBOARD: '/admin/water',
+      ORDERS: '/admin/water/orders',
+      NEW_ORDER: '/admin/water/orders/new',
+      PRODUCTS: '/admin/water/products',
+      CUSTOMERS: '/admin/water/customers',
+      CUSTOMER_DETAILS: '/admin/water/customers/:id',
+      PAYMENTS: '/admin/water/payments',
+      EVENTS: '/admin/water/events',
+      ANALYTICS: '/admin/water/analytics',
+    },
   },
 } as const;

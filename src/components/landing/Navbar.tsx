@@ -22,6 +22,7 @@ export function Navbar() {
     { label: 'Home', href: ROUTES.PUBLIC.HOME },
     { label: 'About', href: '/#about' },
     { label: 'Menu', href: ROUTES.PUBLIC.MENU },
+    { label: 'RadhaWater', href: ROUTES.PUBLIC.WATER },
     { label: 'Gallery', href: ROUTES.PUBLIC.GALLERY },
     { label: 'Reviews', href: ROUTES.PUBLIC.DISCUSSIONS },
     { label: 'Contact', href: ROUTES.PUBLIC.CONTACT },

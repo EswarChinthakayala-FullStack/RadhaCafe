@@ -245,6 +245,263 @@ export interface Database {
           created_at?: string
         }
       }
+      water_products: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          water_type: string
+          unit_name: string
+          price: number
+          is_available: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          water_type: string
+          unit_name: string
+          price: number
+          is_available?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          water_type?: string
+          unit_name?: string
+          price?: number
+          is_available?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      water_customers: {
+        Row: {
+          id: string
+          name: string
+          phone: string
+          email: string | null
+          address: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          phone: string
+          email?: string | null
+          address?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          phone?: string
+          email?: string | null
+          address?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      water_orders: {
+        Row: {
+          id: string
+          order_number: string
+          customer_id: string | null
+          customer_name: string
+          order_status: string
+          subtotal: number
+          discount_amount: number
+          total_amount: number
+          amount_paid: number
+          amount_due: number
+          payment_status: string
+          payment_method: string
+          order_source: string
+          notes: string | null
+          is_printed: boolean
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          order_number: string
+          customer_id?: string | null
+          customer_name?: string
+          order_status?: string
+          subtotal?: number
+          discount_amount?: number
+          total_amount?: number
+          amount_paid?: number
+          amount_due?: number
+          payment_status?: string
+          payment_method?: string
+          order_source?: string
+          notes?: string | null
+          is_printed?: boolean
+          created_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          order_number?: string
+          customer_id?: string | null
+          customer_name?: string
+          order_status?: string
+          subtotal?: number
+          discount_amount?: number
+          total_amount?: number
+          amount_paid?: number
+          amount_due?: number
+          payment_status?: string
+          payment_method?: string
+          order_source?: string
+          notes?: string | null
+          is_printed?: boolean
+          created_at?: string
+          completed_at?: string | null
+        }
+      }
+      water_order_items: {
+        Row: {
+          id: string
+          water_order_id: string
+          water_product_id: string | null
+          item_name: string
+          unit_price: number
+          quantity: number
+          total_price: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          water_order_id: string
+          water_product_id?: string | null
+          item_name: string
+          unit_price: number
+          quantity: number
+          total_price: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          water_order_id?: string
+          water_product_id?: string | null
+          item_name?: string
+          unit_price?: number
+          quantity?: number
+          total_price?: number
+          created_at?: string
+        }
+      }
+      water_payments: {
+        Row: {
+          id: string
+          water_order_id: string
+          water_customer_id: string | null
+          amount: number
+          payment_method: string
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          water_order_id: string
+          water_customer_id?: string | null
+          amount: number
+          payment_method: string
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          water_order_id?: string
+          water_customer_id?: string | null
+          amount?: number
+          payment_method?: string
+          notes?: string | null
+          created_at?: string
+        }
+      }
+      water_event_requests: {
+        Row: {
+          id: string
+          customer_id: string | null
+          customer_name: string
+          phone: string
+          event_type: string
+          event_date: string
+          estimated_quantity: number
+          location: string
+          notes: string | null
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id?: string | null
+          customer_name: string
+          phone: string
+          event_type: string
+          event_date: string
+          estimated_quantity: number
+          location: string
+          notes?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string | null
+          customer_name?: string
+          phone?: string
+          event_type?: string
+          event_date?: string
+          estimated_quantity?: number
+          location?: string
+          notes?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      water_settings: {
+        Row: {
+          id: string
+          service_name: string
+          phone: string | null
+          address: string | null
+          receipt_footer: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          service_name?: string
+          phone?: string | null
+          address?: string | null
+          receipt_footer?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          service_name?: string
+          phone?: string | null
+          address?: string | null
+          receipt_footer?: string | null
+          updated_at?: string
+        }
+      }
       cafe_settings: {
         Row: {
           id: string
@@ -395,6 +652,28 @@ export interface Database {
           p_payment_method: string
           p_notes?: string | null
           p_order_id?: string | null
+        }
+        Returns: Json
+      }
+      create_water_order_with_items: {
+        Args: {
+          p_customer_name?: string | null
+          p_items: Json
+          p_discount_amount: number
+          p_payment_method: string
+          p_customer_id?: string | null
+          p_order_source?: string | null
+          p_notes?: string | null
+        }
+        Returns: Database['public']['Tables']['water_orders']['Row']
+      }
+      record_water_customer_payment: {
+        Args: {
+          p_customer_id: string
+          p_amount: number
+          p_payment_method: string
+          p_notes?: string | null
+          p_water_order_id?: string | null
         }
         Returns: Json
       }

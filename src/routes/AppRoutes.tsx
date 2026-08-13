@@ -6,6 +6,7 @@ import { PublicGalleryPage } from '../pages/public/PublicGalleryPage';
 import { PublicDiscussionPage } from '../pages/public/PublicDiscussionPage';
 import { PublicMenuPage } from '../pages/public/PublicMenuPage';
 import { PublicContactPage } from '../pages/public/PublicContactPage';
+import { PublicWaterPage } from '../pages/public/PublicWaterPage';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { AdminLayout } from '../components/admin/layout/AdminLayout';
@@ -23,6 +24,17 @@ import { PrinterPage } from '../pages/admin/PrinterPage';
 import { SettingsPage } from '../pages/admin/SettingsPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 
+// RadhaWater Admin Modules
+import { WaterDashboardPage } from '../pages/admin/water/WaterDashboardPage';
+import { NewWaterOrderPage } from '../pages/admin/water/NewWaterOrderPage';
+import { WaterOrdersPage } from '../pages/admin/water/WaterOrdersPage';
+import { WaterProductsPage } from '../pages/admin/water/WaterProductsPage';
+import { WaterCustomersPage } from '../pages/admin/water/WaterCustomersPage';
+import { WaterCustomerDetailsPage } from '../pages/admin/water/WaterCustomerDetailsPage';
+import { WaterPaymentsPage } from '../pages/admin/water/WaterPaymentsPage';
+import { WaterEventsPage } from '../pages/admin/water/WaterEventsPage';
+import { WaterAnalyticsPage } from '../pages/admin/water/WaterAnalyticsPage';
+
 export function AppRoutes() {
   return (
     <Routes>
@@ -32,6 +44,7 @@ export function AppRoutes() {
       <Route path={ROUTES.PUBLIC.DISCUSSIONS} element={<PublicDiscussionPage />} />
       <Route path={ROUTES.PUBLIC.MENU} element={<PublicMenuPage />} />
       <Route path={ROUTES.PUBLIC.CONTACT} element={<PublicContactPage />} />
+      <Route path={ROUTES.PUBLIC.WATER} element={<PublicWaterPage />} />
       <Route path={ROUTES.PUBLIC.LOGIN} element={<LoginPage />} />
 
       {/* Protected Admin POS Routes */}
@@ -41,6 +54,7 @@ export function AppRoutes() {
           <ProtectedRoute>
             <AdminLayout>
               <Routes>
+                {/* Cafe Admin Routes */}
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="orders" element={<OrdersPage />} />
                 <Route path="orders/new" element={<NewOrderPage />} />
@@ -53,6 +67,18 @@ export function AppRoutes() {
                 <Route path="discussions" element={<DiscussionPage />} />
                 <Route path="printer" element={<PrinterPage />} />
                 <Route path="settings" element={<SettingsPage />} />
+
+                {/* RadhaWater Independent Admin Routes */}
+                <Route path="water" element={<WaterDashboardPage />} />
+                <Route path="water/orders/new" element={<NewWaterOrderPage />} />
+                <Route path="water/orders" element={<WaterOrdersPage />} />
+                <Route path="water/products" element={<WaterProductsPage />} />
+                <Route path="water/customers" element={<WaterCustomersPage />} />
+                <Route path="water/customers/:id" element={<WaterCustomerDetailsPage />} />
+                <Route path="water/payments" element={<WaterPaymentsPage />} />
+                <Route path="water/events" element={<WaterEventsPage />} />
+                <Route path="water/analytics" element={<WaterAnalyticsPage />} />
+
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </AdminLayout>

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { ROUTES } from "../constants/routes"
 import { RadhaCafeLogo } from "./brand/AppLogo"
 import {
@@ -29,9 +29,11 @@ import {
   PrinterIcon,
   Settings01Icon,
   Logout01Icon,
+  DropletIcon,
+  Wallet01Icon,
+  SparklesIcon,
 } from "@hugeicons/core-free-icons"
 import { useAuth } from "../hooks/useAuth"
-import { useNavigate } from "react-router-dom"
 
 interface NavItem {
   title: string
@@ -46,18 +48,36 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    title: "POS & Operations",
+    title: "Overview",
     items: [
       { title: "Dashboard", url: ROUTES.ADMIN.DASHBOARD, icon: DashboardSquare01Icon },
-      { title: "New Order", url: ROUTES.ADMIN.NEW_ORDER, icon: PlusSignIcon },
-      { title: "Order History", url: ROUTES.ADMIN.ORDERS, icon: InvoiceIcon },
-      { title: "Customers", url: ROUTES.ADMIN.CUSTOMERS, icon: UserGroupIcon },
     ],
   },
   {
-    title: "Menu & Content",
+    title: "RadhaCafe",
     items: [
-      { title: "Menu Items", url: ROUTES.ADMIN.MENU, icon: Menu01Icon },
+      { title: "New Cafe Order", url: ROUTES.ADMIN.NEW_ORDER, icon: PlusSignIcon },
+      { title: "Cafe Orders", url: ROUTES.ADMIN.ORDERS, icon: InvoiceIcon },
+      { title: "Cafe Menu", url: ROUTES.ADMIN.MENU, icon: Menu01Icon },
+      { title: "Cafe Customers", url: ROUTES.ADMIN.CUSTOMERS, icon: UserGroupIcon },
+    ],
+  },
+  {
+    title: "RadhaWater",
+    items: [
+      { title: "Water Dashboard", url: ROUTES.ADMIN.WATER.DASHBOARD, icon: DashboardSquare01Icon },
+      { title: "New Water Order", url: ROUTES.ADMIN.WATER.NEW_ORDER, icon: PlusSignIcon },
+      { title: "Water Orders", url: ROUTES.ADMIN.WATER.ORDERS, icon: InvoiceIcon },
+      { title: "Water Products", url: ROUTES.ADMIN.WATER.PRODUCTS, icon: DropletIcon },
+      { title: "Water Customers", url: ROUTES.ADMIN.WATER.CUSTOMERS, icon: UserGroupIcon },
+      { title: "Water Payments", url: ROUTES.ADMIN.WATER.PAYMENTS, icon: Wallet01Icon },
+      { title: "Water Events", url: ROUTES.ADMIN.WATER.EVENTS, icon: SparklesIcon },
+      { title: "Water Analytics", url: ROUTES.ADMIN.WATER.ANALYTICS, icon: Analytics01Icon },
+    ],
+  },
+  {
+    title: "Content",
+    items: [
       { title: "Gallery", url: ROUTES.ADMIN.GALLERY, icon: Image01Icon },
       { title: "Reviews", url: ROUTES.ADMIN.DISCUSSIONS, icon: Comment01Icon },
     ],
@@ -65,14 +85,13 @@ const navGroups: NavGroup[] = [
   {
     title: "System",
     items: [
-      { title: "Analytics", url: ROUTES.ADMIN.ANALYTICS, icon: Analytics01Icon },
+      { title: "Cafe Analytics", url: ROUTES.ADMIN.ANALYTICS, icon: Analytics01Icon },
       { title: "Printer", url: ROUTES.ADMIN.PRINTER, icon: PrinterIcon },
       { title: "Settings", url: ROUTES.ADMIN.SETTINGS, icon: Settings01Icon },
     ],
   },
 ]
 
-// Flatten for external lookup
 export const allNavItems: NavItem[] = navGroups.flatMap((g) => g.items)
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -100,88 +119,74 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   return (
-    <Sidebar
-      collapsible="icon"
-      variant="sidebar"
-      className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
-      {...props}
-    >
-      {/* ── Header: h-14 (matches topnav AdminHeader h-14) ── */}
-      <SidebarHeader className="h-14 flex items-center justify-center px-3 group-data-[collapsible=icon]:px-0 shrink-0">
-        <SidebarMenu className="group-data-[collapsible=icon]:items-center">
-          <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full">
-            <SidebarMenuButton
-              size="lg"
-              onClick={handleNavClick}
-              className="h-10 hover:bg-transparent active:bg-transparent data-active:bg-transparent p-0 group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center [&_svg]:size-9 group-data-[collapsible=icon]:[&_svg]:!size-7 group-data-[collapsible=icon]:[&_svg]:!w-7 group-data-[collapsible=icon]:[&_svg]:!h-7"
-              render={<Link to={ROUTES.ADMIN.DASHBOARD} onClick={handleNavClick} />}
-            >
-              <RadhaCafeLogo className="size-9 group-data-[collapsible=icon]:!size-7 group-data-[collapsible=icon]:!w-7 group-data-[collapsible=icon]:!h-7 shrink-0 drop-shadow-md" />
-              <div className="flex flex-col leading-none ml-2.5 group-data-[collapsible=icon]:hidden">
-                <span className="font-heading font-bold text-xl text-cream tracking-tight">
-                  Radha<span className="text-cinnamon">Cafe</span>
-                </span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border" {...props}>
+      <SidebarHeader className="h-16 border-b border-sidebar-border px-4 flex items-center justify-between">
+        <Link to={ROUTES.ADMIN.DASHBOARD} className="flex items-center gap-2 group overflow-hidden">
+          <div className="w-8 h-8 shrink-0">
+            <RadhaCafeLogo />
+          </div>
+          <span className="font-heading font-bold text-sm text-sidebar-foreground truncate">
+            Radha<span className="text-cinnamon">Cafe</span>
+          </span>
+        </Link>
       </SidebarHeader>
 
-      <SidebarSeparator className="mx-0 bg-sidebar-border" />
-
-      {/* ── Navigation ── */}
-      <SidebarContent>
-        {navGroups.map((group) => (
-          <SidebarGroup key={group.title}>
-            <SidebarGroupLabel className="text-[10px] font-bold text-cream/50 uppercase tracking-widest">
+      <SidebarContent className="px-2 py-4 space-y-4 no-scrollbar">
+        {navGroups.map((group, groupIdx) => (
+          <SidebarGroup key={group.title} className="p-0">
+            <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/60 mb-1">
               {group.title}
             </SidebarGroupLabel>
             <SidebarMenu>
               {group.items.map((item) => {
-                const isActive = location.pathname === item.url
+                const isActive =
+                  location.pathname === item.url ||
+                  (item.url !== "/admin/dashboard" &&
+                    item.url !== "/admin/water" &&
+                    location.pathname.startsWith(item.url))
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       isActive={isActive}
                       tooltip={item.title}
-                      onClick={handleNavClick}
-                      className={
-                        isActive
-                          ? "bg-cinnamon text-white font-semibold shadow-sm"
-                          : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground font-medium text-cream/85"
+                      render={
+                        <Link
+                          to={item.url}
+                          onClick={handleNavClick}
+                          className={
+                            isActive
+                              ? "bg-cinnamon text-white font-bold hover:bg-cinnamon/90 transition-all rounded-md shadow-2xs flex items-center gap-3 px-3 py-2 text-xs"
+                              : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all rounded-md flex items-center gap-3 px-3 py-2 text-xs"
+                          }
+                        />
                       }
-                      render={<Link to={item.url} onClick={handleNavClick} />}
                     >
-                      <HugeiconsIcon
-                        icon={item.icon}
-                        size={16}
-                        className={isActive ? "text-white" : "text-amber-200/70"}
-                      />
-                      <span>{item.title}</span>
+                      <HugeiconsIcon icon={item.icon} size={16} className="shrink-0" />
+                      <span className="truncate">{item.title}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )
               })}
             </SidebarMenu>
+            {groupIdx < navGroups.length - 1 && <SidebarSeparator className="my-3 opacity-40" />}
           </SidebarGroup>
         ))}
       </SidebarContent>
 
-      {/* ── Footer: Sign-out ── */}
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-sidebar-border p-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              tooltip="Sign Out"
-              className="text-red-300/80 hover:bg-red-900/30 hover:text-red-200 font-medium"
               onClick={handleSignOut}
+              className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive text-xs font-semibold rounded-md flex items-center gap-3 px-3 py-2 transition-all"
             >
-              <HugeiconsIcon icon={Logout01Icon} size={16} />
+              <HugeiconsIcon icon={Logout01Icon} size={16} className="shrink-0" />
               <span>Sign Out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   )
