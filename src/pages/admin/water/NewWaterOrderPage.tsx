@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWaterProducts } from '../../../hooks/useWaterProducts';
 import { useWaterCart } from '../../../store/waterCartStore';
 import { formatCurrency } from '../../../lib/utils/formatCurrency';
@@ -20,6 +20,17 @@ export function NewWaterOrderPage() {
   const { data: products, isLoading, isError } = useWaterProducts(true);
   const { items, addItem, total } = useWaterCart();
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
+
+  // Auto-close mobile water cart drawer when screen is resized to desktop (>= 1024px)
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsMobileCartOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const cartItemsCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = total;

@@ -10,7 +10,6 @@ import { CustomerFormModal } from '../customers/CustomerFormModal';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
-import { Badge } from '../../ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../ui/dialog';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
@@ -35,7 +34,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
   const { items, updateQuantity, removeItem, clearCart, subtotal, discount, setDiscount } = useCart();
   const { data: settings } = useCafeSettings();
   const createOrderMutation = useCreateOrder();
-  const { status: printerStatus, printOrder, printBrowserFallback } = useBluetoothPrinter();
+  const { status: printerStatus, connect, printOrder, printBrowserFallback } = useBluetoothPrinter();
 
   const [customerName, setCustomerName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
@@ -50,30 +49,32 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
   const [printMessage, setPrintMessage] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const { data: searchResults, isLoading: isSearchLoading } = useCustomerSearch(customerSearchQuery);
+  const { data: customerSearchResults } = useCustomerSearch(customerSearchQuery);
 
   const grandTotal = Math.max(0, subtotal - discount);
 
-  const handleCheckout = async () => {
-    if (items.length === 0 || createOrderMutation.isPending) return;
-
+  const handlePlaceOrder = async () => {
     setErrorMsg(null);
     setPrintMessage(null);
 
-    // Validate Pay Later customer requirement
+    if (items.length === 0) {
+      setErrorMsg('Cart is empty. Please add items before placing order.');
+      return;
+    }
+
     if (paymentMethod === 'pay_later' && !selectedCustomer) {
-      setErrorMsg('Please select or create a customer to place a Pay Later credit order.');
+      setErrorMsg('Please select a credit customer for Pay Later orders.');
       return;
     }
 
     const payload = {
-      customer_id: selectedCustomer?.id || null,
-      customer_name: selectedCustomer
-        ? selectedCustomer.name
-        : customerName.trim() || 'Walk-in Customer',
+      customer_id: selectedCustomer ? selectedCustomer.id : null,
+      customer_name: selectedCustomer ? selectedCustomer.name : customerName.trim() || 'Walk-in Customer',
+      customer_phone: selectedCustomer ? selectedCustomer.phone : null,
       payment_method: paymentMethod,
-      tax_amount: 0,
       discount_amount: discount,
+      tax_amount: 0,
+      notes: null,
       items: items.map((i) => ({
         menu_item_id: i.menuItem.id,
         item_name: i.menuItem.name,
@@ -83,45 +84,48 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
     };
 
     try {
-      // 1. Create order in Supabase via RPC
       const order = await createOrderMutation.mutateAsync(payload);
-      setCreatedOrder(order);
+      const fullOrder = {
+        ...order,
+        items: items.map((i) => ({
+          item_name: i.menuItem.name,
+          name: i.menuItem.name,
+          unit_price: i.menuItem.price,
+          quantity: i.quantity,
+        })),
+      };
+      setCreatedOrder(fullOrder);
       setShowSuccessModal(true);
 
-      // Clear cart immediately upon successful order creation
       clearCart();
       setCustomerName('');
       setSelectedCustomer(null);
       setCustomerSearchQuery('');
       setPaymentMethod('cash');
       if (onCloseMobileCart) onCloseMobileCart();
-
-      // 2. Auto-trigger bluetooth printing if printer is connected
-      if (printerStatus === 'connected') {
-        setIsPrinting(true);
-        const success = await printOrder(order);
-        setIsPrinting(false);
-        if (success) {
-          setPrintMessage('Receipt printed successfully via Bluetooth!');
-        } else {
-          setPrintMessage('Automatic print failed. You can retry printing below.');
-        }
-      }
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to place order. Please try again.');
     }
   };
 
-  const handleManualPrint = async () => {
+  const handleBluetoothPrint = async () => {
     if (!createdOrder) return;
     setIsPrinting(true);
     setPrintMessage(null);
-    const success = await printOrder(createdOrder);
-    setIsPrinting(false);
-    if (success) {
-      setPrintMessage('Receipt printed successfully via Bluetooth!');
-    } else {
-      setPrintMessage('Bluetooth print attempt failed. Check printer connection.');
+    try {
+      if (printerStatus !== 'connected') {
+        await connect();
+      }
+      const success = await printOrder(createdOrder);
+      if (success) {
+        setPrintMessage('Receipt printed successfully via Bluetooth!');
+      } else {
+        setPrintMessage('Bluetooth print attempt failed. Verify printer power.');
+      }
+    } catch (err: any) {
+      setPrintMessage(err.message || 'Bluetooth connection failed.');
+    } finally {
+      setIsPrinting(false);
     }
   };
 
@@ -138,13 +142,18 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
     <div className="border border-border/80 rounded-md p-5 bg-card flex flex-col h-full space-y-4 shadow-sm">
       <div className="flex justify-between items-center border-b border-border pb-3">
         <div className="flex items-center gap-2">
-          <HugeiconsIcon icon={ShoppingCart01Icon} size={18} className="text-primary" />
-          <h3 className="font-bold text-sm sm:text-base text-foreground font-heading">Live Order Cart</h3>
+          <HugeiconsIcon icon={ShoppingCart01Icon} className="text-cinnamon" size={20} />
+          <h3 className="font-bold text-base font-heading text-foreground">Live Order Cart</h3>
         </div>
         {items.length > 0 && (
-          <button onClick={clearCart} className="text-xs text-destructive hover:underline font-semibold">
+          <Button
+            size="xs"
+            variant="ghost"
+            className="text-xs text-muted-foreground hover:text-destructive transition-colors h-7"
+            onClick={clearCart}
+          >
             Clear All
-          </button>
+          </Button>
         )}
       </div>
 
@@ -155,7 +164,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         </div>
       )}
 
-      {/* Cart Items List */}
       <div className="flex-1 overflow-y-auto space-y-2.5 min-h-[160px] max-h-[300px] pr-1">
         {items.length === 0 ? (
           <div className="text-center py-10 space-y-2 border border-dashed border-border/60 rounded-md bg-secondary/20">
@@ -173,7 +181,9 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                 <p className="font-bold text-foreground truncate">{item.menuItem.name}</p>
                 <p className="text-[11px] text-muted-foreground">
                   {formatCurrency(item.menuItem.price)} × {item.quantity} ={' '}
-                  <span className="font-semibold text-cinnamon">{formatCurrency(item.menuItem.price * item.quantity)}</span>
+                  <span className="font-semibold text-cinnamon">
+                    {formatCurrency(item.menuItem.price * item.quantity)}
+                  </span>
                 </p>
               </div>
 
@@ -183,7 +193,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                   variant="outline"
                   className="h-6 w-6 p-0 rounded-md"
                   onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
-                  aria-label="Decrease quantity"
                 >
                   <HugeiconsIcon icon={MinusSignIcon} size={12} />
                 </Button>
@@ -193,7 +202,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                   variant="outline"
                   className="h-6 w-6 p-0 rounded-md"
                   onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
-                  aria-label="Increase quantity"
                 >
                   <HugeiconsIcon icon={PlusSignIcon} size={12} />
                 </Button>
@@ -202,7 +210,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                   variant="ghost"
                   className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10 ml-1 rounded-md"
                   onClick={() => removeItem(item.menuItem.id)}
-                  aria-label="Remove item"
                 >
                   <HugeiconsIcon icon={Delete02Icon} size={14} />
                 </Button>
@@ -212,7 +219,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         )}
       </div>
 
-      {/* Calculations Breakdown */}
       <div className="border-t border-border pt-3 space-y-2 text-xs">
         <div className="flex justify-between text-muted-foreground">
           <span>Subtotal</span>
@@ -237,7 +243,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         </div>
       </div>
 
-      {/* Payment Method Selector */}
       <div className="space-y-1.5 pt-1">
         <Label className="text-xs font-semibold">Payment Method</Label>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-1">
@@ -266,7 +271,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         </div>
       </div>
 
-      {/* Customer Name input for Normal paid orders */}
       {paymentMethod !== 'pay_later' && (
         <div className="space-y-1.5">
           <Label className="text-xs font-semibold">Customer Name (Optional)</Label>
@@ -279,7 +283,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         </div>
       )}
 
-      {/* Pay Later Customer Credit Workflow Section */}
       {paymentMethod === 'pay_later' && (
         <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
@@ -299,7 +302,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
             </Button>
           </div>
 
-          {/* If customer is selected */}
           {selectedCustomer ? (
             <div className="p-2.5 rounded-md bg-background border border-border/80 space-y-2 text-xs">
               <div className="flex justify-between items-center">
@@ -317,7 +319,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                 </Button>
               </div>
 
-              {/* Outstanding Balance Projections */}
               <div className="pt-2 border-t border-border/50 space-y-1 text-[11px]">
                 <div className="flex justify-between text-muted-foreground">
                   <span>Existing Outstanding:</span>
@@ -328,20 +329,15 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                   <span className="font-semibold text-cinnamon">+{formatCurrency(grandTotal)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-xs pt-1 border-t border-border/40 text-amber-700 dark:text-amber-400">
-                  <span>Projected Total Due:</span>
+                  <span>Projected Due Balance:</span>
                   <span>{formatCurrency(projectedOutstanding)}</span>
                 </div>
               </div>
             </div>
           ) : (
-            /* Search customer autocomplete */
-            <div className="relative space-y-2">
+            <div className="space-y-2 relative">
               <div className="relative">
-                <HugeiconsIcon
-                  icon={Search01Icon}
-                  size={14}
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
+                <HugeiconsIcon icon={Search01Icon} size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" />
                 <Input
                   placeholder="Search customer by name or phone..."
                   value={customerSearchQuery}
@@ -349,56 +345,36 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                     setCustomerSearchQuery(e.target.value);
                     setIsSearchingCustomer(true);
                   }}
-                  onFocus={() => setIsSearchingCustomer(true)}
-                  className="h-9 text-xs pl-8 bg-background rounded-md"
+                  className="h-8.5 pl-8 text-xs bg-background rounded-md"
                 />
               </div>
 
-              {/* Search dropdown results */}
-              {isSearchingCustomer && customerSearchQuery.trim() !== '' && (
-                <div className="absolute top-full left-0 w-full z-20 mt-1 bg-card border border-border rounded-md shadow-xl max-h-48 overflow-y-auto p-1">
-                  {isSearchLoading ? (
-                    <div className="p-3 text-center text-xs text-muted-foreground">Searching customers...</div>
-                  ) : !searchResults || searchResults.length === 0 ? (
-                    <div className="p-3 text-center space-y-2">
-                      <p className="text-xs text-muted-foreground">No customer found for "{customerSearchQuery}"</p>
-                      <Button
-                        type="button"
-                        size="xs"
-                        onClick={() => {
-                          setShowAddCustomerModal(true);
-                          setIsSearchingCustomer(false);
-                        }}
-                        className="h-7 text-xs bg-cinnamon hover:bg-cinnamon/90 text-white font-bold gap-1 rounded-md"
-                      >
-                        <HugeiconsIcon icon={UserAdd01Icon} size={13} />
-                        <span>Create Customer Profile</span>
-                      </Button>
-                    </div>
-                  ) : (
-                    searchResults.map((cust) => (
+              {isSearchingCustomer && customerSearchQuery.trim() && (
+                <div className="absolute left-0 right-0 top-full mt-1 bg-popover border border-border rounded-md shadow-lg z-50 max-h-40 overflow-y-auto p-1 space-y-1">
+                  {customerSearchResults && customerSearchResults.length > 0 ? (
+                    customerSearchResults.map((cust) => (
                       <button
                         key={cust.id}
                         type="button"
+                        className="w-full text-left p-2 rounded-md hover:bg-secondary flex justify-between items-center text-xs transition-colors"
                         onClick={() => {
                           setSelectedCustomer(cust);
                           setIsSearchingCustomer(false);
-                          setCustomerSearchQuery('');
                         }}
-                        className="w-full text-left p-2 hover:bg-secondary/60 rounded-md transition-all flex justify-between items-center text-xs"
                       >
                         <div>
                           <p className="font-bold text-foreground">{cust.name}</p>
-                          <p className="text-[11px] text-muted-foreground font-mono">{cust.phone}</p>
+                          <p className="text-[10px] text-muted-foreground font-mono">{cust.phone}</p>
                         </div>
-                        <Badge
-                          variant={Number(cust.total_due || 0) > 0 ? 'secondary' : 'outline'}
-                          className="text-[10px] font-semibold"
-                        >
-                          Outstanding: {formatCurrency(Number(cust.total_due || 0))}
-                        </Badge>
+                        <span className="text-[10px] font-mono font-bold text-amber-600">
+                          {formatCurrency(cust.total_due || 0)} due
+                        </span>
                       </button>
                     ))
+                  ) : (
+                    <div className="p-3 text-center text-xs text-muted-foreground">
+                      No customer found with "{customerSearchQuery}".
+                    </div>
                   )}
                 </div>
               )}
@@ -407,15 +383,12 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         </div>
       )}
 
-      {/* Place Order CTA */}
       <Button
-        onClick={handleCheckout}
+        type="button"
+        size="lg"
+        onClick={handlePlaceOrder}
         disabled={items.length === 0 || createOrderMutation.isPending}
-        className={
-          paymentMethod === 'pay_later'
-            ? 'w-full bg-amber-600 hover:bg-amber-700 text-white font-bold h-11 text-sm shadow-md rounded-md'
-            : 'w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-sm shadow-md rounded-md'
-        }
+        className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-sm rounded-md shadow-md transition-all active:scale-[0.99] mt-2"
       >
         {createOrderMutation.isPending
           ? 'Processing Order...'
@@ -424,87 +397,157 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
           : `Place Order (${formatCurrency(grandTotal)})`}
       </Button>
 
-      {/* Success & Print Action Modal */}
+      {/* Responsive Side-by-Side Laptop / Stacked Mobile Success Modal */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-        <DialogContent className="max-w-md bg-card rounded-md border border-border p-6 shadow-2xl space-y-4 no-scrollbar">
-          <DialogHeader className="text-center pb-1 space-y-2">
-            <div className="w-14 h-14 mx-auto rounded-md bg-success/15 border border-success/30 flex items-center justify-center text-success shadow-xs">
-              <HugeiconsIcon icon={CheckmarkCircle02Icon} size={28} />
+        <DialogContent className="max-w-md sm:max-w-2xl md:max-w-3xl bg-card rounded-2xl border border-border/80 p-5 sm:p-6 shadow-2xl space-y-4 no-scrollbar">
+          <DialogHeader className="text-center pb-2 border-b border-border/60 space-y-1">
+            <div className="w-12 h-12 mx-auto rounded-full bg-success/15 border border-success/30 flex items-center justify-center text-success shadow-2xs">
+              <HugeiconsIcon icon={CheckmarkCircle02Icon} size={24} />
             </div>
             <DialogTitle className="text-xl font-bold font-heading text-foreground text-center">
               Order Placed Successfully!
             </DialogTitle>
-            <DialogDescription className="text-xs text-center flex items-center justify-center gap-1.5 pt-1">
+            <DialogDescription className="text-xs text-center flex items-center justify-center gap-1.5 pt-0.5">
               <span className="text-muted-foreground">Order Number:</span>
-              <span className="font-bold text-cinnamon font-mono text-xs px-2.5 py-0.5 rounded-lg bg-cinnamon/10 border border-cinnamon/20">
+              <span className="font-bold text-cinnamon font-mono text-xs px-2.5 py-0.5 rounded-md bg-cinnamon/10 border border-cinnamon/20">
                 {createdOrder?.order_number}
               </span>
             </DialogDescription>
           </DialogHeader>
 
-          {/* Payment & Credit details recap */}
-          <div className="p-3.5 rounded-lg bg-secondary/50 border border-border/60 space-y-1.5 text-xs">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Customer:</span>
-              <span className="font-bold text-foreground">{createdOrder?.customer_name}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Payment Method:</span>
-              <Badge variant="outline" className="uppercase text-[10px] font-bold">
-                {createdOrder?.payment_method === 'pay_later' ? 'PAY LATER' : createdOrder?.payment_method}
-              </Badge>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Total Amount:</span>
-              <span className="font-bold text-cinnamon">{formatCurrency(createdOrder?.total_amount || 0)}</span>
-            </div>
-            {createdOrder?.payment_method === 'pay_later' && (
-              <div className="flex justify-between pt-1 border-t border-border/40 text-amber-700 dark:text-amber-400 font-bold">
-                <span>Amount Due:</span>
-                <span>{formatCurrency(createdOrder?.due_amount || createdOrder?.total_amount || 0)}</span>
+          {/* 2-Column Responsive Layout: Thermal Paper Slip (Left) & Actions (Right) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start pt-1">
+            {/* Left Column: Authentic Thermal Receipt Paper Slip */}
+            <div className="bg-[#fefdfa] dark:bg-stone-900 text-stone-900 dark:text-stone-100 font-mono text-[11px] leading-relaxed p-4 rounded-xl border border-stone-300/80 dark:border-stone-700 shadow-md space-y-2 select-text max-h-[380px] overflow-y-auto no-scrollbar relative">
+              <div className="text-center space-y-0.5 pb-2 border-b border-dashed border-stone-400 dark:border-stone-700">
+                <p className="font-bold text-sm tracking-widest text-cinnamon uppercase font-heading">RADHACAFE</p>
+                <p className="text-[10px] text-stone-600 dark:text-stone-400">1A, Vellampalli Tallur Rd, opposite Pattu Office</p>
+                <p className="text-[10px] text-stone-600 dark:text-stone-400">Tallur, Andhra Pradesh 523264 • Tel: 09966630913</p>
               </div>
-            )}
-          </div>
 
-          {printMessage && (
-            <div className="p-3 rounded-lg bg-secondary text-xs text-center font-medium border border-border/60">
-              {printMessage}
+              <div className="space-y-0.5 text-[10px] py-1 border-b border-dashed border-stone-400 dark:border-stone-700 text-stone-700 dark:text-stone-300">
+                <div className="flex justify-between">
+                  <span>Order #:</span>
+                  <span className="font-bold">{createdOrder?.order_number}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Date:</span>
+                  <span>{new Date(createdOrder?.created_at || Date.now()).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Customer:</span>
+                  <span className="font-bold">{createdOrder?.customer_name || 'Walk-in Customer'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Payment:</span>
+                  <span className="uppercase font-bold text-cinnamon">{createdOrder?.payment_method}</span>
+                </div>
+              </div>
+
+              {/* Itemized Order Table */}
+              <div className="py-1 border-b border-dashed border-stone-400 dark:border-stone-700 space-y-1">
+                <div className="flex justify-between font-bold text-[10px] text-stone-700 dark:text-stone-400 border-b border-stone-300 dark:border-stone-800 pb-1">
+                  <span>Item (Qty)</span>
+                  <span>Amount</span>
+                </div>
+                {createdOrder?.items && createdOrder.items.length > 0 ? (
+                  createdOrder.items.map((item: any, idx: number) => {
+                    const name = item.item_name || item.name || item.menu_item?.name || 'Item';
+                    const qty = item.quantity || 1;
+                    const price = item.unit_price || item.price || 0;
+                    return (
+                      <div key={idx} className="flex justify-between items-center text-[11px]">
+                        <span className="truncate max-w-[170px]">
+                          {name} ×{qty}
+                        </span>
+                        <span className="font-bold">
+                          {formatCurrency(price * qty)}
+                        </span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-[10px] text-stone-500 italic text-center py-1">
+                    Itemized slip details
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-0.5 pt-1 text-[11px]">
+                <div className="flex justify-between font-bold text-xs pt-0.5">
+                  <span>TOTAL AMOUNT:</span>
+                  <span className="text-cinnamon">{formatCurrency(createdOrder?.total_amount || 0)}</span>
+                </div>
+              </div>
+
+              <div className="text-center pt-2 text-[9.5px] text-stone-500 italic">
+                Thank You! Visit RadhaCafe Again.
+              </div>
             </div>
-          )}
 
-          <div className="space-y-2 pt-2">
-            {printerStatus === 'connected' ? (
-              <Button
-                onClick={handleManualPrint}
-                disabled={isPrinting}
-                className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 text-xs rounded-md shadow-xs gap-2"
-              >
-                <HugeiconsIcon icon={PrinterIcon} size={16} />
-                <span>{isPrinting ? 'Printing Receipt...' : 'Reprint Receipt via Bluetooth'}</span>
-              </Button>
-            ) : (
-              <Button
-                onClick={() => createdOrder && printBrowserFallback(createdOrder, settings)}
-                variant="outline"
-                className="w-full h-10 text-xs font-bold gap-2 rounded-md border-border/80"
-              >
-                <HugeiconsIcon icon={PrinterIcon} size={16} />
-                <span>Print Receipt via Browser / PDF</span>
-              </Button>
-            )}
+            {/* Right Column: Actions & Summary */}
+            <div className="space-y-3.5 flex flex-col justify-between h-full">
+              <div className="p-3.5 rounded-xl bg-secondary/50 border border-border/60 space-y-2 text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Customer Profile:</span>
+                  <span className="font-bold text-foreground">{createdOrder?.customer_name}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Payment Method:</span>
+                  <span className="uppercase text-[10px] font-bold px-2 py-0.5 rounded bg-cinnamon/10 text-cinnamon border border-cinnamon/20">
+                    {createdOrder?.payment_method === 'pay_later' ? 'PAY LATER' : createdOrder?.payment_method}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pt-1 border-t border-border/40">
+                  <span className="text-muted-foreground font-semibold">Total Paid/Charged:</span>
+                  <span className="font-bold text-cinnamon text-sm">{formatCurrency(createdOrder?.total_amount || 0)}</span>
+                </div>
+              </div>
 
-            <Button
-              onClick={() => setShowSuccessModal(false)}
-              variant="ghost"
-              className="w-full h-9 text-xs font-semibold"
-            >
-              Done & Start Next Order
-            </Button>
+              {printMessage && (
+                <div className="p-2.5 rounded-lg bg-secondary text-xs text-center font-medium border border-border/60 text-foreground">
+                  {printMessage}
+                </div>
+              )}
+
+              <div className="space-y-2.5 pt-1">
+                <Button
+                  onClick={handleBluetoothPrint}
+                  disabled={isPrinting}
+                  className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-xs rounded-xl shadow-md gap-2 transition-all active:scale-[0.98]"
+                >
+                  <HugeiconsIcon icon={PrinterIcon} size={16} />
+                  <span>
+                    {isPrinting
+                      ? 'Printing Thermal Receipt...'
+                      : printerStatus === 'connected'
+                      ? 'Print Thermal Receipt (Bluetooth Connected)'
+                      : 'Connect & Print Thermal Receipt (Bluetooth)'}
+                  </span>
+                </Button>
+
+                <Button
+                  onClick={() => createdOrder && printBrowserFallback(createdOrder, settings)}
+                  variant="outline"
+                  className="w-full h-10 text-xs font-bold gap-2 rounded-xl border-border/80 hover:bg-secondary"
+                >
+                  <HugeiconsIcon icon={PrinterIcon} size={16} />
+                  <span>Print Receipt via Browser / PDF</span>
+                </Button>
+
+                <Button
+                  onClick={() => setShowSuccessModal(false)}
+                  variant="ghost"
+                  className="w-full h-9 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                >
+                  Done & Start Next Order
+                </Button>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Quick Add Customer Modal */}
       <CustomerFormModal
         open={showAddCustomerModal}
         onOpenChange={setShowAddCustomerModal}

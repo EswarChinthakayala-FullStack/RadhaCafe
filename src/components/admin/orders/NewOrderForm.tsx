@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { OrderItemSelector } from './OrderItemSelector';
 import { OrderCart } from './OrderCart';
 import { useCart } from '../../../hooks/useCart';
@@ -12,6 +12,17 @@ export function NewOrderForm() {
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const { items, total } = useCart();
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Auto-close mobile cart drawer when screen is resized to desktop (>= 1024px)
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsMobileCartOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <div className="space-y-4 min-w-0 w-full overflow-x-hidden">
