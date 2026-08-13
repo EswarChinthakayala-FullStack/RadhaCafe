@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Order } from '../../../types';
 import { useBluetoothPrinter } from '../../../hooks/useBluetoothPrinter';
 import { useCafeSettings } from '../../../hooks/useCafeSettings';
+import { useActiveReceiptTemplate } from '../../../hooks/useReceiptTemplates';
 import { useCustomer } from '../../../hooks/useCustomers';
 import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import { formatDate } from '../../../lib/utils/formatDate';
@@ -43,6 +44,7 @@ export function OrderDetailsModal({ order, open, onClose, onOpenChange }: OrderD
 
   const { printOrder, printBrowserFallback } = useBluetoothPrinter();
   const { data: cafeSettings } = useCafeSettings();
+  const { data: activeTemplate } = useActiveReceiptTemplate();
   const { data: customer } = useCustomer(order.customer_id || undefined);
 
   const [isPrinting, setIsPrinting] = useState(false);
@@ -228,7 +230,7 @@ export function OrderDetailsModal({ order, open, onClose, onOpenChange }: OrderD
               </h4>
               <div className="p-3 pb-8 rounded-md bg-secondary/20 border border-border/60 flex justify-center max-h-[420px] overflow-y-auto no-scrollbar">
                 <div className="py-2 pb-8 w-full flex justify-center">
-                  <ReceiptPreview order={order} cafeSettings={cafeSettings} />
+                  <ReceiptPreview order={order} templateConfig={activeTemplate?.template_config} cafeSettings={cafeSettings} />
                 </div>
               </div>
             </div>

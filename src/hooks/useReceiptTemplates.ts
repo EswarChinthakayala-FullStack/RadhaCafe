@@ -20,6 +20,8 @@ export function useReceiptTemplates() {
   return useQuery({
     queryKey: RECEIPT_TEMPLATES_QUERY_KEY,
     queryFn: fetchReceiptTemplates,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 }
 
@@ -30,6 +32,8 @@ export function useActiveReceiptTemplate() {
   return useQuery({
     queryKey: ACTIVE_RECEIPT_TEMPLATE_QUERY_KEY,
     queryFn: fetchActiveReceiptTemplate,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 }
 

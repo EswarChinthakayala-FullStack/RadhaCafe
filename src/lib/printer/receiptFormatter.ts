@@ -92,8 +92,7 @@ export function formatReceiptFromTemplate(
 } {
   const data = normalizeOrderToReceiptData(rawOrder, cafeSettings);
 
-  // Default Template Config Fallback
-  const config: ReceiptTemplateConfig = templateConfig || {
+  const DEFAULT_CONFIG: ReceiptTemplateConfig = {
     paperWidth: 32,
     dividerStyle: 'dashed',
     previewFont: 'JetBrains Mono',
@@ -157,6 +156,19 @@ export function formatReceiptFromTemplate(
       emphasis: 'normal',
     },
     sectionOrder: ['header', 'orderInfo', 'customerInfo', 'items', 'summary', 'payment', 'footer'],
+  };
+
+  const config: ReceiptTemplateConfig = {
+    ...DEFAULT_CONFIG,
+    ...(templateConfig || {}),
+    header: { ...DEFAULT_CONFIG.header, ...(templateConfig?.header || {}) },
+    orderInfo: { ...DEFAULT_CONFIG.orderInfo, ...(templateConfig?.orderInfo || {}) },
+    customerInfo: { ...DEFAULT_CONFIG.customerInfo, ...(templateConfig?.customerInfo || {}) },
+    items: { ...DEFAULT_CONFIG.items, ...(templateConfig?.items || {}) },
+    summary: { ...DEFAULT_CONFIG.summary, ...(templateConfig?.summary || {}) },
+    payment: { ...DEFAULT_CONFIG.payment, ...(templateConfig?.payment || {}) },
+    footer: { ...DEFAULT_CONFIG.footer, ...(templateConfig?.footer || {}) },
+    sectionOrder: templateConfig?.sectionOrder || DEFAULT_CONFIG.sectionOrder,
   };
 
   const dividerLine = generateDivider(config.dividerStyle, config.paperWidth);

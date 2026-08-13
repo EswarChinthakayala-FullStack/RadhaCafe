@@ -4,10 +4,12 @@ import { useCart } from '../../../hooks/useCart';
 import { useCreateOrder } from '../../../hooks/useOrders';
 import { useCafeSettings } from '../../../hooks/useCafeSettings';
 import { useBluetoothPrinter } from '../../../hooks/useBluetoothPrinter';
+import { useActiveReceiptTemplate } from '../../../hooks/useReceiptTemplates';
 import { useCustomerSearch } from '../../../hooks/useCustomers';
 import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import type { Customer, PaymentMethod } from '../../../types';
 import { CustomerFormModal } from '../customers/CustomerFormModal';
+import { ReceiptPreview } from '../printer/ReceiptPreview';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
@@ -44,6 +46,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
   const queryClient = useQueryClient();
   const { items, updateQuantity, removeItem, clearCart, subtotal, discount, setDiscount } = useCart();
   const { data: settings } = useCafeSettings();
+  const { data: activeTemplate } = useActiveReceiptTemplate();
   const createOrderMutation = useCreateOrder();
   const { status: printerStatus, connect, printOrder, printBrowserFallback } = useBluetoothPrinter();
 
@@ -493,72 +496,13 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
           {/* 2-Column Responsive Layout: Thermal Paper Slip (Left) & Actions (Right) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start pt-1">
-            {/* Left Column: Authentic Thermal Receipt Paper Slip */}
-            <div className="bg-[#fefdfa] dark:bg-stone-900 text-stone-900 dark:text-stone-100 font-mono text-[11px] leading-relaxed p-4 rounded-md border border-stone-300/80 dark:border-stone-700 shadow-md space-y-2 select-text max-h-[380px] overflow-y-auto no-scrollbar relative">
-              <div className="text-center space-y-0.5 pb-2 border-b border-dashed border-stone-400 dark:border-stone-700">
-                <p className="font-bold text-sm tracking-widest text-cinnamon uppercase font-heading">RADHACAFE</p>
-                <p className="text-[10px] text-stone-600 dark:text-stone-400">1A, Vellampalli Tallur Rd, opposite Pattu Office</p>
-                <p className="text-[10px] text-stone-600 dark:text-stone-400">Tallur, Andhra Pradesh 523264 • Tel: 09966630913</p>
-              </div>
-
-              <div className="space-y-0.5 text-[10px] py-1 border-b border-dashed border-stone-400 dark:border-stone-700 text-stone-700 dark:text-stone-300">
-                <div className="flex justify-between">
-                  <span>Order #:</span>
-                  <span className="font-bold">{createdOrder?.order_number}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Date:</span>
-                  <span>{new Date(createdOrder?.created_at || Date.now()).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Customer:</span>
-                  <span className="font-bold">{createdOrder?.customer_name || 'Walk-in Customer'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Payment:</span>
-                  <span className="uppercase font-bold text-cinnamon">{createdOrder?.payment_method}</span>
-                </div>
-              </div>
-
-              {/* Itemized Order Table */}
-              <div className="py-1 border-b border-dashed border-stone-400 dark:border-stone-700 space-y-1">
-                <div className="flex justify-between font-bold text-[10px] text-stone-700 dark:text-stone-400 border-b border-stone-300 dark:border-stone-800 pb-1">
-                  <span>Item (Qty)</span>
-                  <span>Amount</span>
-                </div>
-                {createdOrder?.items && createdOrder.items.length > 0 ? (
-                  createdOrder.items.map((item: any, idx: number) => {
-                    const name = item.item_name || item.name || item.menu_item?.name || 'Item';
-                    const qty = item.quantity || 1;
-                    const price = item.unit_price || item.price || 0;
-                    return (
-                      <div key={idx} className="flex justify-between items-center text-[11px]">
-                        <span className="truncate max-w-[170px]">
-                          {name} ×{qty}
-                        </span>
-                        <span className="font-bold">
-                          {formatCurrency(price * qty)}
-                        </span>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-[10px] text-stone-500 italic text-center py-1">
-                    Itemized slip details
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-0.5 pt-1 text-[11px]">
-                <div className="flex justify-between font-bold text-xs pt-0.5">
-                  <span>TOTAL AMOUNT:</span>
-                  <span className="text-cinnamon">{formatCurrency(createdOrder?.total_amount || 0)}</span>
-                </div>
-              </div>
-
-              <div className="text-center pt-2 text-[9.5px] text-stone-500 italic">
-                Thank You! Visit RadhaCafe Again.
-              </div>
+            {/* Left Column: Authentic Template-Based Thermal Receipt Paper Slip */}
+            <div className="max-h-[380px] overflow-y-auto rounded-md border border-border/80 shadow-xs">
+              <ReceiptPreview
+                order={createdOrder}
+                templateConfig={activeTemplate?.template_config}
+                cafeSettings={settings}
+              />
             </div>
 
             {/* Right Column: Actions & Summary */}
