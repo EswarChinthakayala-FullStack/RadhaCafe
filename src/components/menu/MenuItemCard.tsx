@@ -20,16 +20,18 @@ export function MenuItemCard({ item, onSelect }: MenuItemCardProps) {
       className="overflow-hidden border border-[#2C1810] bg-[#1D100A] rounded-md hover:border-[#E5A88B]/40 transition-all duration-300 group flex flex-col justify-between shadow-md hover:-translate-y-1 hover:shadow-xl cursor-pointer"
     >
       <div>
-        {/* Image Container with Fixed Aspect Ratio */}
-        <div className="aspect-[4/3] w-full overflow-hidden bg-[#140A06] relative">
+        {/* Outer Container with Cafe dark background bg-[#180C07] */}
+        <div className="aspect-[4/3] w-full overflow-hidden bg-[#180C07] relative flex items-center justify-center p-2">
           {item.image_url && !imageFailed ? (
-            <img
-              src={item.image_url}
-              alt={item.name}
-              onError={() => setImageFailed(true)}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
+            <div className="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden p-1 shadow-xs">
+              <img
+                src={item.image_url}
+                alt={item.name}
+                onError={() => setImageFailed(true)}
+                className="w-full h-full object-contain"
+                loading="lazy"
+              />
+            </div>
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center text-[#E5A88B]/30 gap-2 bg-[#1C100B]">
               <HugeiconsIcon icon={Coffee02Icon} size={40} />

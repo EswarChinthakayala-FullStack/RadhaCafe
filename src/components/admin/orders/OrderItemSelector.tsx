@@ -174,14 +174,16 @@ export function OrderItemSelector() {
 
                 <div className="space-y-2">
                   {/* Thumbnail */}
-                  <div className="w-full h-24 sm:h-28 rounded-md overflow-hidden bg-secondary/40 border border-border/60 flex items-center justify-center relative">
+                  <div className="w-full h-24 sm:h-28 rounded-md overflow-hidden bg-secondary/40 border border-border/60 flex items-center justify-center relative p-1.5">
                     {hasImage ? (
-                      <img
-                        src={item.image_url!}
-                        alt={item.name}
-                        onError={() => handleImageError(item.id)}
-                        className="w-full h-full object-cover"
-                      />
+                      <div className="w-full h-full bg-white rounded-md flex items-center justify-center p-0.5 overflow-hidden shadow-2xs">
+                        <img
+                          src={item.image_url!}
+                          alt={item.name}
+                          onError={() => handleImageError(item.id)}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center text-muted-foreground/40">
                         <HugeiconsIcon icon={Image01Icon} size={24} />
