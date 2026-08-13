@@ -276,11 +276,13 @@ export function ReceiptTemplateBuilder() {
                 }}
               >
                 <SelectTrigger className="w-[240px] font-bold text-sm h-10 border-border/80">
-                  <SelectValue placeholder="Select Template" />
+                  <SelectValue placeholder="Select Template">
+                    {currentTemplate?.name || 'Select Template'}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {templates?.map((t) => (
-                    <SelectItem key={t.id} value={t.id} className="font-medium text-xs">
+                    <SelectItem key={t.id} value={t.id} label={t.name} className="font-medium text-xs">
                       <div className="flex items-center gap-2">
                         <span>{t.name}</span>
                         {t.is_active && (
