@@ -16,6 +16,7 @@ import { Textarea } from '../../../components/ui/textarea';
 import { Badge } from '../../../components/ui/badge';
 import { Card, CardContent } from '../../../components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
@@ -39,6 +40,8 @@ export function WaterProductsPage() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<WaterProductFormData>({
     resolver: zodResolver(waterProductSchema),
@@ -299,29 +302,37 @@ export function WaterProductsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="wp-type" className="text-xs font-semibold">Water Type *</Label>
-                <select
-                  id="wp-type"
-                  {...register('water_type')}
-                  className="w-full h-10 text-xs bg-background border border-input rounded-md px-3 font-semibold"
+                <Select
+                  value={watch('water_type')}
+                  onValueChange={(val) => setValue('water_type', val as any, { shouldValidate: true })}
                 >
-                  <option value="normal">Normal Water (₹5)</option>
-                  <option value="cooling">Cooling Water (₹30)</option>
-                  <option value="other">Other</option>
-                </select>
+                  <SelectTrigger className="w-full h-10 text-xs bg-background rounded-md">
+                    <SelectValue placeholder="Select Type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border border-border shadow-xl">
+                    <SelectItem value="normal">Normal Water (₹5)</SelectItem>
+                    <SelectItem value="cooling">Cooling Water (₹30)</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="wp-unit" className="text-xs font-semibold">Unit *</Label>
-                <select
-                  id="wp-unit"
-                  {...register('unit_name')}
-                  className="w-full h-10 text-xs bg-background border border-input rounded-md px-3 font-semibold"
+                <Select
+                  value={watch('unit_name')}
+                  onValueChange={(val) => setValue('unit_name', val as any, { shouldValidate: true })}
                 >
-                  <option value="can">20L Can</option>
-                  <option value="jar">Jar</option>
-                  <option value="bottle">Bottle</option>
-                  <option value="other">Other</option>
-                </select>
+                  <SelectTrigger className="w-full h-10 text-xs bg-background rounded-md">
+                    <SelectValue placeholder="Select Unit" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border border-border shadow-xl">
+                    <SelectItem value="can">20L Can</SelectItem>
+                    <SelectItem value="jar">Jar</SelectItem>
+                    <SelectItem value="bottle">Bottle</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

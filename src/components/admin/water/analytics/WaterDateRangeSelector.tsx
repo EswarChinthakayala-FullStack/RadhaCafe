@@ -1,7 +1,9 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { formatDate } from '@/lib/utils/formatDate';
 import type { WaterAnalyticsDateRange } from '@/types/water.types';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Calendar01Icon, FilterIcon } from '@hugeicons/core-free-icons';
@@ -68,30 +70,82 @@ export const WaterDateRangeSelector: React.FC<WaterDateRangeSelectorProps> = ({
 
       {range === 'custom' && (
         <div className="flex flex-col sm:flex-row items-end gap-3 pt-3 border-t border-border/50 text-xs">
-          <div className="space-y-1 w-full sm:w-44">
+          {/* Start Date Picker via ShadCN Popover & Calendar */}
+          <div className="space-y-1 w-full sm:w-52">
             <Label className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
               <HugeiconsIcon icon={Calendar01Icon} size={12} className="text-cinnamon" />
               <span>Start Date</span>
             </Label>
-            <Input
-              type="date"
-              value={customStart}
-              onChange={(e) => setCustomStart?.(e.target.value)}
-              className="h-8 text-xs bg-background rounded-md"
-            />
+            <Popover>
+              <PopoverTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    className="w-full h-8 justify-start text-xs bg-background rounded-md gap-2 px-2.5 font-normal border-input"
+                  />
+                }
+              >
+                <HugeiconsIcon icon={Calendar01Icon} size={13} className="text-cinnamon" />
+                <span>
+                  {customStart
+                    ? formatDate(customStart, 'dd MMM yyyy')
+                    : 'Select Start Date'}
+                </span>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-auto p-0 rounded-md bg-card border border-border shadow-xl z-50">
+                <Calendar
+                  mode="single"
+                  selected={customStart ? new Date(customStart + 'T00:00:00') : undefined}
+                  onSelect={(date) => {
+                    if (date) {
+                      const yyyy = date.getFullYear();
+                      const mm = String(date.getMonth() + 1).padStart(2, '0');
+                      const dd = String(date.getDate()).padStart(2, '0');
+                      setCustomStart?.(`${yyyy}-${mm}-${dd}`);
+                    }
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
-          <div className="space-y-1 w-full sm:w-44">
+          {/* End Date Picker via ShadCN Popover & Calendar */}
+          <div className="space-y-1 w-full sm:w-52">
             <Label className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
               <HugeiconsIcon icon={Calendar01Icon} size={12} className="text-cinnamon" />
               <span>End Date</span>
             </Label>
-            <Input
-              type="date"
-              value={customEnd}
-              onChange={(e) => setCustomEnd?.(e.target.value)}
-              className="h-8 text-xs bg-background rounded-md"
-            />
+            <Popover>
+              <PopoverTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    className="w-full h-8 justify-start text-xs bg-background rounded-md gap-2 px-2.5 font-normal border-input"
+                  />
+                }
+              >
+                <HugeiconsIcon icon={Calendar01Icon} size={13} className="text-cinnamon" />
+                <span>
+                  {customEnd
+                    ? formatDate(customEnd, 'dd MMM yyyy')
+                    : 'Select End Date'}
+                </span>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-auto p-0 rounded-md bg-card border border-border shadow-xl z-50">
+                <Calendar
+                  mode="single"
+                  selected={customEnd ? new Date(customEnd + 'T00:00:00') : undefined}
+                  onSelect={(date) => {
+                    if (date) {
+                      const yyyy = date.getFullYear();
+                      const mm = String(date.getMonth() + 1).padStart(2, '0');
+                      const dd = String(date.getDate()).padStart(2, '0');
+                      setCustomEnd?.(`${yyyy}-${mm}-${dd}`);
+                    }
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       )}

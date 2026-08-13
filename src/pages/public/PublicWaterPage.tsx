@@ -5,6 +5,7 @@ import { waterEventInquirySchema, type WaterEventInquiryFormData } from '../../v
 import { useCreateWaterEventInquiry } from '../../hooks/useWaterEvents';
 import { useWaterProducts } from '../../hooks/useWaterProducts';
 import { formatCurrency } from '../../lib/utils/formatCurrency';
+import { formatDate } from '../../lib/utils/formatDate';
 import { Navbar } from '../../components/landing/Navbar';
 import { Footer } from '../../components/landing/Footer';
 import { Button } from '../../components/ui/button';
@@ -13,6 +14,8 @@ import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
+import { Calendar } from '../../components/ui/calendar';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   DropletIcon,
@@ -36,6 +39,8 @@ export function PublicWaterPage() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<WaterEventInquiryFormData>({
     resolver: zodResolver(waterEventInquirySchema),
@@ -279,12 +284,37 @@ export function PublicWaterPage() {
                     <HugeiconsIcon icon={Calendar01Icon} size={14} className="text-cinnamon" />
                     <span>Event Date *</span>
                   </Label>
-                  <Input
-                    id="req-date"
-                    type="date"
-                    {...register('event_date')}
-                    className="h-10 text-xs bg-background rounded-md"
-                  />
+                  <Popover>
+                    <PopoverTrigger
+                      render={
+                        <Button
+                          variant="outline"
+                          className="w-full h-10 justify-start text-xs bg-background rounded-md gap-2 px-3 font-normal border-input"
+                        />
+                      }
+                    >
+                      <HugeiconsIcon icon={Calendar01Icon} size={14} className="text-cinnamon" />
+                      <span>
+                        {watch('event_date')
+                          ? formatDate(watch('event_date'), 'dd MMM yyyy')
+                          : 'Select Event Date from Calendar'}
+                      </span>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-auto p-0 rounded-md bg-card border border-border shadow-xl z-50">
+                      <Calendar
+                        mode="single"
+                        selected={watch('event_date') ? new Date(watch('event_date') + 'T00:00:00') : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const yyyy = date.getFullYear();
+                            const mm = String(date.getMonth() + 1).padStart(2, '0');
+                            const dd = String(date.getDate()).padStart(2, '0');
+                            setValue('event_date', `${yyyy}-${mm}-${dd}`, { shouldValidate: true });
+                          }
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
                   {errors.event_date && (
                     <p className="text-[11px] text-destructive font-medium">{errors.event_date.message}</p>
                   )}
