@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMenuItems } from '../../../hooks/useMenuItems';
 import { useCategories } from '../../../hooks/useCategories';
 import { useCart } from '../../../hooks/useCart';
@@ -29,6 +29,8 @@ import {
   RiceBowl01Icon,
   Pizza01Icon,
   Hamburger01Icon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
 } from '@hugeicons/core-free-icons';
 
 const ICON_MAP: Record<string, any> = {
@@ -54,11 +56,61 @@ export function OrderItemSelector() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+
   const { data: menuItems, isLoading: isMenuItemsLoading } = useMenuItems(true);
   const { data: categories, isLoading: isCategoriesLoading } = useCategories();
   const { addItem, updateQuantity, items: cartItems } = useCart();
 
   const categoryMap = new Map(categories?.map((c) => [c.id, c]));
+
+  const updateScrollButtons = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 5);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 5);
+  };
+
+  useEffect(() => {
+    updateScrollButtons();
+    window.addEventListener('resize', updateScrollButtons);
+    return () => window.removeEventListener('resize', updateScrollButtons);
+  }, [categories]);
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY !== 0 && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollLeft += e.deltaY;
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    isDraggingRef.current = true;
+    startXRef.current = e.pageX - (scrollContainerRef.current?.offsetLeft || 0);
+    scrollLeftRef.current = scrollContainerRef.current?.scrollLeft || 0;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - (scrollContainerRef.current.offsetLeft || 0);
+    const walk = (x - startXRef.current) * 1.5;
+    scrollContainerRef.current.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isDraggingRef.current = false;
+  };
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (!scrollContainerRef.current) return;
+    const amount = direction === 'left' ? -200 : 200;
+    scrollContainerRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+  };
 
   const filteredItems = menuItems?.filter((item) => {
     const matchesCategory = !selectedCategoryId || item.category_id === selectedCategoryId;
@@ -83,7 +135,7 @@ export function OrderItemSelector() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 min-w-0 max-w-full overflow-x-hidden">
       {/* Search Input */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
@@ -107,39 +159,74 @@ export function OrderItemSelector() {
         )}
       </div>
 
-      {/* Category Tabs Navigation */}
-      <div className="flex items-center gap-2 overflow-x-auto touch-pan-x overscroll-x-contain pb-1.5 scrollbar-none snap-x snap-mandatory scroll-smooth w-full">
-        <button
-          type="button"
-          onClick={() => setSelectedCategoryId(null)}
-          className={`snap-start shrink-0 min-w-max px-3.5 py-2 rounded-md text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${selectedCategoryId === null
-            ? 'bg-cinnamon text-white shadow-xs'
-            : 'bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/50'
-            }`}
+      {/* Category Tabs Navigation — Scrollable with Drag & Arrows */}
+      <div className="relative group/tabs min-w-0 max-w-full">
+        {canScrollLeft && (
+          <button
+            type="button"
+            onClick={() => scroll('left')}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-background/90 border border-border shadow-md flex items-center justify-center text-foreground hover:bg-secondary transition-all"
+            aria-label="Scroll Left"
+          >
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
+          </button>
+        )}
+
+        <div
+          ref={scrollContainerRef}
+          onScroll={updateScrollButtons}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUpOrLeave}
+          onMouseLeave={handleMouseUpOrLeave}
+          onWheel={handleWheel}
+          className="w-full overflow-x-auto touch-pan-x overscroll-x-contain pb-2 scrollbar-none snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none"
         >
-          <HugeiconsIcon icon={GridIcon} size={13} />
-          <span>All Items ({menuItems?.length || 0})</span>
-        </button>
-        {categories?.map((cat) => {
-          const IconComp = ICON_MAP[(cat as any).icon_name || ''] || Tag01Icon;
-          return (
+          <div className="flex items-center gap-2 min-w-max px-1">
             <button
-              key={cat.id}
               type="button"
-              onClick={() => setSelectedCategoryId(cat.id)}
-              className={`snap-start shrink-0 min-w-max px-3.5 py-2 rounded-md text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${selectedCategoryId === cat.id
+              onClick={() => setSelectedCategoryId(null)}
+              className={`snap-start shrink-0 min-w-max px-3.5 py-2 rounded-md text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${selectedCategoryId === null
                 ? 'bg-cinnamon text-white shadow-xs'
                 : 'bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/50'
                 }`}
             >
-              <HugeiconsIcon icon={IconComp} size={13} />
-              <span>{cat.name}</span>
+              <HugeiconsIcon icon={GridIcon} size={13} />
+              <span>All Items ({menuItems?.length || 0})</span>
             </button>
-          );
-        })}
+            {categories?.map((cat) => {
+              const IconComp = ICON_MAP[(cat as any).icon_name || ''] || Tag01Icon;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedCategoryId(cat.id)}
+                  className={`snap-start shrink-0 min-w-max px-3.5 py-2 rounded-md text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${selectedCategoryId === cat.id
+                    ? 'bg-cinnamon text-white shadow-xs'
+                    : 'bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/50'
+                    }`}
+                >
+                  <HugeiconsIcon icon={IconComp} size={13} />
+                  <span>{cat.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {canScrollRight && (
+          <button
+            type="button"
+            onClick={() => scroll('right')}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-background/90 border border-border shadow-md flex items-center justify-center text-foreground hover:bg-secondary transition-all"
+            aria-label="Scroll Right"
+          >
+            <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
+          </button>
+        )}
       </div>
 
-      {/* Menu Item Grid */}
+      {/* Menu Item Grid — 2, 3, 4 responsive grid */}
       {!filteredItems || filteredItems.length === 0 ? (
         <div className="p-10 text-center bg-card rounded-md border border-dashed border-border/80 space-y-2">
           <div className="w-10 h-10 mx-auto rounded-full bg-secondary flex items-center justify-center text-muted-foreground/50">
@@ -149,7 +236,7 @@ export function OrderItemSelector() {
           <p className="text-[11px] text-muted-foreground">Try adjusting your search or category filter.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
           {filteredItems.map((item) => {
             const qty = getCartQuantity(item.id);
             const hasImage = item.image_url && !failedImages[item.id];
