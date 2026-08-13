@@ -39,7 +39,7 @@ export function WaterPaymentsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4 sm:pb-5">
         <div>
           <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 shrink-0 border border-sky-500/20 shadow-2xs">
+            <div className="p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs">
               <HugeiconsIcon icon={Wallet01Icon} size={22} />
             </div>
             <span>Water Payment Collection & Management</span>
@@ -81,7 +81,7 @@ export function WaterPaymentsPage() {
                 size="xs"
                 className={
                   isSelected
-                    ? 'bg-sky-600 text-white font-bold text-xs h-8 rounded-lg shadow-2xs px-3'
+                    ? 'bg-cinnamon text-white font-bold text-xs h-8 rounded-lg shadow-2xs px-3'
                     : 'text-xs h-8 text-foreground/80 rounded-lg px-3'
                 }
                 onClick={() => {
@@ -136,7 +136,7 @@ export function WaterPaymentsPage() {
 
                 return (
                   <tr key={ord.id} className="hover:bg-secondary/30 transition-colors">
-                    <td className="p-3.5 font-bold font-mono text-sky-600 dark:text-sky-400">{ord.order_number}</td>
+                    <td className="p-3.5 font-bold font-mono text-cinnamon">{ord.order_number}</td>
                     <td className="p-3.5 font-semibold">{ord.customer_name}</td>
                     <td className="p-3.5 text-muted-foreground text-[11px]">{formatDate(ord.created_at)}</td>
                     <td className="p-3.5 text-right font-bold font-mono">{formatCurrency(ord.total_amount)}</td>

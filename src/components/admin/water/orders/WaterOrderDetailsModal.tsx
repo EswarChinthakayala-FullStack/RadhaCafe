@@ -76,13 +76,13 @@ export function WaterOrderDetailsModal({
           <DialogHeader className="border-b border-border/80 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="space-y-1.5">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <div className="p-2 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 shrink-0 border border-sky-500/20">
+                <div className="p-2 rounded-md bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20">
                   <HugeiconsIcon icon={Invoice01Icon} size={22} />
                 </div>
                 <DialogTitle className="font-heading text-xl sm:text-2xl font-bold text-foreground">
                   Water Order Details
                 </DialogTitle>
-                <span className="font-mono text-xs sm:text-sm px-3 py-1 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 font-bold whitespace-nowrap">
+                <span className="font-mono text-xs sm:text-sm px-3 py-1 rounded-md bg-cinnamon/10 text-cinnamon border border-cinnamon/20 font-bold whitespace-nowrap">
                   {order.order_number}
                 </span>
               </div>
@@ -125,7 +125,7 @@ export function WaterOrderDetailsModal({
                     <HugeiconsIcon icon={CreditCardIcon} size={14} />
                     <span>Payment Method:</span>
                   </span>
-                  <Badge variant="outline" className="uppercase font-bold text-[10px] text-sky-600 border-sky-500/30 bg-sky-500/5 rounded-md px-2 py-0.5">
+                  <Badge variant="outline" className="uppercase font-bold text-[10px] text-cinnamon border-cinnamon/30 bg-cinnamon/5 rounded-md px-2 py-0.5">
                     {order.payment_method === 'pay_later' ? 'PAY LATER' : order.payment_method}
                   </Badge>
                 </div>
@@ -133,7 +133,7 @@ export function WaterOrderDetailsModal({
 
               <div className="space-y-2">
                 <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5 font-heading">
-                  <HugeiconsIcon icon={DropletIcon} size={14} className="text-sky-500" />
+                  <HugeiconsIcon icon={DropletIcon} size={14} className="text-cinnamon" />
                   <span>Purchased Water Products ({order.items?.length || 0})</span>
                 </h4>
                 <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1 no-scrollbar">
@@ -159,14 +159,14 @@ export function WaterOrderDetailsModal({
                   <span className="font-semibold text-foreground">{formatCurrency(order.subtotal)}</span>
                 </div>
                 {order.discount_amount > 0 && (
-                  <div className="flex justify-between text-sky-600 font-medium">
+                  <div className="flex justify-between text-cinnamon font-medium">
                     <span>Discount</span>
                     <span>-{formatCurrency(order.discount_amount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-sm text-foreground pt-2 border-t border-border/60">
                   <span>Grand Total</span>
-                  <span className="text-sky-600 dark:text-sky-400 font-mono">{formatCurrency(order.total_amount)}</span>
+                  <span className="text-cinnamon font-mono">{formatCurrency(order.total_amount)}</span>
                 </div>
 
                 <div className="flex justify-between text-xs pt-2 border-t border-border/40 text-muted-foreground">
@@ -193,7 +193,7 @@ export function WaterOrderDetailsModal({
               )}
 
               {printFeedback && (
-                <div className="p-3 rounded-md text-xs font-medium border bg-sky-500/10 text-sky-700 border-sky-500/20">
+                <div className="p-3 rounded-md text-xs font-medium border bg-cinnamon/10 text-cinnamon border-cinnamon/20">
                   {printFeedback}
                 </div>
               )}
@@ -202,7 +202,7 @@ export function WaterOrderDetailsModal({
             {/* Right Column: Thermal Receipt Preview */}
             <div className="space-y-2">
               <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5 font-heading">
-                <HugeiconsIcon icon={PrinterIcon} size={14} className="text-sky-500" />
+                <HugeiconsIcon icon={PrinterIcon} size={14} className="text-cinnamon" />
                 <span>Thermal Water Receipt Preview</span>
               </h4>
               <div className="p-3 pb-8 rounded-md bg-secondary/20 border border-border/60 flex justify-center max-h-[420px] overflow-y-auto no-scrollbar">
@@ -221,7 +221,7 @@ export function WaterOrderDetailsModal({
               size="sm"
               disabled={isPrinting}
               onClick={handleReprintBluetooth}
-              className="bg-sky-600 hover:bg-sky-700 text-white font-bold h-10 rounded-md px-5 text-xs gap-1.5 shadow-md"
+              className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 rounded-md px-5 text-xs gap-1.5 shadow-md"
             >
               <HugeiconsIcon icon={PrinterIcon} size={15} />
               <span>{isPrinting ? 'Printing...' : 'Bluetooth Print Receipt'}</span>

@@ -136,7 +136,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
     <div className="border border-border/80 rounded-md p-5 bg-card flex flex-col h-full space-y-4 shadow-sm">
       <div className="flex justify-between items-center border-b border-border pb-3">
         <div className="flex items-center gap-2">
-          <HugeiconsIcon icon={ShoppingCart01Icon} size={18} className="text-sky-500" />
+          <HugeiconsIcon icon={ShoppingCart01Icon} size={18} className="text-cinnamon" />
           <h3 className="font-bold text-sm sm:text-base text-foreground font-heading">Water Order Cart</h3>
         </div>
         {items.length > 0 && (
@@ -171,7 +171,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
                 <p className="font-bold text-foreground truncate">{item.product.name}</p>
                 <p className="text-[11px] text-muted-foreground">
                   {formatCurrency(item.product.price)} × {item.quantity} ={' '}
-                  <span className="font-semibold text-sky-600 dark:text-sky-400">
+                  <span className="font-semibold text-cinnamon">
                     {formatCurrency(item.product.price * item.quantity)}
                   </span>
                 </p>
@@ -230,7 +230,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
 
         <div className="flex justify-between font-bold text-base text-foreground pt-2 border-t border-border">
           <span>Grand Total</span>
-          <span className="text-sky-600 dark:text-sky-400">{formatCurrency(grandTotal)}</span>
+          <span className="text-cinnamon">{formatCurrency(grandTotal)}</span>
         </div>
       </div>
 
@@ -251,7 +251,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
                   isSelected
                     ? isPayLater
                       ? 'bg-amber-600 hover:bg-amber-700 text-white uppercase font-bold text-[9px] sm:text-[10px] h-8 rounded-lg shadow-xs'
-                      : 'bg-sky-600 hover:bg-sky-700 text-white uppercase font-bold text-[9px] sm:text-[10px] h-8 rounded-lg shadow-xs'
+                      : 'bg-cinnamon hover:bg-cinnamon/90 text-white uppercase font-bold text-[9px] sm:text-[10px] h-8 rounded-lg shadow-xs'
                     : 'uppercase text-[9px] sm:text-[10px] h-8 text-foreground/80 rounded-lg'
                 }
                 onClick={() => setPaymentMethod(method)}
@@ -321,7 +321,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>New Water Order Total:</span>
-                  <span className="font-semibold text-sky-600 dark:text-sky-400">+{formatCurrency(grandTotal)}</span>
+                  <span className="font-semibold text-cinnamon">+{formatCurrency(grandTotal)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-xs pt-1 border-t border-border/40 text-amber-700 dark:text-amber-400">
                   <span>Projected Water Total Due:</span>
@@ -363,7 +363,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
                           setShowAddCustomerModal(true);
                           setIsSearchingCustomer(false);
                         }}
-                        className="h-7 text-xs bg-sky-600 hover:bg-sky-700 text-white font-bold gap-1 rounded-md"
+                        className="h-7 text-xs bg-cinnamon hover:bg-cinnamon/90 text-white font-bold gap-1 rounded-md"
                       >
                         <HugeiconsIcon icon={UserAdd01Icon} size={13} />
                         <span>Create Customer Profile</span>
@@ -408,7 +408,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
         className={
           paymentMethod === 'pay_later'
             ? 'w-full bg-amber-600 hover:bg-amber-700 text-white font-bold h-11 text-sm shadow-md rounded-md'
-            : 'w-full bg-sky-600 hover:bg-sky-700 text-white font-bold h-11 text-sm shadow-md rounded-md'
+            : 'w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-sm shadow-md rounded-md'
         }
       >
         {createOrderMutation.isPending
@@ -430,7 +430,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
             </DialogTitle>
             <DialogDescription className="text-xs text-center flex items-center justify-center gap-1.5 pt-1">
               <span className="text-muted-foreground">Order Number:</span>
-              <span className="font-bold text-sky-600 dark:text-sky-400 font-mono text-xs px-2.5 py-0.5 rounded-lg bg-sky-500/10 border border-sky-500/20">
+              <span className="font-bold text-cinnamon font-mono text-xs px-2.5 py-0.5 rounded-lg bg-cinnamon/10 border border-cinnamon/20">
                 {createdOrder?.order_number}
               </span>
             </DialogDescription>
@@ -449,7 +449,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total Amount:</span>
-              <span className="font-bold text-sky-600 dark:text-sky-400">{formatCurrency(createdOrder?.total_amount || 0)}</span>
+              <span className="font-bold text-cinnamon">{formatCurrency(createdOrder?.total_amount || 0)}</span>
             </div>
             {createdOrder?.payment_method === 'pay_later' && (
               <div className="flex justify-between pt-1 border-t border-border/40 text-amber-700 dark:text-amber-400 font-bold">
@@ -470,7 +470,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
               <Button
                 onClick={handleManualPrint}
                 disabled={isPrinting}
-                className="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold h-10 text-xs rounded-md shadow-xs gap-2"
+                className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 text-xs rounded-md shadow-xs gap-2"
               >
                 <HugeiconsIcon icon={PrinterIcon} size={16} />
                 <span>{isPrinting ? 'Printing Receipt...' : 'Print Water Receipt via Bluetooth'}</span>

@@ -44,7 +44,7 @@ export function WaterEventsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4 sm:pb-5">
         <div>
           <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 shrink-0 border border-purple-500/20 shadow-2xs">
+            <div className="p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs">
               <HugeiconsIcon icon={SparklesIcon} size={22} />
             </div>
             <span>Bulk Water Supply & Event Requests</span>
@@ -68,7 +68,7 @@ export function WaterEventsPage() {
               size="xs"
               className={
                 isSelected
-                  ? 'bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs h-8 rounded-lg shadow-2xs px-3 whitespace-nowrap'
+                  ? 'bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs h-8 rounded-lg shadow-2xs px-3 whitespace-nowrap'
                   : 'text-xs h-8 text-foreground/80 rounded-lg px-3 whitespace-nowrap'
               }
               onClick={() => setStatusFilter(st)}
@@ -107,7 +107,7 @@ export function WaterEventsPage() {
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Badge className="bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30 text-xs font-bold">
+                        <Badge className="bg-cinnamon/15 text-cinnamon border-cinnamon/30 text-xs font-bold">
                           {evt.event_type}
                         </Badge>
                         <Badge
@@ -128,7 +128,7 @@ export function WaterEventsPage() {
 
                     <div className="text-right">
                       <p className="text-[10px] text-muted-foreground uppercase font-semibold">Estimated Cans</p>
-                      <p className="text-lg font-bold font-heading text-sky-600 dark:text-sky-400">
+                      <p className="text-lg font-bold font-heading text-cinnamon">
                         {evt.estimated_quantity} Cans
                       </p>
                     </div>
@@ -137,7 +137,7 @@ export function WaterEventsPage() {
                   <div className="space-y-2 text-xs bg-secondary/40 p-3 rounded-md border border-border/40">
                     <div className="flex items-center justify-between text-muted-foreground">
                       <span className="flex items-center gap-1.5 font-medium">
-                        <HugeiconsIcon icon={SmartPhoneIcon} size={13} className="text-purple-500" />
+                        <HugeiconsIcon icon={SmartPhoneIcon} size={13} className="text-cinnamon" />
                         <span>Phone:</span>
                       </span>
                       <span className="font-bold font-mono text-foreground">{evt.phone}</span>
@@ -145,7 +145,7 @@ export function WaterEventsPage() {
 
                     <div className="flex items-center justify-between text-muted-foreground">
                       <span className="flex items-center gap-1.5 font-medium">
-                        <HugeiconsIcon icon={Calendar01Icon} size={13} className="text-purple-500" />
+                        <HugeiconsIcon icon={Calendar01Icon} size={13} className="text-cinnamon" />
                         <span>Event Date:</span>
                       </span>
                       <span className="font-bold text-foreground">{formatDate(evt.event_date)}</span>
@@ -153,7 +153,7 @@ export function WaterEventsPage() {
 
                     <div className="flex items-start justify-between text-muted-foreground">
                       <span className="flex items-center gap-1.5 font-medium shrink-0">
-                        <HugeiconsIcon icon={Location01Icon} size={13} className="text-purple-500" />
+                        <HugeiconsIcon icon={Location01Icon} size={13} className="text-cinnamon" />
                         <span>Location:</span>
                       </span>
                       <span className="font-semibold text-foreground text-right">{evt.location}</span>
@@ -196,7 +196,7 @@ export function WaterEventsPage() {
                         <Button
                           size="xs"
                           onClick={() => handleUpdateStatus(evt.id, 'completed')}
-                          className="h-7 text-[11px] bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-md"
+                          className="h-7 text-[11px] bg-cinnamon hover:bg-cinnamon/90 text-white font-bold rounded-md"
                         >
                           Mark Completed
                         </Button>

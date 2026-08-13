@@ -68,7 +68,7 @@ export function WaterCustomerFormModal({ open, onOpenChange, onSuccess }: WaterC
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md bg-card border border-border/80 rounded-md p-6 shadow-2xl space-y-4">
         <DialogHeader className="space-y-1 text-left">
-          <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 flex items-center justify-center mb-2 shadow-2xs">
+          <div className="w-10 h-10 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 flex items-center justify-center mb-2 shadow-2xs">
             <HugeiconsIcon icon={UserAdd01Icon} size={20} />
           </div>
           <DialogTitle className="text-xl font-bold font-heading text-foreground">
@@ -89,7 +89,7 @@ export function WaterCustomerFormModal({ open, onOpenChange, onSuccess }: WaterC
           {/* Customer Name */}
           <div className="space-y-1.5">
             <Label htmlFor="w-cust-name" className="text-xs font-semibold flex items-center gap-1.5">
-              <HugeiconsIcon icon={UserIcon} size={14} className="text-sky-500" />
+              <HugeiconsIcon icon={UserIcon} size={14} className="text-cinnamon" />
               <span>Customer Name *</span>
             </Label>
             <Input
@@ -106,7 +106,7 @@ export function WaterCustomerFormModal({ open, onOpenChange, onSuccess }: WaterC
           {/* Phone Number */}
           <div className="space-y-1.5">
             <Label htmlFor="w-cust-phone" className="text-xs font-semibold flex items-center gap-1.5">
-              <HugeiconsIcon icon={SmartPhoneIcon} size={14} className="text-sky-500" />
+              <HugeiconsIcon icon={SmartPhoneIcon} size={14} className="text-cinnamon" />
               <span>Phone Number *</span>
             </Label>
             <Input
@@ -124,7 +124,7 @@ export function WaterCustomerFormModal({ open, onOpenChange, onSuccess }: WaterC
           {/* Address */}
           <div className="space-y-1.5">
             <Label htmlFor="w-cust-addr" className="text-xs font-semibold flex items-center gap-1.5">
-              <HugeiconsIcon icon={Location01Icon} size={14} className="text-sky-500" />
+              <HugeiconsIcon icon={Location01Icon} size={14} className="text-cinnamon" />
               <span>Delivery Address (Optional)</span>
             </Label>
             <Input
@@ -163,7 +163,7 @@ export function WaterCustomerFormModal({ open, onOpenChange, onSuccess }: WaterC
               type="submit"
               size="sm"
               disabled={isSubmitting || createCustomerMutation.isPending}
-              className="h-9 text-xs bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-md shadow-xs"
+              className="h-9 text-xs bg-cinnamon hover:bg-cinnamon/90 text-white font-bold rounded-md shadow-xs"
             >
               {isSubmitting || createCustomerMutation.isPending ? 'Saving...' : 'Create Customer'}
             </Button>

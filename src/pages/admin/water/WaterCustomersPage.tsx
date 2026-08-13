@@ -59,7 +59,7 @@ export function WaterCustomersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4 sm:pb-5">
         <div>
           <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 shrink-0 border border-sky-500/20 shadow-2xs">
+            <div className="p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs">
               <HugeiconsIcon icon={UserGroupIcon} size={22} />
             </div>
             <span>Water Customers & Credit Ledger</span>
@@ -71,7 +71,7 @@ export function WaterCustomersPage() {
 
         <Button
           onClick={() => setShowAddModal(true)}
-          className="bg-sky-600 hover:bg-sky-700 text-white font-bold h-10 text-xs px-4 rounded-md shadow-xs gap-2 shrink-0 self-start sm:self-auto"
+          className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 text-xs px-4 rounded-md shadow-xs gap-2 shrink-0 self-start sm:self-auto"
         >
           <HugeiconsIcon icon={UserAdd01Icon} size={16} />
           <span>Add Water Customer</span>
@@ -104,13 +104,13 @@ export function WaterCustomersPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-sky-500/30 bg-sky-500/5 rounded-md shadow-2xs">
+        <Card className="border border-cinnamon/30 bg-cinnamon/5 rounded-md shadow-2xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-[11px] font-semibold text-sky-700 dark:text-sky-300 uppercase tracking-wider">Total Water Credit Due</p>
-              <p className="text-2xl font-bold text-sky-600 dark:text-sky-400 font-heading">{formatCurrency(totalOutstandingAmount)}</p>
+              <p className="text-[11px] font-semibold text-cinnamon uppercase tracking-wider">Total Water Credit Due</p>
+              <p className="text-2xl font-bold text-cinnamon font-heading">{formatCurrency(totalOutstandingAmount)}</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-sky-500/15 text-sky-500 flex items-center justify-center border border-sky-500/20">
+            <div className="w-10 h-10 rounded-xl bg-cinnamon/15 text-cinnamon flex items-center justify-center border border-cinnamon/20">
               <HugeiconsIcon icon={Wallet01Icon} size={20} />
             </div>
           </CardContent>
@@ -148,7 +148,7 @@ export function WaterCustomersPage() {
                 size="xs"
                 className={
                   isSelected
-                    ? 'bg-sky-600 text-white font-bold text-xs h-8 rounded-lg shadow-2xs px-3 whitespace-nowrap'
+                    ? 'bg-cinnamon text-white font-bold text-xs h-8 rounded-lg shadow-2xs px-3 whitespace-nowrap'
                     : 'text-xs h-8 text-foreground/80 rounded-lg px-3 whitespace-nowrap'
                 }
                 onClick={() => {
@@ -183,7 +183,7 @@ export function WaterCustomersPage() {
           <Button
             size="sm"
             onClick={() => setShowAddModal(true)}
-            className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs gap-1.5 h-9 rounded-md shadow-xs"
+            className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs gap-1.5 h-9 rounded-md shadow-xs"
           >
             <HugeiconsIcon icon={UserAdd01Icon} size={15} />
             <span>Create First Customer</span>
@@ -214,7 +214,7 @@ export function WaterCustomersPage() {
                       <td className="p-3.5 font-bold">
                         <button
                           onClick={() => navigate(`/admin/water/customers/${cust.id}`)}
-                          className="hover:text-sky-600 transition-colors text-left"
+                          className="hover:text-cinnamon transition-colors text-left"
                         >
                           {cust.name}
                         </button>
@@ -297,7 +297,7 @@ export function WaterCustomersPage() {
                       </div>
                       <div>
                         <p className="text-[10px] text-muted-foreground uppercase font-semibold">Total Purchased</p>
-                        <p className="font-bold text-sky-600 dark:text-sky-400">{formatCurrency(cust.total_spent || 0)}</p>
+                        <p className="font-bold text-cinnamon">{formatCurrency(cust.total_spent || 0)}</p>
                       </div>
                     </div>
 

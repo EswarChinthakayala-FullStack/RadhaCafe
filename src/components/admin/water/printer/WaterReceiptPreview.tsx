@@ -13,7 +13,7 @@ export function WaterReceiptPreview({ order }: WaterReceiptPreviewProps) {
     <div className="receipt-preview w-full max-w-[340px] mx-auto bg-card text-foreground p-5 pb-8 my-2 rounded-md border border-border/80 shadow-md font-mono text-xs leading-relaxed select-none space-y-2.5">
       {/* Header Info */}
       <div className="text-center space-y-0.5">
-        <h3 className="font-bold text-sm text-sky-600 dark:text-sky-400 tracking-tight uppercase font-heading">
+        <h3 className="font-bold text-sm text-cinnamon tracking-tight uppercase font-heading">
           {receipt.cafeName}
         </h3>
         <p className="text-[10px] text-muted-foreground max-w-[260px] mx-auto leading-tight">{receipt.address}</p>
@@ -75,12 +75,12 @@ export function WaterReceiptPreview({ order }: WaterReceiptPreviewProps) {
           <span className="font-mono text-foreground">{formatCurrency(receipt.subtotal)}</span>
         </div>
         {receipt.discount > 0 && (
-          <div className="flex justify-between text-sky-600 dark:text-sky-400 font-medium">
+          <div className="flex justify-between text-cinnamon font-medium">
             <span>Discount</span>
             <span className="font-mono">-{formatCurrency(receipt.discount)}</span>
           </div>
         )}
-        <div className="flex justify-between font-bold text-xs pt-1.5 border-t border-dashed border-border/80 text-sky-600 dark:text-sky-400">
+        <div className="flex justify-between font-bold text-xs pt-1.5 border-t border-dashed border-border/80 text-cinnamon">
           <span>TOTAL</span>
           <span className="font-mono text-sm">{formatCurrency(receipt.total)}</span>
         </div>

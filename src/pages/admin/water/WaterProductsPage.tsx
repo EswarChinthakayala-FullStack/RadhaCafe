@@ -147,7 +147,7 @@ export function WaterProductsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4 sm:pb-5">
         <div>
           <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 shrink-0 border border-sky-500/20 shadow-2xs">
+            <div className="p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs">
               <HugeiconsIcon icon={DropletIcon} size={22} />
             </div>
             <span>Water Products & Pricing</span>
@@ -159,7 +159,7 @@ export function WaterProductsPage() {
 
         <Button
           onClick={handleOpenAddModal}
-          className="bg-sky-600 hover:bg-sky-700 text-white font-bold h-10 text-xs px-4 rounded-md shadow-xs gap-2 shrink-0 self-start sm:self-auto"
+          className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 text-xs px-4 rounded-md shadow-xs gap-2 shrink-0 self-start sm:self-auto"
         >
           <HugeiconsIcon icon={PlusSignIcon} size={16} />
           <span>Add Water Product</span>
@@ -186,7 +186,7 @@ export function WaterProductsPage() {
           <Button
             size="sm"
             onClick={handleOpenAddModal}
-            className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs gap-1.5 h-9 rounded-md shadow-xs"
+            className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs gap-1.5 h-9 rounded-md shadow-xs"
           >
             <HugeiconsIcon icon={PlusSignIcon} size={15} />
             <span>Create First Product</span>
@@ -201,7 +201,7 @@ export function WaterProductsPage() {
                 key={prod.id}
                 className={
                   prod.is_available
-                    ? 'border border-border/80 bg-card rounded-md shadow-2xs hover:border-sky-500/40 transition-all'
+                    ? 'border border-border/80 bg-card rounded-md shadow-2xs hover:border-cinnamon/40 transition-all'
                     : 'border border-border/50 bg-secondary/20 rounded-md opacity-75'
                 }
               >
@@ -214,8 +214,8 @@ export function WaterProductsPage() {
                         className={
                           prod.is_available
                             ? isCooling
-                              ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30 text-[10px] uppercase font-bold'
-                              : 'bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30 text-[10px] uppercase font-bold'
+                              ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 text-[10px] uppercase font-bold'
+                              : 'bg-cinnamon/15 text-cinnamon border-cinnamon/30 text-[10px] uppercase font-bold'
                             : 'text-muted-foreground text-[10px] uppercase'
                         }
                       >
@@ -231,7 +231,7 @@ export function WaterProductsPage() {
                   <div className="flex items-center justify-between pt-3 border-t border-border/50">
                     <div>
                       <p className="text-[10px] text-muted-foreground uppercase font-semibold">Database Price</p>
-                      <p className="text-xl font-bold font-heading text-sky-600 dark:text-sky-400">
+                      <p className="text-xl font-bold font-heading text-cinnamon">
                         {formatCurrency(prod.price)}
                       </p>
                     </div>
@@ -363,7 +363,7 @@ export function WaterProductsPage() {
                 type="submit"
                 size="sm"
                 disabled={isSubmitting || createProductMutation.isPending || updateProductMutation.isPending}
-                className="h-9 text-xs bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-md shadow-xs"
+                className="h-9 text-xs bg-cinnamon hover:bg-cinnamon/90 text-white font-bold rounded-md shadow-xs"
               >
                 {isSubmitting ? 'Saving...' : editingProduct ? 'Update Product' : 'Create Product'}
               </Button>

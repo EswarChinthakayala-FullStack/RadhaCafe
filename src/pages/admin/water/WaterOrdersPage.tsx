@@ -43,7 +43,7 @@ export function WaterOrdersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4 sm:pb-5">
         <div>
           <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 shrink-0 border border-sky-500/20 shadow-2xs">
+            <div className="p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs">
               <HugeiconsIcon icon={InvoiceIcon} size={22} />
             </div>
             <span>Water Order History</span>
@@ -55,7 +55,7 @@ export function WaterOrdersPage() {
 
         <Button
           onClick={() => navigate('/admin/water/orders/new')}
-          className="bg-sky-600 hover:bg-sky-700 text-white font-bold h-10 text-xs px-4 rounded-md shadow-xs gap-2 shrink-0 self-start sm:self-auto"
+          className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 text-xs px-4 rounded-md shadow-xs gap-2 shrink-0 self-start sm:self-auto"
         >
           <HugeiconsIcon icon={PlusSignIcon} size={16} />
           <span>New Water Order</span>
@@ -93,7 +93,7 @@ export function WaterOrdersPage() {
                 size="xs"
                 className={
                   isSelected
-                    ? 'bg-sky-600 text-white font-bold text-xs h-8 rounded-lg shadow-2xs px-3 whitespace-nowrap'
+                    ? 'bg-cinnamon text-white font-bold text-xs h-8 rounded-lg shadow-2xs px-3 whitespace-nowrap'
                     : 'text-xs h-8 text-foreground/80 rounded-lg px-3 whitespace-nowrap'
                 }
                 onClick={() => {
@@ -133,7 +133,7 @@ export function WaterOrdersPage() {
           <Button
             size="sm"
             onClick={() => navigate('/admin/water/orders/new')}
-            className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs gap-1.5 h-9 rounded-md shadow-xs"
+            className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs gap-1.5 h-9 rounded-md shadow-xs"
           >
             <HugeiconsIcon icon={PlusSignIcon} size={15} />
             <span>Create First Order</span>
@@ -164,7 +164,7 @@ export function WaterOrdersPage() {
 
                   return (
                     <tr key={ord.id} className="hover:bg-secondary/30 transition-colors">
-                      <td className="p-3.5 font-bold font-mono text-sky-600 dark:text-sky-400">
+                      <td className="p-3.5 font-bold font-mono text-cinnamon">
                         {ord.order_number}
                       </td>
                       <td className="p-3.5 font-semibold">{ord.customer_name}</td>
@@ -225,7 +225,7 @@ export function WaterOrdersPage() {
                   <CardContent className="p-4 space-y-3">
                     <div className="flex justify-between items-start">
                       <div>
-                        <span className="font-mono font-bold text-xs text-sky-600 dark:text-sky-400 block">
+                        <span className="font-mono font-bold text-xs text-cinnamon block">
                           {ord.order_number}
                         </span>
                         <h4 className="font-bold text-sm text-foreground">{ord.customer_name}</h4>

@@ -34,7 +34,7 @@ export function WaterDashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4 sm:pb-5">
         <div>
           <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 shrink-0 border border-sky-500/20 shadow-2xs">
+            <div className="p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs">
               <HugeiconsIcon icon={DropletIcon} size={22} />
             </div>
             <span>RadhaWater Operational Dashboard</span>
@@ -47,7 +47,7 @@ export function WaterDashboardPage() {
         <div className="flex items-center gap-2">
           <Button
             onClick={() => navigate('/admin/water/orders/new')}
-            className="bg-sky-600 hover:bg-sky-700 text-white font-bold h-10 text-xs px-4 rounded-md shadow-xs gap-2"
+            className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 text-xs px-4 rounded-md shadow-xs gap-2"
           >
             <HugeiconsIcon icon={PlusSignIcon} size={16} />
             <span>New Water Order</span>
@@ -71,15 +71,15 @@ export function WaterDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-sky-500/30 bg-sky-500/5 rounded-md shadow-2xs">
+        <Card className="border border-cinnamon/30 bg-cinnamon/5 rounded-md shadow-2xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-[11px] font-semibold text-sky-700 dark:text-sky-300 uppercase tracking-wider">Today's Revenue</p>
-              <p className="text-2xl font-bold text-sky-600 dark:text-sky-400 font-heading">
+              <p className="text-[11px] font-semibold text-cinnamon uppercase tracking-wider">Today's Revenue</p>
+              <p className="text-2xl font-bold text-cinnamon font-heading">
                 {isAnalyticsLoading ? <Skeleton className="h-8 w-24" /> : formatCurrency(analytics?.totalRevenue || 0)}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-sky-500/15 text-sky-500 flex items-center justify-center border border-sky-500/20">
+            <div className="w-10 h-10 rounded-xl bg-cinnamon/15 text-cinnamon flex items-center justify-center border border-cinnamon/20">
               <HugeiconsIcon icon={DropletIcon} size={20} />
             </div>
           </CardContent>
@@ -99,15 +99,15 @@ export function WaterDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-purple-500/30 bg-purple-500/5 rounded-md shadow-2xs">
+        <Card className="border border-border/80 bg-card rounded-md shadow-2xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-[11px] font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">Event Requests</p>
-              <p className="text-2xl font-bold text-purple-700 dark:text-purple-400 font-heading">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Event Requests</p>
+              <p className="text-2xl font-bold text-foreground font-heading">
                 {pendingEventsCount} <span className="text-xs font-normal text-muted-foreground">new</span>
               </p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-700 dark:text-purple-400 flex items-center justify-center border border-purple-500/20">
+            <div className="w-10 h-10 rounded-xl bg-secondary text-foreground flex items-center justify-center border border-border/40">
               <HugeiconsIcon icon={SparklesIcon} size={20} />
             </div>
           </CardContent>
@@ -117,7 +117,7 @@ export function WaterDashboardPage() {
       {/* Cans Sold Summary Banner */}
       <div className="p-4 rounded-md bg-secondary/50 border border-border/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+          <div className="p-2 rounded-lg bg-cinnamon/10 text-cinnamon">
             <HugeiconsIcon icon={DropletIcon} size={20} />
           </div>
           <div>
@@ -149,7 +149,7 @@ export function WaterDashboardPage() {
             variant="ghost"
             size="xs"
             onClick={() => navigate('/admin/water/orders')}
-            className="text-xs text-sky-600 dark:text-sky-400 font-bold gap-1"
+            className="text-xs text-cinnamon font-bold gap-1"
           >
             <span>View All Orders</span>
             <HugeiconsIcon icon={ArrowRight01Icon} size={13} />
@@ -178,7 +178,7 @@ export function WaterDashboardPage() {
               <tbody className="divide-y divide-border/60 text-foreground">
                 {recentOrders.map((ord) => (
                   <tr key={ord.id} className="hover:bg-secondary/30 transition-colors">
-                    <td className="p-3 font-bold font-mono text-sky-600 dark:text-sky-400">{ord.order_number}</td>
+                    <td className="p-3 font-bold font-mono text-cinnamon">{ord.order_number}</td>
                     <td className="p-3 font-semibold">{ord.customer_name}</td>
                     <td className="p-3 text-muted-foreground text-[11px]">{formatDate(ord.created_at)}</td>
                     <td className="p-3">

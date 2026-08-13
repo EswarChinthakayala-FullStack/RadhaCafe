@@ -86,11 +86,11 @@ export function PublicWaterPage() {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden bg-gradient-to-b from-[#0F172A] via-[#1E293B] to-background text-white border-b border-border/40">
+      <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden bg-gradient-to-b from-[#1F1009] via-[#2A160C] to-background text-white border-b border-border/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-500/15 border border-sky-400/30 text-sky-300 text-xs font-bold shadow-xs">
-            <HugeiconsIcon icon={DropletIcon} size={15} className="text-sky-400" />
-            <span>RadhaCafe Platform — Pure Drinking Water Supply</span>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cinnamon/15 border border-cinnamon/30 text-cinnamon text-xs font-bold shadow-xs">
+            <HugeiconsIcon icon={DropletIcon} size={15} className="text-cinnamon" />
+            <span>RadhaCafe Ecosystem — Pure Drinking Water Supply</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold font-heading tracking-tight text-white max-w-3xl mx-auto leading-tight">
@@ -103,22 +103,22 @@ export function PublicWaterPage() {
 
           {/* Pricing Highlight Badges */}
           <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
-            <div className="p-4 rounded-xl bg-slate-900/80 border border-sky-500/30 shadow-xl text-left flex items-center gap-3">
-              <div className="w-12 h-12 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-xl border border-sky-500/30">
+            <div className="p-4 rounded-xl bg-black/40 border border-cinnamon/30 shadow-xl text-left flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg bg-cinnamon/20 text-cinnamon flex items-center justify-center font-bold text-xl border border-cinnamon/30">
                 ₹{normalProduct.price}
               </div>
               <div>
-                <p className="text-xs text-sky-300 font-bold uppercase tracking-wider font-heading">Normal 20L Can</p>
+                <p className="text-xs text-cinnamon font-bold uppercase tracking-wider font-heading">Normal 20L Can</p>
                 <p className="text-sm font-extrabold text-white">{formatCurrency(normalProduct.price)} / Can</p>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-900/80 border border-blue-500/30 shadow-xl text-left flex items-center gap-3">
-              <div className="w-12 h-12 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xl border border-blue-500/30">
+            <div className="p-4 rounded-xl bg-black/40 border border-amber-500/30 shadow-xl text-left flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xl border border-amber-500/30">
                 ₹{coolingProduct.price}
               </div>
               <div>
-                <p className="text-xs text-blue-300 font-bold uppercase tracking-wider font-heading">Cooling 20L Can</p>
+                <p className="text-xs text-amber-300 font-bold uppercase tracking-wider font-heading">Cooling 20L Can</p>
                 <p className="text-sm font-extrabold text-white">{formatCurrency(coolingProduct.price)} / Can</p>
               </div>
             </div>
@@ -139,9 +139,9 @@ export function PublicWaterPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="border border-border/80 bg-card rounded-md shadow-2xs hover:border-sky-500/40 transition-all">
+            <Card className="border border-border/80 bg-card rounded-md shadow-2xs hover:border-cinnamon/40 transition-all">
               <CardContent className="p-6 space-y-3">
-                <div className="w-12 h-12 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-500/20">
+                <div className="w-12 h-12 rounded-xl bg-cinnamon/10 text-cinnamon flex items-center justify-center border border-cinnamon/20">
                   <HugeiconsIcon icon={TruckIcon} size={24} />
                 </div>
                 <h3 className="font-bold text-base text-foreground font-heading">Daily Can Supply</h3>
@@ -151,9 +151,9 @@ export function PublicWaterPage() {
               </CardContent>
             </Card>
 
-            <Card className="border border-border/80 bg-card rounded-md shadow-2xs hover:border-sky-500/40 transition-all">
+            <Card className="border border-border/80 bg-card rounded-md shadow-2xs hover:border-cinnamon/40 transition-all">
               <CardContent className="p-6 space-y-3">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300 flex items-center justify-center border border-amber-500/20">
                   <HugeiconsIcon icon={SparklesIcon} size={24} />
                 </div>
                 <h3 className="font-bold text-base text-foreground font-heading">Weddings & Parties</h3>
@@ -163,9 +163,9 @@ export function PublicWaterPage() {
               </CardContent>
             </Card>
 
-            <Card className="border border-border/80 bg-card rounded-md shadow-2xs hover:border-sky-500/40 transition-all">
+            <Card className="border border-border/80 bg-card rounded-md shadow-2xs hover:border-cinnamon/40 transition-all">
               <CardContent className="p-6 space-y-3">
-                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center border border-cyan-500/20">
+                <div className="w-12 h-12 rounded-xl bg-cinnamon/10 text-cinnamon flex items-center justify-center border border-cinnamon/20">
                   <HugeiconsIcon icon={Building01Icon} size={24} />
                 </div>
                 <h3 className="font-bold text-base text-foreground font-heading">Corporate & Institutions</h3>
@@ -182,7 +182,7 @@ export function PublicWaterPage() {
       <section className="py-16 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <Card className="border border-border/80 bg-card rounded-md p-6 sm:p-8 shadow-xl space-y-6">
           <div className="space-y-2 text-center sm:text-left border-b border-border/60 pb-4">
-            <Badge className="bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30 text-xs font-bold px-3 py-1 mb-1">
+            <Badge className="bg-cinnamon/15 text-cinnamon border-cinnamon/30 text-xs font-bold px-3 py-1 mb-1">
               <HugeiconsIcon icon={SparklesIcon} size={14} className="mr-1" /> Event Booking
             </Badge>
             <h2 className="text-2xl font-bold font-heading text-foreground">
@@ -206,7 +206,7 @@ export function PublicWaterPage() {
                 type="button"
                 size="sm"
                 onClick={() => setSubmittedSuccess(false)}
-                className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs h-9 px-4 rounded-md shadow-xs"
+                className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs h-9 px-4 rounded-md shadow-xs"
               >
                 Submit Another Request
               </Button>
@@ -223,7 +223,7 @@ export function PublicWaterPage() {
                 {/* Your Name */}
                 <div className="space-y-1.5">
                   <Label htmlFor="req-name" className="text-xs font-semibold flex items-center gap-1.5">
-                    <HugeiconsIcon icon={UserIcon} size={14} className="text-sky-500" />
+                    <HugeiconsIcon icon={UserIcon} size={14} className="text-cinnamon" />
                     <span>Your Name *</span>
                   </Label>
                   <Input
@@ -240,7 +240,7 @@ export function PublicWaterPage() {
                 {/* Phone Number */}
                 <div className="space-y-1.5">
                   <Label htmlFor="req-phone" className="text-xs font-semibold flex items-center gap-1.5">
-                    <HugeiconsIcon icon={SmartPhoneIcon} size={14} className="text-sky-500" />
+                    <HugeiconsIcon icon={SmartPhoneIcon} size={14} className="text-cinnamon" />
                     <span>Phone Number *</span>
                   </Label>
                   <Input
@@ -276,7 +276,7 @@ export function PublicWaterPage() {
                 {/* Event Date */}
                 <div className="space-y-1.5">
                   <Label htmlFor="req-date" className="text-xs font-semibold flex items-center gap-1.5">
-                    <HugeiconsIcon icon={Calendar01Icon} size={14} className="text-sky-500" />
+                    <HugeiconsIcon icon={Calendar01Icon} size={14} className="text-cinnamon" />
                     <span>Event Date *</span>
                   </Label>
                   <Input
@@ -311,7 +311,7 @@ export function PublicWaterPage() {
               {/* Delivery Location */}
               <div className="space-y-1.5">
                 <Label htmlFor="req-loc" className="text-xs font-semibold flex items-center gap-1.5">
-                  <HugeiconsIcon icon={Location01Icon} size={14} className="text-sky-500" />
+                  <HugeiconsIcon icon={Location01Icon} size={14} className="text-cinnamon" />
                   <span>Delivery Location / Venue Address *</span>
                 </Label>
                 <Input
@@ -342,7 +342,7 @@ export function PublicWaterPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting || createInquiryMutation.isPending}
-                className="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold h-11 text-sm rounded-md shadow-md"
+                className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-sm rounded-md shadow-md"
               >
                 {isSubmitting || createInquiryMutation.isPending
                   ? 'Submitting Inquiry...'

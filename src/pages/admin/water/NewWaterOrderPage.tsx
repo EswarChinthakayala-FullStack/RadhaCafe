@@ -29,7 +29,7 @@ export function NewWaterOrderPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4 sm:pb-5">
         <div>
           <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 shrink-0 border border-sky-500/20 shadow-2xs">
+            <div className="p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs">
               <HugeiconsIcon icon={DropletIcon} size={22} />
             </div>
             <span>New Water Order (POS)</span>
@@ -45,14 +45,14 @@ export function NewWaterOrderPage() {
             <SheetTrigger
               render={
                 <Button
-                  className="bg-sky-600 hover:bg-sky-700 text-white font-bold h-10 px-4 text-xs gap-2 rounded-md shadow-sm w-full sm:w-auto"
+                  className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 px-4 text-xs gap-2 rounded-md shadow-sm w-full sm:w-auto"
                 />
               }
             >
               <HugeiconsIcon icon={ShoppingCart01Icon} size={16} />
               <span>View Water Cart ({cartItemsCount})</span>
               {cartItemsCount > 0 && (
-                <Badge className="bg-white text-sky-700 font-bold ml-1 font-mono text-[10px]">
+                <Badge className="bg-white text-cinnamon font-bold ml-1 font-mono text-[10px]">
                   {formatCurrency(subtotal)}
                 </Badge>
               )}
@@ -60,7 +60,7 @@ export function NewWaterOrderPage() {
             <SheetContent side="right" className="w-full sm:max-w-md p-0 bg-card">
               <SheetHeader className="p-4 border-b border-border">
                 <SheetTitle className="text-base font-bold font-heading text-foreground flex items-center gap-2">
-                  <HugeiconsIcon icon={ShoppingCart01Icon} size={18} className="text-sky-500" />
+                  <HugeiconsIcon icon={ShoppingCart01Icon} size={18} className="text-cinnamon" />
                   <span>RadhaWater Order Cart</span>
                 </SheetTitle>
               </SheetHeader>
@@ -77,7 +77,7 @@ export function NewWaterOrderPage() {
         {/* Products Selection */}
         <div className="lg:col-span-7 space-y-4">
           <h3 className="font-bold text-sm text-foreground uppercase tracking-wider font-heading flex items-center gap-2">
-            <HugeiconsIcon icon={DropletIcon} size={16} className="text-sky-500" />
+            <HugeiconsIcon icon={DropletIcon} size={16} className="text-cinnamon" />
             <span>Available Water Cans & Products</span>
           </h3>
 
@@ -101,11 +101,7 @@ export function NewWaterOrderPage() {
                 return (
                   <Card
                     key={prod.id}
-                    className={
-                      isCooling
-                        ? 'border border-blue-500/30 bg-blue-500/5 hover:border-blue-500/50 transition-all rounded-md shadow-2xs'
-                        : 'border border-sky-500/30 bg-sky-500/5 hover:border-sky-500/50 transition-all rounded-md shadow-2xs'
-                    }
+                    className="border border-border/80 bg-card hover:border-cinnamon/50 transition-all rounded-md shadow-2xs"
                   >
                     <CardContent className="p-5 flex flex-col justify-between h-full space-y-4">
                       <div className="space-y-1.5">
@@ -114,8 +110,8 @@ export function NewWaterOrderPage() {
                           <Badge
                             className={
                               isCooling
-                                ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/40 text-[10px] uppercase font-bold gap-1'
-                                : 'bg-sky-500/20 text-sky-700 dark:text-sky-300 border-sky-500/40 text-[10px] uppercase font-bold gap-1'
+                                ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 text-[10px] uppercase font-bold gap-1'
+                                : 'bg-cinnamon/15 text-cinnamon border-cinnamon/30 text-[10px] uppercase font-bold gap-1'
                             }
                           >
                             {isCooling && <HugeiconsIcon icon={SnowIcon} size={11} />}
@@ -128,7 +124,7 @@ export function NewWaterOrderPage() {
                       <div className="flex items-center justify-between pt-2 border-t border-border/40">
                         <div>
                           <p className="text-[10px] text-muted-foreground uppercase font-semibold">Unit Price</p>
-                          <p className="text-xl font-bold font-heading text-sky-600 dark:text-sky-400">
+                          <p className="text-xl font-bold font-heading text-cinnamon">
                             {formatCurrency(prod.price)}
                           </p>
                         </div>
@@ -136,11 +132,7 @@ export function NewWaterOrderPage() {
                         <Button
                           size="sm"
                           onClick={() => addItem(prod, 1)}
-                          className={
-                            isCooling
-                              ? 'bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1.5 h-9 rounded-md shadow-xs'
-                              : 'bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs gap-1.5 h-9 rounded-md shadow-xs'
-                          }
+                          className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs gap-1.5 h-9 rounded-md shadow-xs"
                         >
                           <HugeiconsIcon icon={PlusSignIcon} size={14} />
                           <span>Add Can</span>

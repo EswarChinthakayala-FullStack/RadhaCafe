@@ -62,7 +62,7 @@ export function WaterCustomerDetailsPage() {
         <Button
           size="sm"
           onClick={() => navigate('/admin/water/customers')}
-          className="bg-sky-600 text-white font-bold text-xs gap-2 rounded-md"
+          className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs gap-2 rounded-md"
         >
           <HugeiconsIcon icon={ArrowLeft01Icon} size={16} />
           <span>Back to Water Customers</span>
@@ -92,7 +92,7 @@ export function WaterCustomerDetailsPage() {
       <div className="p-5 rounded-md bg-card border border-border/80 shadow-2xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 flex items-center justify-center font-bold text-xl font-heading shadow-2xs shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 flex items-center justify-center font-bold text-xl font-heading shadow-2xs shrink-0">
               <HugeiconsIcon icon={UserIcon} size={24} />
             </div>
             <div>
@@ -110,12 +110,12 @@ export function WaterCustomerDetailsPage() {
               </div>
               <div className="text-xs text-muted-foreground font-mono flex items-center gap-3 mt-1 flex-wrap">
                 <span className="flex items-center gap-1">
-                  <HugeiconsIcon icon={SmartPhoneIcon} size={13} className="text-sky-500" />
+                  <HugeiconsIcon icon={SmartPhoneIcon} size={13} className="text-cinnamon" />
                   <span>{customer.phone}</span>
                 </span>
                 {customer.address && (
                   <span className="flex items-center gap-1 font-sans">
-                    <HugeiconsIcon icon={Location01Icon} size={13} className="text-sky-500" />
+                    <HugeiconsIcon icon={Location01Icon} size={13} className="text-cinnamon" />
                     <span>{customer.address}</span>
                   </span>
                 )}
@@ -142,7 +142,7 @@ export function WaterCustomerDetailsPage() {
           </div>
           <div className="p-3 rounded-lg bg-secondary/40 border border-border/40">
             <p className="text-[10px] text-muted-foreground uppercase font-semibold">Total Purchased</p>
-            <p className="text-lg font-bold text-sky-600 dark:text-sky-400 font-heading mt-0.5">{formatCurrency(customer.total_spent || 0)}</p>
+            <p className="text-lg font-bold text-cinnamon font-heading mt-0.5">{formatCurrency(customer.total_spent || 0)}</p>
           </div>
           <div className="p-3 rounded-lg bg-secondary/40 border border-border/40">
             <p className="text-[10px] text-muted-foreground uppercase font-semibold">Total Collected</p>
@@ -164,7 +164,7 @@ export function WaterCustomerDetailsPage() {
           onClick={() => setActiveTab('orders')}
           className={
             activeTab === 'orders'
-              ? 'bg-sky-600 text-white font-bold text-xs h-9 rounded-md shadow-2xs gap-2'
+              ? 'bg-cinnamon text-white font-bold text-xs h-9 rounded-md shadow-2xs gap-2'
               : 'text-xs h-9 text-muted-foreground hover:text-foreground font-medium gap-2'
           }
         >
@@ -179,7 +179,7 @@ export function WaterCustomerDetailsPage() {
           onClick={() => setActiveTab('payments')}
           className={
             activeTab === 'payments'
-              ? 'bg-sky-600 text-white font-bold text-xs h-9 rounded-md shadow-2xs gap-2'
+              ? 'bg-cinnamon text-white font-bold text-xs h-9 rounded-md shadow-2xs gap-2'
               : 'text-xs h-9 text-muted-foreground hover:text-foreground font-medium gap-2'
           }
         >
@@ -209,11 +209,11 @@ export function WaterCustomerDetailsPage() {
                 const isPaid = ord.payment_status === 'paid' || ordDue === 0;
 
                 return (
-                  <Card key={ord.id} className="border border-border/80 bg-card rounded-md shadow-2xs hover:border-sky-500/40 transition-colors">
+                  <Card key={ord.id} className="border border-border/80 bg-card rounded-md shadow-2xs hover:border-cinnamon/40 transition-colors">
                     <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold font-mono text-sky-600 dark:text-sky-400 text-sm">{ord.order_number}</span>
+                          <span className="font-bold font-mono text-cinnamon text-sm">{ord.order_number}</span>
                           <Badge
                             className={
                               isPaid
@@ -297,7 +297,7 @@ export function WaterCustomerDetailsPage() {
                       <td className="p-3.5 font-medium text-muted-foreground text-[11px]">
                         {formatDate(pmt.created_at)}
                       </td>
-                      <td className="p-3.5 font-bold font-mono text-sky-600 dark:text-sky-400">
+                      <td className="p-3.5 font-bold font-mono text-cinnamon">
                         {pmt.order_number || 'Direct Ledger'}
                       </td>
                       <td className="p-3.5">
