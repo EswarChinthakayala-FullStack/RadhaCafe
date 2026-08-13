@@ -87,6 +87,7 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "Cafe Analytics", url: ROUTES.ADMIN.ANALYTICS, icon: Analytics01Icon },
       { title: "Printer", url: ROUTES.ADMIN.PRINTER, icon: PrinterIcon },
+      { title: "Receipt Templates", url: "/admin/settings/receipts", icon: InvoiceIcon },
       { title: "Settings", url: ROUTES.ADMIN.SETTINGS, icon: Settings01Icon },
     ],
   },

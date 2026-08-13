@@ -17,7 +17,7 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
 
   if (isLoading) {
     return (
-      <div className="p-4 rounded-xl bg-card border border-border/80 space-y-3">
+      <div className="p-4 rounded-md bg-card border border-border/80 space-y-3">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-600 animate-pulse">
             <HugeiconsIcon icon={FireIcon} size={16} />
@@ -43,7 +43,7 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
   };
 
   return (
-    <div className="p-4 rounded-xl bg-card border border-border/80 space-y-3 shadow-2xs">
+    <div className="p-4 rounded-md bg-card border border-border/80 space-y-3 shadow-2xs">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-orange-500/15 text-orange-600 dark:text-orange-400">
@@ -95,7 +95,7 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
                 {/* Info */}
                 <div>
                   <h4 className="font-bold text-xs text-foreground line-clamp-1">{item.name}</h4>
-                  
+
                   {/* Tag Pills */}
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 pt-0.5">

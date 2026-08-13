@@ -397,7 +397,7 @@ export function ReceiptTemplateBuilder() {
         <div className={`md:col-span-7 space-y-4 ${activeTabMobile === 'preview' ? 'hidden md:block' : 'block'}`}>
           <Accordion className="space-y-3">
             {/* Header Accordion */}
-            <AccordionItem value="header" className="border border-border/80 rounded-xl bg-card px-4 shadow-2xs">
+            <AccordionItem value="header" className="border border-border/80 rounded-md bg-card px-4 shadow-2xs">
               <AccordionTrigger className="hover:no-underline py-3.5">
                 <span className="font-bold text-sm font-heading text-foreground">1. Cafe Header & Branding</span>
               </AccordionTrigger>
@@ -514,7 +514,7 @@ export function ReceiptTemplateBuilder() {
             </AccordionItem>
 
             {/* Paper & Divider Accordion */}
-            <AccordionItem value="paper" className="border border-border/80 rounded-xl bg-card px-4 shadow-2xs">
+            <AccordionItem value="paper" className="border border-border/80 rounded-md bg-card px-4 shadow-2xs">
               <AccordionTrigger className="hover:no-underline py-3.5">
                 <span className="font-bold text-sm font-heading text-foreground">2. Paper Width & Divider Style</span>
               </AccordionTrigger>
@@ -605,7 +605,7 @@ export function ReceiptTemplateBuilder() {
             </AccordionItem>
 
             {/* Customer & Payment Accordion */}
-            <AccordionItem value="customer" className="border border-border/80 rounded-xl bg-card px-4 shadow-2xs">
+            <AccordionItem value="customer" className="border border-border/80 rounded-md bg-card px-4 shadow-2xs">
               <AccordionTrigger className="hover:no-underline py-3.5">
                 <span className="font-bold text-sm font-heading text-foreground">3. Customer Details & Pay Later</span>
               </AccordionTrigger>
@@ -654,7 +654,7 @@ export function ReceiptTemplateBuilder() {
             </AccordionItem>
 
             {/* Footer Accordion */}
-            <AccordionItem value="footer" className="border border-border/80 rounded-xl bg-card px-4 shadow-2xs">
+            <AccordionItem value="footer" className="border border-border/80 rounded-md bg-card px-4 shadow-2xs">
               <AccordionTrigger className="hover:no-underline py-3.5">
                 <span className="font-bold text-sm font-heading text-foreground">4. Receipt Footer Messages</span>
               </AccordionTrigger>
@@ -695,7 +695,7 @@ export function ReceiptTemplateBuilder() {
             </AccordionItem>
 
             {/* Section Reordering Accordion */}
-            <AccordionItem value="sections" className="border border-border/80 rounded-xl bg-card px-4 shadow-2xs">
+            <AccordionItem value="sections" className="border border-border/80 rounded-md bg-card px-4 shadow-2xs">
               <AccordionTrigger className="hover:no-underline py-3.5">
                 <span className="font-bold text-sm font-heading text-foreground">5. Receipt Section Sequence</span>
               </AccordionTrigger>

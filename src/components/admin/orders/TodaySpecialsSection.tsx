@@ -24,7 +24,7 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
   };
 
   return (
-    <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/25 space-y-3 shadow-2xs">
+    <div className="p-4 rounded-md bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/25 space-y-3 shadow-2xs">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300">
