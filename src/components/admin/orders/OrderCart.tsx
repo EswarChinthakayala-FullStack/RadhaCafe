@@ -626,7 +626,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
       {/* Popups Blocked Alert Dialog */}
       <AlertDialog open={showPopupBlockedAlert} onOpenChange={setShowPopupBlockedAlert}>
-        <AlertDialogContent className="max-w-md bg-card border border-border/80 p-6 rounded-2xl shadow-2xl space-y-4">
+        <AlertDialogContent className="max-w-md bg-card border border-border/80 p-6 rounded-md shadow-2xl space-y-4">
           <AlertDialogHeader className="space-y-2">
             <div className="w-12 h-12 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center mx-auto">
               <HugeiconsIcon icon={PrinterIcon} size={24} />

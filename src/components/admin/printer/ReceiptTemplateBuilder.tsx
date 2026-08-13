@@ -784,7 +784,7 @@ export function ReceiptTemplateBuilder() {
 
       {/* Modal: Save As New Template */}
       <Dialog open={showSaveAsModal} onOpenChange={setShowSaveAsModal}>
-        <DialogContent className="max-w-md bg-card border border-border/80 p-6 rounded-2xl shadow-2xl">
+        <DialogContent className="max-w-md bg-card border border-border/80 p-6 rounded-md shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold font-heading">Save As New Receipt Template</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
@@ -802,14 +802,14 @@ export function ReceiptTemplateBuilder() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setShowSaveAsModal(false)} className="text-xs font-semibold">
+          <DialogFooter className="flex justify-end items-center gap-2.5 pt-2">
+            <Button variant="outline" onClick={() => setShowSaveAsModal(false)} className="h-9 px-4 text-xs font-semibold rounded-md border-border/80">
               Cancel
             </Button>
             <Button
               onClick={handleSaveAs}
               disabled={!saveAsName.trim() || createMutation.isPending}
-              className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs px-5 shadow-2xs"
+              className="h-9 px-5 bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs rounded-md shadow-2xs"
             >
               {createMutation.isPending ? 'Saving...' : 'Create Template'}
             </Button>
@@ -819,7 +819,7 @@ export function ReceiptTemplateBuilder() {
 
       {/* AlertDialog: Confirm Activate Template */}
       <AlertDialog open={showActivateDialog} onOpenChange={setShowActivateDialog}>
-        <AlertDialogContent className="max-w-md bg-card border border-border/80 p-6 rounded-2xl shadow-2xl space-y-4">
+        <AlertDialogContent className="max-w-md bg-card border border-border/80 p-6 rounded-md shadow-2xl space-y-4">
           <AlertDialogHeader className="space-y-2">
             <div className="w-12 h-12 rounded-full bg-emerald-500/15 text-emerald-600 flex items-center justify-center mx-auto">
               <HugeiconsIcon icon={StarIcon} size={24} />
@@ -831,11 +831,11 @@ export function ReceiptTemplateBuilder() {
               This template will become the active source of truth for all future order receipts, manual prints, and historical reprints across RadhaCafe.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex justify-center gap-2 pt-2">
-            <AlertDialogCancel className="text-xs font-semibold">Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="flex justify-center items-center gap-2.5 pt-2">
+            <AlertDialogCancel className="h-9 px-5 text-xs font-semibold rounded-md border-border/80">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleActivate}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 px-6 rounded-md shadow-md"
+              className="h-9 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-md shadow-2xs"
             >
               Activate Now
             </AlertDialogAction>
@@ -845,7 +845,7 @@ export function ReceiptTemplateBuilder() {
 
       {/* AlertDialog: Delete Safety Check */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="max-w-md bg-card border border-border/80 p-6 rounded-2xl shadow-2xl space-y-4">
+        <AlertDialogContent className="max-w-md bg-card border border-border/80 p-6 rounded-md shadow-2xl space-y-4">
           <AlertDialogHeader className="space-y-2">
             <div className="w-12 h-12 rounded-full bg-red-500/15 text-red-600 flex items-center justify-center mx-auto">
               <HugeiconsIcon icon={AlertCircleIcon} size={24} />
@@ -857,11 +857,11 @@ export function ReceiptTemplateBuilder() {
               Are you sure you want to permanently delete this saved template configuration? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex justify-center gap-2 pt-2">
-            <AlertDialogCancel className="text-xs font-semibold">Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="flex justify-center items-center gap-2.5 pt-2">
+            <AlertDialogCancel className="h-9 px-5 text-xs font-semibold rounded-md border-border/80">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs h-10 px-6 rounded-md shadow-md"
+              className="h-9 px-6 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-md shadow-2xs"
             >
               Permanently Delete
             </AlertDialogAction>
