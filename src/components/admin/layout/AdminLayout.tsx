@@ -16,8 +16,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     <TooltipProvider>
       <SidebarProvider defaultOpen={true}>
         <AppSidebar />
-        <SidebarInset className="flex flex-col min-h-svh min-w-0 w-full overflow-x-hidden">
-          {/* Sticky top nav — same h-14 as sidebar header for border alignment */}
+        <SidebarInset className="flex flex-col h-svh max-h-svh min-w-0 w-full overflow-hidden">
+          {/* Fixed top nav — same h-14 as sidebar header for border alignment */}
           <AdminHeader />
 
           {/* Scrollable main content area */}

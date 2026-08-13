@@ -26,7 +26,7 @@ export function AdminHeader() {
   const currentPage = usePageBreadcrumbs();
 
   return (
-    <header className="sticky top-0 z-30 h-14 flex items-center gap-2 px-4 shrink-0 border-b border-border bg-card/95 backdrop-blur-md shadow-xs">
+    <header className="sticky top-0 z-40 h-14 flex items-center gap-2 px-4 shrink-0 border-b border-border bg-card/95 backdrop-blur-md shadow-xs">
       {/* Toggle + Breadcrumb */}
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <SidebarTrigger className="-ml-1 text-foreground" />
