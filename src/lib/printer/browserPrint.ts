@@ -1,16 +1,22 @@
 import type { Order } from '../../types';
 import { formatOrderReceipt } from './receiptFormatter';
+import { toast } from '../../components/ui/toast';
 
 /**
  * Fallback browser printing handler generating a clean print window when Web Bluetooth is unavailable.
+ * Returns true if the popup window opened successfully, or false if blocked by browser.
  */
-export function printOrderViaBrowser(order: Order, cafeSettings?: any): void {
+export function printOrderViaBrowser(order: Order, cafeSettings?: any): boolean {
   const receipt = formatOrderReceipt(order, cafeSettings);
 
   const printWindow = window.open('', '_blank', 'width=420,height=650');
   if (!printWindow) {
-    alert('Please allow popups in your browser to enable receipt printing fallback.');
-    return;
+    toast.add({
+      title: 'Browser Popup Blocked',
+      description: 'Please allow popups in your browser settings to enable receipt printing fallback.',
+      type: 'warning',
+    });
+    return false;
   }
 
   const itemsHtml = receipt.items
@@ -109,4 +115,5 @@ export function printOrderViaBrowser(order: Order, cafeSettings?: any): void {
   printWindow.document.open();
   printWindow.document.write(htmlContent);
   printWindow.document.close();
+  return true;
 }

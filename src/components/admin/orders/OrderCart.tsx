@@ -12,6 +12,15 @@ import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../ui/alert-dialog';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   PlusSignIcon,
@@ -47,6 +56,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
   const [createdOrder, setCreatedOrder] = useState<any | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showPopupBlockedAlert, setShowPopupBlockedAlert] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [printMessage, setPrintMessage] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -160,7 +170,10 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
     setIsPrinting(false);
     setPrintMessage('No Bluetooth printer connected. Opening browser print slip...');
     setTimeout(() => {
-      printBrowserFallback(targetOrder);
+      const opened = printBrowserFallback(targetOrder);
+      if (!opened) {
+        setShowPopupBlockedAlert(true);
+      }
     }, 150);
   };
 
@@ -610,6 +623,31 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Popups Blocked Alert Dialog */}
+      <AlertDialog open={showPopupBlockedAlert} onOpenChange={setShowPopupBlockedAlert}>
+        <AlertDialogContent className="max-w-md bg-card border border-border/80 p-6 rounded-2xl shadow-2xl space-y-4">
+          <AlertDialogHeader className="space-y-2">
+            <div className="w-12 h-12 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center mx-auto">
+              <HugeiconsIcon icon={PrinterIcon} size={24} />
+            </div>
+            <AlertDialogTitle className="text-center text-lg font-bold font-heading text-foreground">
+              Browser Popups Blocked
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-xs text-muted-foreground leading-relaxed">
+              Your browser blocked the print receipt window. Please allow popups for this site in your browser address bar to automatically generate and print thermal receipts.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex justify-center pt-2">
+            <AlertDialogAction
+              onClick={() => setShowPopupBlockedAlert(false)}
+              className="w-full sm:w-auto bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs h-10 px-6 rounded-md shadow-md"
+            >
+              Got It, I'll Enable Popups
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <CustomerFormModal
         open={showAddCustomerModal}

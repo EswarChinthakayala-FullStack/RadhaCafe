@@ -155,8 +155,8 @@ export function useBluetoothPrinter() {
   /**
    * Browser fallback printing using HTML receipt window dialog
    */
-  const printBrowserFallback = (order: Order, cafeSettings?: any) => {
-    printOrderViaBrowser(order, cafeSettings);
+  const printBrowserFallback = (order: Order, cafeSettings?: any): boolean => {
+    return printOrderViaBrowser(order, cafeSettings);
   };
 
   return {
