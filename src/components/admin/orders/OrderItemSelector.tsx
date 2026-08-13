@@ -2,11 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { useMenuItems } from '../../../hooks/useMenuItems';
 import { useCategories } from '../../../hooks/useCategories';
 import { useCart } from '../../../hooks/useCart';
+import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
-import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import { Loader } from '../../shared/Loader';
+import { LazyImage } from '../../ui/lazy-image';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Search01Icon,
@@ -264,7 +265,7 @@ export function OrderItemSelector() {
                   <div className="w-full h-20 sm:h-24 rounded-md overflow-hidden bg-secondary/40 border border-border/60 flex items-center justify-center relative p-1.5">
                     {hasImage ? (
                       <div className="w-full h-full bg-white rounded-md flex items-center justify-center p-0.5 overflow-hidden shadow-2xs">
-                        <img
+                        <LazyImage
                           src={item.image_url!}
                           alt={item.name}
                           onError={() => handleImageError(item.id)}

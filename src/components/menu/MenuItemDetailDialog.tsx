@@ -5,6 +5,8 @@ import { formatCurrency } from '../../lib/utils/formatCurrency';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Coffee02Icon, CheckmarkCircle02Icon } from '@hugeicons/core-free-icons';
 
+import { LazyImage } from '../ui/lazy-image';
+
 interface MenuItemDetailDialogProps {
   item: MenuItem | null;
   onClose: () => void;
@@ -24,10 +26,11 @@ export function MenuItemDetailDialog({ item, onClose }: MenuItemDetailDialogProp
         {/* Top Image Banner */}
         <div className="relative w-full bg-[#140A06] flex items-center justify-center p-3 min-h-[220px] max-h-[380px] overflow-hidden">
           {item.image_url ? (
-            <img
+            <LazyImage
               src={item.image_url}
               alt={item.name}
               className="max-h-[350px] w-auto max-w-full object-contain rounded-md shadow-sm"
+              loading="lazy"
             />
           ) : (
             <div className="w-full h-48 flex flex-col items-center justify-center text-[#E5A88B]/40 gap-2">

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { MenuItem } from '../../types';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -6,14 +5,14 @@ import { formatCurrency } from '../../lib/utils/formatCurrency';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Coffee02Icon, ViewIcon } from '@hugeicons/core-free-icons';
 
+import { LazyImage } from '../ui/lazy-image';
+
 interface MenuItemCardProps {
   item: MenuItem;
   onSelect?: (item: MenuItem) => void;
 }
 
 export function MenuItemCard({ item, onSelect }: MenuItemCardProps) {
-  const [imageFailed, setImageFailed] = useState(false);
-
   return (
     <Card
       onClick={() => onSelect?.(item)}
@@ -22,12 +21,11 @@ export function MenuItemCard({ item, onSelect }: MenuItemCardProps) {
       <div>
         {/* Outer Container with Cafe dark background bg-[#180C07] */}
         <div className="aspect-[4/3] w-full overflow-hidden bg-[#180C07] relative flex items-center justify-center p-2">
-          {item.image_url && !imageFailed ? (
+          {item.image_url ? (
             <div className="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden p-1 shadow-xs">
-              <img
+              <LazyImage
                 src={item.image_url}
                 alt={item.name}
-                onError={() => setImageFailed(true)}
                 className="w-full h-full object-contain"
                 loading="lazy"
               />

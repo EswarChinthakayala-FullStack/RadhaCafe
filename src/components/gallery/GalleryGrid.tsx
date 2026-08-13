@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { GalleryItem } from '../../lib/supabase/queries/gallery';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Image01Icon, ViewIcon } from '@hugeicons/core-free-icons';
+import { LazyImage } from '../ui/lazy-image';
 
 interface GalleryGridProps {
   items: GalleryItem[];
@@ -85,13 +86,12 @@ export function GalleryGrid({ items, onSelectImage, maxItems }: GalleryGridProps
             <span className="text-[11px] font-medium text-cream/50">Photo Unavailable</span>
           </div>
         ) : (
-          <img
+          <LazyImage
             src={item.image_url}
             alt={item.caption || `RadhaCafe Photo ${index + 1}`}
             onError={() => handleImageError(item.id)}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
             loading={index < 4 ? 'eager' : 'lazy'}
-            decoding="async"
           />
         )}
 

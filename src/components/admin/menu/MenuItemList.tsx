@@ -3,6 +3,7 @@ import { useMenuItems, useDeleteMenuItem, useToggleMenuItemAvailability } from '
 import { useCategories } from '../../../hooks/useCategories';
 import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import { Loader } from '../../shared/Loader';
+import { LazyImage } from '../../ui/lazy-image';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Switch } from '../../ui/switch';
@@ -194,11 +195,12 @@ export function MenuItemList({ onEdit }: MenuItemListProps) {
                       <td className="p-3.5 pl-4">
                         <div className="flex items-center gap-3">
                           {item.image_url && !failedImages[item.id] ? (
-                            <img
+                            <LazyImage
                               src={item.image_url}
                               alt={item.name}
                               onError={() => handleImageError(item.id)}
-                              className="w-11 h-11 rounded-md object-cover border border-border/80 shrink-0 shadow-xs"
+                              containerClassName="w-11 h-11 rounded-md border border-border/80 shrink-0 shadow-xs"
+                              className="w-full h-full object-cover"
                             />
                           ) : (
                             <div className="w-11 h-11 rounded-md border border-dashed border-border bg-secondary/40 flex items-center justify-center text-muted-foreground/40 shrink-0">
