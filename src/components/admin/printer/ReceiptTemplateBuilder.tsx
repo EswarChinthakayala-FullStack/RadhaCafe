@@ -481,7 +481,7 @@ export function ReceiptTemplateBuilder() {
                           updateDraft((prev) => ({ ...prev, header: { ...prev.header, alignment: val } }))
                         }
                       >
-                        <SelectTrigger className="h-9 text-xs mt-1">
+                        <SelectTrigger className="w-full h-9 text-xs mt-1">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -500,7 +500,7 @@ export function ReceiptTemplateBuilder() {
                           updateDraft((prev) => ({ ...prev, header: { ...prev.header, emphasis: val } }))
                         }
                       >
-                        <SelectTrigger className="h-9 text-xs mt-1">
+                        <SelectTrigger className="w-full h-9 text-xs mt-1">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
