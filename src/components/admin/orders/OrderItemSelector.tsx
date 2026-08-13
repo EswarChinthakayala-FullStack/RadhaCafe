@@ -160,15 +160,15 @@ export function OrderItemSelector() {
       </div>
 
       {/* Category Tabs Navigation — Scrollable with Drag & Arrows */}
-      <div className="relative group/tabs min-w-0 max-w-full">
+      <div className="relative group/tabs w-full min-w-0 max-w-full overflow-hidden">
         {canScrollLeft && (
           <button
             type="button"
             onClick={() => scroll('left')}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-background/90 border border-border shadow-md flex items-center justify-center text-foreground hover:bg-secondary transition-all"
+            className="absolute left-0 top-[18px] -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-card border border-border/80 shadow-md flex items-center justify-center p-0 text-foreground hover:bg-secondary active:scale-95 transition-all shrink-0"
             aria-label="Scroll Left"
           >
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={14} className="shrink-0" />
           </button>
         )}
 
@@ -180,7 +180,7 @@ export function OrderItemSelector() {
           onMouseUp={handleMouseUpOrLeave}
           onMouseLeave={handleMouseUpOrLeave}
           onWheel={handleWheel}
-          className="w-full overflow-x-auto touch-pan-x overscroll-x-contain pb-2 scrollbar-none snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none"
+          className="w-full min-w-0 max-w-full overflow-x-auto touch-pan-x overscroll-x-contain pb-2 scrollbar-none snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none"
         >
           <div className="flex items-center gap-2 min-w-max px-1">
             <button
@@ -218,10 +218,10 @@ export function OrderItemSelector() {
           <button
             type="button"
             onClick={() => scroll('right')}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-background/90 border border-border shadow-md flex items-center justify-center text-foreground hover:bg-secondary transition-all"
+            className="absolute right-0 top-[18px] -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-card border border-border/80 shadow-md flex items-center justify-center p-0 text-foreground hover:bg-secondary active:scale-95 transition-all shrink-0"
             aria-label="Scroll Right"
           >
-            <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
+            <HugeiconsIcon icon={ArrowRight01Icon} size={14} className="shrink-0" />
           </button>
         )}
       </div>
@@ -254,7 +254,7 @@ export function OrderItemSelector() {
                   }`}
               >
                 {qty > 0 && (
-                  <Badge className="absolute -top-2 -right-2 bg-cinnamon text-white font-bold font-mono text-[11px] h-6 w-6 rounded-full p-0 flex items-center justify-center shadow-md z-10">
+                  <Badge className="absolute top-2 right-2 bg-cinnamon text-white font-bold font-mono text-[11px] h-6 w-6 rounded-full p-0 flex items-center justify-center shadow-md z-20">
                     {qty}
                   </Badge>
                 )}

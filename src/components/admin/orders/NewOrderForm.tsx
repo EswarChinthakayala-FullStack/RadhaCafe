@@ -14,15 +14,15 @@ export function NewOrderForm() {
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="space-y-4">
-      <div className="grid lg:grid-cols-3 gap-6 items-start">
+    <div className="space-y-4 min-w-0 w-full overflow-x-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-start min-w-0 w-full">
         {/* Left Column: POS Item Selector */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 min-w-0 w-full overflow-x-hidden">
           <OrderItemSelector />
         </div>
 
         {/* Right Column: Desktop Sticky Live Cart */}
-        <div className="hidden lg:block lg:col-span-1 sticky top-20">
+        <div className="hidden lg:block lg:col-span-1 sticky top-20 min-w-0">
           <OrderCart />
         </div>
       </div>
