@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Store01Icon,
@@ -6,6 +6,8 @@ import {
   InvoiceIcon,
   PrinterIcon,
   Settings01Icon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
 } from '@hugeicons/core-free-icons';
 
 export type SettingsCategory = 'profile' | 'branding' | 'tax' | 'printer' | 'preferences';
@@ -57,8 +59,27 @@ interface SettingsNavigationProps {
 
 export function SettingsNavigation({ activeCategory, onSelectCategory }: SettingsNavigationProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
 
-  // Auto-scroll selected tab into view on mobile/tablet
+  const updateScrollButtons = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setCanScrollLeft(scrollLeft > 5);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5);
+    }
+  };
+
+  useEffect(() => {
+    updateScrollButtons();
+    window.addEventListener('resize', updateScrollButtons);
+    return () => window.removeEventListener('resize', updateScrollButtons);
+  }, []);
+
+  // Auto-scroll active tab into view
   useEffect(() => {
     if (scrollContainerRef.current) {
       const activeEl = scrollContainerRef.current.querySelector('[data-active="true"]');
@@ -66,34 +87,102 @@ export function SettingsNavigation({ activeCategory, onSelectCategory }: Setting
         activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
       }
     }
+    updateScrollButtons();
   }, [activeCategory]);
+
+  const scrollByAmount = (distance: number) => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: distance, behavior: 'smooth' });
+    }
+  };
+
+  // Drag-to-scroll for mouse users
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollContainerRef.current) return;
+    isDraggingRef.current = true;
+    startXRef.current = e.pageX - scrollContainerRef.current.offsetLeft;
+    scrollLeftRef.current = scrollContainerRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingRef.current || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startXRef.current) * 1.5;
+    scrollContainerRef.current.scrollLeft = scrollLeftRef.current - walk;
+    updateScrollButtons();
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isDraggingRef.current = false;
+  };
+
+  // Convert vertical mouse wheel to horizontal scrolling
+  const handleWheel = (e: React.WheelEvent) => {
+    if (scrollContainerRef.current && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      scrollContainerRef.current.scrollLeft += e.deltaY;
+      updateScrollButtons();
+    }
+  };
 
   return (
     <>
-      {/* Mobile & Tablet Horizontal Scroll Navigation */}
-      <div 
-        ref={scrollContainerRef}
-        className="lg:hidden w-full overflow-x-auto touch-pan-x overscroll-x-contain pb-2 scrollbar-none snap-x snap-mandatory scroll-smooth"
-      >
-        <div className="flex items-center gap-2 min-w-max px-0.5">
-          {NAV_ITEMS.map((item) => {
-            const isActive = activeCategory === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                data-active={isActive ? "true" : "false"}
-                onClick={() => onSelectCategory(item.id)}
-                className={`snap-start shrink-0 min-w-max flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all border shadow-xs active:scale-95 ${isActive
-                  ? 'bg-cinnamon text-white border-cinnamon shadow-sm'
-                  : 'bg-card text-muted-foreground border-border/80 hover:text-foreground hover:bg-secondary/40'
-                  }`}
-              >
-                <HugeiconsIcon icon={item.icon} size={15} />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
+      {/* Mobile & Tablet Horizontal Scroll Navigation with Drag & Buttons */}
+      <div className="lg:hidden relative w-full min-w-0">
+        {/* Left Scroll Button */}
+        {canScrollLeft && (
+          <button
+            type="button"
+            onClick={() => scrollByAmount(-180)}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-card border border-border/80 text-foreground shadow-md hover:bg-secondary active:scale-95"
+            aria-label="Scroll Left"
+          >
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
+          </button>
+        )}
+
+        {/* Right Scroll Button */}
+        {canScrollRight && (
+          <button
+            type="button"
+            onClick={() => scrollByAmount(180)}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-card border border-border/80 text-foreground shadow-md hover:bg-secondary active:scale-95"
+            aria-label="Scroll Right"
+          >
+            <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
+          </button>
+        )}
+
+        <div
+          ref={scrollContainerRef}
+          onScroll={updateScrollButtons}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUpOrLeave}
+          onMouseLeave={handleMouseUpOrLeave}
+          onWheel={handleWheel}
+          className="w-full overflow-x-auto touch-pan-x overscroll-x-contain pb-2 scrollbar-none snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none"
+        >
+          <div className="flex items-center gap-2 min-w-max px-1">
+            {NAV_ITEMS.map((item) => {
+              const isActive = activeCategory === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  data-active={isActive ? "true" : "false"}
+                  onClick={() => onSelectCategory(item.id)}
+                  className={`snap-start shrink-0 min-w-max flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all border shadow-2xs active:scale-95 ${isActive
+                    ? 'bg-cinnamon text-white border-cinnamon shadow-sm font-bold'
+                    : 'bg-card text-muted-foreground border-border/80 hover:text-foreground hover:bg-secondary/50'
+                    }`}
+                >
+                  <HugeiconsIcon icon={item.icon} size={16} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 

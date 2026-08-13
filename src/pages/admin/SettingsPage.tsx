@@ -61,7 +61,7 @@ export function SettingsPage() {
       {/* Main Responsive Settings Layout */}
       <div className="grid lg:grid-cols-4 gap-6 items-start">
         {/* Left Column: Navigation / Category List */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 min-w-0 w-full">
           <SettingsNavigation
             activeCategory={activeCategory}
             onSelectCategory={handleSelectCategory}
