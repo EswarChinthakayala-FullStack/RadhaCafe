@@ -27,6 +27,8 @@ import {
   TruckIcon,
   SparklesIcon,
   Building01Icon,
+  Target01Icon,
+  Loading03Icon,
 } from '@hugeicons/core-free-icons';
 
 export function PublicWaterPage() {
@@ -34,6 +36,62 @@ export function PublicWaterPage() {
   const createInquiryMutation = useCreateWaterEventInquiry();
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`
+          );
+          const data = await res.json();
+
+          let addressStr = '';
+          if (data && data.address) {
+            const parts = [
+              data.address.amenity || data.address.building || data.address.shop || data.address.office,
+              data.address.road || data.address.street || data.address.pedestrian,
+              data.address.suburb || data.address.neighbourhood || data.address.village || data.address.town || data.address.city_district,
+              data.address.city || data.address.county || data.address.state_district,
+              data.address.postcode,
+            ].filter(Boolean);
+
+            addressStr = parts.length > 0 ? parts.join(', ') : data.display_name;
+          } else if (data && data.display_name) {
+            addressStr = data.display_name;
+          } else {
+            addressStr = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+          }
+
+          setValue('location', addressStr, { shouldValidate: true });
+        } catch (err) {
+          setLocationError('Failed to fetch location address name. Please type your location.');
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (err) => {
+        setIsLocating(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          setLocationError('Location permission denied. Please enter your address manually.');
+        } else {
+          setLocationError('Could not detect location. Please enter address manually.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
 
   const {
     register,
@@ -342,18 +400,58 @@ export function PublicWaterPage() {
                 </div>
               </div>
 
-              {/* Delivery Location */}
+              {/* Delivery Location with Auto Detect */}
               <div className="space-y-1.5">
-                <Label htmlFor="req-loc" className="text-xs font-semibold flex items-center gap-1.5 text-[#E5A88B]">
-                  <HugeiconsIcon icon={Location01Icon} size={14} className="text-cinnamon" />
-                  <span>Delivery Location / Venue Address *</span>
-                </Label>
-                <Input
-                  id="req-loc"
-                  placeholder="e.g. Royal Function Hall, Main Road, Tallur"
-                  {...register('location')}
-                  className="h-10 text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] placeholder:text-[#E5A88B]/30 rounded-xl focus:border-cinnamon"
-                />
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="req-loc" className="text-xs font-semibold flex items-center gap-1.5 text-[#E5A88B]">
+                    <HugeiconsIcon icon={Location01Icon} size={14} className="text-cinnamon" />
+                    <span>Delivery Location / Venue Address *</span>
+                  </Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDetectLocation}
+                    disabled={isLocating}
+                    className="h-7 text-[11px] px-2.5 text-cinnamon hover:text-cinnamon hover:bg-cinnamon/15 border border-cinnamon/30 rounded-lg flex items-center gap-1.5 transition-all shadow-2xs"
+                  >
+                    {isLocating ? (
+                      <>
+                        <HugeiconsIcon icon={Loading03Icon} size={13} className="animate-spin text-cinnamon" />
+                        <span>Detecting Location...</span>
+                      </>
+                    ) : (
+                      <>
+                        <HugeiconsIcon icon={Target01Icon} size={13} className="text-cinnamon" />
+                        <span>Auto-Detect Location</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="req-loc"
+                    placeholder="e.g. Royal Function Hall, Main Road, Tallur"
+                    {...register('location')}
+                    className="h-10 text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] placeholder:text-[#E5A88B]/30 rounded-xl focus:border-cinnamon pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleDetectLocation}
+                    disabled={isLocating}
+                    title="Auto-detect location using GPS"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#E5A88B]/60 hover:text-cinnamon transition-colors disabled:opacity-50"
+                  >
+                    <HugeiconsIcon
+                      icon={isLocating ? Loading03Icon : Target01Icon}
+                      size={16}
+                      className={isLocating ? 'animate-spin text-cinnamon' : ''}
+                    />
+                  </button>
+                </div>
+                {locationError && (
+                  <p className="text-[11px] text-amber-400 font-medium">{locationError}</p>
+                )}
                 {errors.location && (
                   <p className="text-[11px] text-red-400 font-medium">{errors.location.message}</p>
                 )}

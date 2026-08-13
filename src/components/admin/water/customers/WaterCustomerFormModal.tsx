@@ -10,7 +10,7 @@ import { Input } from '../../../ui/input';
 import { Label } from '../../../ui/label';
 import { Textarea } from '../../../ui/textarea';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { UserAdd01Icon, UserIcon, SmartPhoneIcon, Location01Icon } from '@hugeicons/core-free-icons';
+import { UserAdd01Icon, UserIcon, SmartPhoneIcon, Location01Icon, Target01Icon, Loading03Icon } from '@hugeicons/core-free-icons';
 import { toast } from '../../../ui/toast';
 
 interface WaterCustomerFormModalProps {
@@ -22,22 +22,77 @@ interface WaterCustomerFormModalProps {
 export function WaterCustomerFormModal({ open, onOpenChange, onSuccess }: WaterCustomerFormModalProps) {
   const createCustomerMutation = useCreateWaterCustomer();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<WaterCustomerFormData>({
     resolver: zodResolver(waterCustomerSchema),
     defaultValues: {
       name: '',
       phone: '',
-      email: '',
       address: '',
       notes: '',
     },
   });
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      toast.add({ title: 'Geolocation is not supported by your browser.', type: 'error' });
+      return;
+    }
+
+    setIsLocating(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`
+          );
+          const data = await res.json();
+
+          let addressStr = '';
+          if (data && data.address) {
+            const parts = [
+              data.address.amenity || data.address.building || data.address.shop || data.address.office,
+              data.address.road || data.address.street || data.address.pedestrian,
+              data.address.suburb || data.address.neighbourhood || data.address.village || data.address.town || data.address.city_district,
+              data.address.city || data.address.county || data.address.state_district,
+              data.address.postcode,
+            ].filter(Boolean);
+
+            addressStr = parts.length > 0 ? parts.join(', ') : data.display_name;
+          } else if (data && data.display_name) {
+            addressStr = data.display_name;
+          } else {
+            addressStr = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+          }
+
+          setValue('address', addressStr, { shouldValidate: true });
+          toast.add({ title: 'Location auto-detected successfully!', type: 'success' });
+        } catch (err) {
+          toast.add({ title: 'Failed to fetch location address.', type: 'error' });
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (err) => {
+        setIsLocating(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          toast.add({ title: 'Location permission denied.', type: 'error' });
+        } else {
+          toast.add({ title: 'Could not detect location.', type: 'error' });
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
 
   const onSubmit = async (data: WaterCustomerFormData) => {
     setErrorMsg(null);
@@ -121,18 +176,55 @@ export function WaterCustomerFormModal({ open, onOpenChange, onSuccess }: WaterC
             )}
           </div>
 
-          {/* Address */}
+          {/* Address with Auto-Detect */}
           <div className="space-y-1.5">
-            <Label htmlFor="w-cust-addr" className="text-xs font-semibold flex items-center gap-1.5">
-              <HugeiconsIcon icon={Location01Icon} size={14} className="text-cinnamon" />
-              <span>Delivery Address (Optional)</span>
-            </Label>
-            <Input
-              id="w-cust-addr"
-              placeholder="e.g. Door 4-12, Main Road, Tallur"
-              {...register('address')}
-              className="h-10 text-xs bg-background rounded-md"
-            />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="w-cust-addr" className="text-xs font-semibold flex items-center gap-1.5">
+                <HugeiconsIcon icon={Location01Icon} size={14} className="text-cinnamon" />
+                <span>Delivery Address (Optional)</span>
+              </Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleDetectLocation}
+                disabled={isLocating}
+                className="h-6 text-[11px] px-2 text-cinnamon hover:bg-cinnamon/10 border border-cinnamon/20 rounded-md flex items-center gap-1"
+              >
+                {isLocating ? (
+                  <>
+                    <HugeiconsIcon icon={Loading03Icon} size={12} className="animate-spin text-cinnamon" />
+                    <span>Detecting...</span>
+                  </>
+                ) : (
+                  <>
+                    <HugeiconsIcon icon={Target01Icon} size={12} className="text-cinnamon" />
+                    <span>Auto-Detect</span>
+                  </>
+                )}
+              </Button>
+            </div>
+            <div className="relative">
+              <Input
+                id="w-cust-addr"
+                placeholder="e.g. Door 4-12, Main Road, Tallur"
+                {...register('address')}
+                className="h-10 text-xs bg-background rounded-md pr-9"
+              />
+              <button
+                type="button"
+                onClick={handleDetectLocation}
+                disabled={isLocating}
+                title="Auto-detect location using GPS"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-cinnamon transition-colors disabled:opacity-50"
+              >
+                <HugeiconsIcon
+                  icon={isLocating ? Loading03Icon : Target01Icon}
+                  size={15}
+                  className={isLocating ? 'animate-spin text-cinnamon' : ''}
+                />
+              </button>
+            </div>
           </div>
 
           {/* Notes */}
