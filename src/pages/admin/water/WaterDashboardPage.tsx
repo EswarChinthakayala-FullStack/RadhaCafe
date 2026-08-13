@@ -48,22 +48,35 @@ export function WaterDashboardPage() {
   return (
     <div className="space-y-6 pb-12">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4 sm:pb-5">
-        <div>
-          <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs">
-              <HugeiconsIcon icon={DropletIcon} size={22} />
+      <div className="flex flex-col gap-3.5 border-b border-border/80 pb-4 sm:pb-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-2.5">
+            <div className="p-2 sm:p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs mt-0.5 sm:mt-0">
+              <HugeiconsIcon icon={DropletIcon} size={20} />
             </div>
-            <span>RadhaWater Operational Dashboard</span>
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Real-time daily metrics, Recharts visual analytics, credit ledger, and bulk event requests.
-          </p>
+            <div>
+              <h2 className="text-lg sm:text-2xl font-bold font-heading text-foreground tracking-tight">
+                RadhaWater Operational Dashboard
+              </h2>
+              <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-tight sm:leading-normal">
+                Real-time daily metrics, Recharts visual analytics, credit ledger, and bulk event requests.
+              </p>
+            </div>
+          </div>
+
+          <Button
+            onClick={() => navigate('/admin/water/orders/new')}
+            className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-9 sm:h-10 text-xs px-3.5 sm:px-4 rounded-md shadow-xs gap-2 shrink-0 self-stretch sm:self-auto justify-center"
+          >
+            <HugeiconsIcon icon={PlusSignIcon} size={16} />
+            <span>New Water Order</span>
+          </Button>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Quick Range selector for dashboard */}
-          <div className="flex items-center gap-1 bg-card p-1 rounded-md border border-border/80 text-xs">
+        {/* Quick Range selector for dashboard */}
+        <div className="flex items-center justify-between sm:justify-start gap-2 overflow-x-auto pb-1 no-scrollbar pt-1">
+          <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0">Timeframe:</span>
+          <div className="flex items-center gap-1 bg-card p-1 rounded-md border border-border/80 text-xs shrink-0">
             {(['today', 'week', 'days_30', 'month'] as const).map((r) => (
               <Button
                 key={r}
@@ -81,14 +94,6 @@ export function WaterDashboardPage() {
               </Button>
             ))}
           </div>
-
-          <Button
-            onClick={() => navigate('/admin/water/orders/new')}
-            className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 text-xs px-4 rounded-md shadow-xs gap-2 shrink-0"
-          >
-            <HugeiconsIcon icon={PlusSignIcon} size={16} />
-            <span>New Water Order</span>
-          </Button>
         </div>
       </div>
 

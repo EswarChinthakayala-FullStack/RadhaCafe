@@ -41,17 +41,19 @@ export function WaterEventsPage() {
   return (
     <div className="space-y-6 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4 sm:pb-5">
-        <div>
-          <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs">
-              <HugeiconsIcon icon={SparklesIcon} size={22} />
-            </div>
-            <span>Bulk Water Supply & Event Requests</span>
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Manage incoming event inquiries from the public website for weddings, parties, corporate functions, and large gatherings.
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-4 sm:pb-5">
+        <div className="flex items-start sm:items-center gap-2.5">
+          <div className="p-2 sm:p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs mt-0.5 sm:mt-0">
+            <HugeiconsIcon icon={SparklesIcon} size={20} />
+          </div>
+          <div>
+            <h2 className="text-lg sm:text-2xl font-bold font-heading text-foreground tracking-tight">
+              Bulk Water Supply & Event Requests
+            </h2>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-tight sm:leading-normal">
+              Manage incoming event inquiries from the public website for weddings, parties, corporate functions, and large gatherings.
+            </p>
+          </div>
         </div>
       </div>
 

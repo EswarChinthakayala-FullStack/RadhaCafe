@@ -36,14 +36,14 @@ export const WaterDateRangeSelector: React.FC<WaterDateRangeSelectorProps> = ({
   return (
     <div className="bg-card border border-border/80 p-3 sm:p-4 rounded-md shadow-2xs space-y-3">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs font-bold text-foreground font-heading">
+        <div className="flex items-center gap-2 text-xs font-bold text-foreground font-heading shrink-0">
           <div className="p-1.5 rounded-md bg-cinnamon/10 text-cinnamon border border-cinnamon/20">
             <HugeiconsIcon icon={FilterIcon} size={15} />
           </div>
           <span>Date Range Filter:</span>
         </div>
 
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 md:pb-0 no-scrollbar w-full md:w-auto">
           {PRESETS.map((p) => {
             const isSelected = range === p.value;
             return (
@@ -54,8 +54,8 @@ export const WaterDateRangeSelector: React.FC<WaterDateRangeSelectorProps> = ({
                 size="xs"
                 className={
                   isSelected
-                    ? 'bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs h-8 rounded-lg shadow-2xs px-3'
-                    : 'text-xs h-8 text-foreground/80 rounded-lg px-3'
+                    ? 'bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs h-8 rounded-lg shadow-2xs px-3 whitespace-nowrap shrink-0'
+                    : 'text-xs h-8 text-foreground/80 rounded-lg px-3 whitespace-nowrap shrink-0'
                 }
                 onClick={() => setRange(p.value)}
               >

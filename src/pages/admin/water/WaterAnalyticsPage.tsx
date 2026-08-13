@@ -79,25 +79,27 @@ export function WaterAnalyticsPage() {
   return (
     <div className="space-y-6 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4 sm:pb-5">
-        <div>
-          <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs">
-              <HugeiconsIcon icon={DropletIcon} size={22} />
-            </div>
-            <span>RadhaWater Performance Analytics</span>
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Dedicated sales performance, 20L cans distribution, revenue breakdown, and event supply metrics visualized with Recharts.
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-4 sm:pb-5">
+        <div className="flex items-start sm:items-center gap-2.5">
+          <div className="p-2 sm:p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs mt-0.5 sm:mt-0">
+            <HugeiconsIcon icon={DropletIcon} size={20} />
+          </div>
+          <div>
+            <h2 className="text-lg sm:text-2xl font-bold font-heading text-foreground tracking-tight">
+              RadhaWater Performance Analytics
+            </h2>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-tight sm:leading-normal">
+              Dedicated sales performance, 20L cans distribution, revenue breakdown, and event supply metrics.
+            </p>
+          </div>
         </div>
 
         {/* CSV Export Dropdown / Actions */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto pt-1 sm:pt-0">
           <Button
             size="sm"
             onClick={handleExportAllOrders}
-            className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-9 text-xs gap-1.5 rounded-md shadow-xs"
+            className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-9 text-xs gap-1.5 rounded-md shadow-xs flex-1 sm:flex-none justify-center"
           >
             <HugeiconsIcon icon={Download01Icon} size={15} />
             <span>Export Orders CSV</span>
@@ -107,7 +109,7 @@ export function WaterAnalyticsPage() {
             size="sm"
             variant="outline"
             onClick={handleExportProducts}
-            className="h-9 text-xs font-semibold gap-1.5 rounded-md border-border/80"
+            className="h-9 text-xs font-semibold gap-1.5 rounded-md border-border/80 flex-1 sm:flex-none justify-center"
           >
             <HugeiconsIcon icon={Invoice01Icon} size={15} />
             <span>Products CSV</span>
