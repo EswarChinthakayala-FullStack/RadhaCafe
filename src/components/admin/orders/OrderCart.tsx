@@ -150,6 +150,12 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
     }
   };
 
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    setCreatedOrder(null);
+    setPrintMessage(null);
+  };
+
   const triggerSmartReceiptPrint = async (targetOrder: any) => {
     if (!targetOrder) return;
     setIsPrinting(true);
@@ -162,6 +168,9 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         setIsPrinting(false);
         if (success) {
           setPrintMessage('Receipt printed successfully via Bluetooth ESC/POS printer!');
+          setTimeout(() => {
+            handleCloseSuccessModal();
+          }, 800);
           return; // Printed via Bluetooth, skip browser fallback
         }
       } catch {
@@ -173,10 +182,13 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
     setIsPrinting(false);
     setPrintMessage('No Bluetooth printer connected. Opening browser print slip...');
     setTimeout(() => {
-      const opened = printBrowserFallback(targetOrder);
+      const opened = printBrowserFallback(targetOrder, settings);
       if (!opened) {
         setShowPopupBlockedAlert(true);
       }
+      setTimeout(() => {
+        handleCloseSuccessModal();
+      }, 1000);
     }, 150);
   };
 
@@ -547,7 +559,14 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                 </Button>
 
                 <Button
-                  onClick={() => createdOrder && printBrowserFallback(createdOrder, settings)}
+                  onClick={() => {
+                    if (createdOrder) {
+                      printBrowserFallback(createdOrder, settings);
+                      setTimeout(() => {
+                        handleCloseSuccessModal();
+                      }, 1000);
+                    }
+                  }}
                   variant="outline"
                   className="w-full h-10 text-xs font-bold gap-2 rounded-md border-border/80 hover:bg-secondary"
                 >

@@ -142,6 +142,12 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
     }
   };
 
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    setCreatedOrder(null);
+    setPrintMessage(null);
+  };
+
   const triggerSmartReceiptPrint = async (targetOrder: any) => {
     if (!targetOrder) return;
     setIsPrinting(true);
@@ -154,6 +160,9 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
         setIsPrinting(false);
         if (success) {
           setPrintMessage('Water receipt printed successfully via Bluetooth ESC/POS printer!');
+          setTimeout(() => {
+            handleCloseSuccessModal();
+          }, 800);
           return; // Printed via Bluetooth, skip browser fallback
         }
       } catch {
@@ -169,6 +178,9 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
       if (!opened) {
         setShowPopupBlockedAlert(true);
       }
+      setTimeout(() => {
+        handleCloseSuccessModal();
+      }, 1000);
     }, 150);
   };
 
@@ -630,7 +642,14 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
                 </Button>
 
                 <Button
-                  onClick={() => createdOrder && printBrowserFallback(createdOrder as any)}
+                  onClick={() => {
+                    if (createdOrder) {
+                      printBrowserFallback(createdOrder as any);
+                      setTimeout(() => {
+                        handleCloseSuccessModal();
+                      }, 1000);
+                    }
+                  }}
                   variant="outline"
                   className="w-full h-10 text-xs font-bold gap-2 rounded-md border-border/80 hover:bg-secondary"
                 >
