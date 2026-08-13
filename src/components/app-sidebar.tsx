@@ -120,7 +120,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border" {...props}>
-      <SidebarHeader className="h-16 border-b border-sidebar-border px-4 flex items-center justify-between">
+      <SidebarHeader className="h-14 border-b border-sidebar-border px-4 flex items-center justify-between shrink-0">
         <Link to={ROUTES.ADMIN.DASHBOARD} className="flex items-center gap-2 group overflow-hidden">
           <div className="w-8 h-8 shrink-0">
             <RadhaCafeLogo />
