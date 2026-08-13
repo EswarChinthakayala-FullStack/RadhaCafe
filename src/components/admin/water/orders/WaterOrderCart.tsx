@@ -138,7 +138,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
   const projectedOutstanding = existingOutstanding + grandTotal;
 
   return (
-    <div className="border border-border/80 rounded-md p-5 bg-card flex flex-col h-full space-y-4 shadow-sm">
+    <div className="border border-border/80 rounded-xl p-4 sm:p-5 bg-card flex flex-col space-y-4 shadow-sm max-h-[calc(100vh-6.5rem)] overflow-y-auto no-scrollbar">
       <div className="flex justify-between items-center border-b border-border pb-3">
         <div className="flex items-center gap-2">
           <HugeiconsIcon icon={ShoppingCart01Icon} size={18} className="text-cinnamon" />

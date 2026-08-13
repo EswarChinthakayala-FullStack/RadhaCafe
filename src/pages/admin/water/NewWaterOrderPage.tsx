@@ -158,7 +158,7 @@ export function NewWaterOrderPage() {
         </div>
 
         {/* Desktop Order Cart (Right 5 cols) */}
-        <div className="hidden lg:block lg:col-span-5 sticky top-24">
+        <div className="hidden lg:block lg:col-span-5 sticky top-4 self-start min-w-0 z-10">
           <WaterOrderCart />
         </div>
       </div>

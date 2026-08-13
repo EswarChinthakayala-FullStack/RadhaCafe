@@ -2,7 +2,7 @@ import { useDailySummary, useTopSellingItems } from '../../../hooks/useAnalytics
 import { Card, CardContent } from '../../ui/card';
 import { Skeleton } from '../../ui/skeleton';
 import { Button } from '../../ui/button';
-import { formatCurrency } from '../../../lib/utils/formatCurrency';
+import { formatCompactCurrency } from '../../../lib/utils/formatCurrency';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ShoppingBag01Icon,
@@ -55,13 +55,13 @@ export function StatsCards() {
     },
     {
       title: "Today's Revenue",
-      value: formatCurrency(summary?.total_revenue ?? 0),
+      value: formatCompactCurrency(summary?.total_revenue ?? 0),
       subtext: 'Completed sales today',
       icon: Invoice01Icon,
     },
     {
       title: 'Avg Order Value',
-      value: formatCurrency(summary?.avg_order_value ?? 0),
+      value: formatCompactCurrency(summary?.avg_order_value ?? 0),
       subtext: 'Revenue per completed order',
       icon: Analytics01Icon,
     },

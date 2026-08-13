@@ -6,7 +6,7 @@ import { ShoppingCart01Icon, Invoice01Icon } from '@hugeicons/core-free-icons';
 
 export function NewOrderPage() {
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto min-w-0 w-full overflow-x-hidden">
+    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto min-w-0 w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4 sm:pb-5">
         <div className="space-y-1">
