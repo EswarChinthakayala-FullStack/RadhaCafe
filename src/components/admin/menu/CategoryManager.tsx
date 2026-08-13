@@ -31,7 +31,17 @@ import {
   ArrowUp01Icon,
   ArrowDown01Icon,
   Coffee02Icon,
+  BubbleTeaIcon,
+  DrinkIcon,
+  GlassWaterIcon,
+  CupSodaIcon,
   CakeIcon,
+  CookieIcon,
+  Bread01Icon,
+  Dish01Icon,
+  RiceBowl01Icon,
+  Pizza01Icon,
+  Hamburger01Icon,
   Tag01Icon,
   PackageIcon,
   GridIcon,
@@ -41,7 +51,17 @@ import type { Category } from '../../../types';
 // Predefined safe HugeIcons mapping for categories
 const CATEGORY_ICONS = [
   { key: 'Coffee02Icon', label: 'Coffee', icon: Coffee02Icon },
+  { key: 'BubbleTeaIcon', label: 'Tea & Chai', icon: BubbleTeaIcon },
+  { key: 'DrinkIcon', label: 'Milk & Drinks', icon: DrinkIcon },
+  { key: 'GlassWaterIcon', label: 'Pure Water', icon: GlassWaterIcon },
+  { key: 'CupSodaIcon', label: 'Cold Drinks', icon: CupSodaIcon },
   { key: 'CakeIcon', label: 'Pastry & Dessert', icon: CakeIcon },
+  { key: 'CookieIcon', label: 'Cookies & Bakery', icon: CookieIcon },
+  { key: 'Bread01Icon', label: 'Breads & Toast', icon: Bread01Icon },
+  { key: 'Dish01Icon', label: 'Main Dishes', icon: Dish01Icon },
+  { key: 'RiceBowl01Icon', label: 'Rice & Biryani', icon: RiceBowl01Icon },
+  { key: 'Pizza01Icon', label: 'Pizza & Pasta', icon: Pizza01Icon },
+  { key: 'Hamburger01Icon', label: 'Burgers & Snacks', icon: Hamburger01Icon },
   { key: 'Tag01Icon', label: 'General Tag', icon: Tag01Icon },
   { key: 'PackageIcon', label: 'Package & Goods', icon: PackageIcon },
   { key: 'GridIcon', label: 'Grid Menu', icon: GridIcon },
@@ -329,7 +349,7 @@ export function CategoryManager() {
             {/* Category Icon Selector */}
             <div className="space-y-1.5">
               <Label className="font-bold text-foreground">Category Icon</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {CATEGORY_ICONS.map((ico) => {
                   const isSelected = selectedIconKey === ico.key;
                   return (
