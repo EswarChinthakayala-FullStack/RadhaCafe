@@ -18,7 +18,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/pop
 import { Calendar } from '../../components/ui/calendar';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  DropletIcon,
   Calendar01Icon,
   SmartPhoneIcon,
   UserIcon,
@@ -154,39 +153,34 @@ export function PublicWaterPage() {
         <div className="absolute top-10 left-1/4 w-[30rem] h-[30rem] bg-[#D9825B]/10 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-10 right-1/4 w-[30rem] h-[30rem] bg-[#E5A88B]/8 rounded-full blur-[120px] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cinnamon/15 border border-cinnamon/30 text-cinnamon text-xs font-bold shadow-lg shadow-cinnamon/10 backdrop-blur-md">
-            <HugeiconsIcon icon={DropletIcon} size={15} className="text-cinnamon" />
-            <span>RadhaCafe Ecosystem — Pure Drinking Water Supply</span>
-          </div>
-
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold font-heading tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#F5E6D3] via-white to-[#E5A88B] max-w-3xl mx-auto leading-tight">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-4 sm:space-y-6">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold font-heading tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#F5E6D3] via-white to-[#E5A88B] max-w-3xl mx-auto leading-tight">
             RadhaWater Service
           </h1>
 
-          <p className="text-sm sm:text-base text-[#E5A88B]/80 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xs sm:text-base text-[#E5A88B]/80 max-w-2xl mx-auto leading-relaxed px-2">
             Hygienically purified 20 Litre drinking water cans delivered for daily household, commercial, wedding, and event supplies in Tallur.
           </p>
 
           {/* Glassmorphism Pricing Cards */}
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
-            <div className="p-5 rounded-md bg-[#2C1810]/60 backdrop-blur-2xl border border-cinnamon/30 shadow-2xl text-left flex items-center gap-4 hover:border-cinnamon/60 transition-all hover:scale-[1.02]">
-              <div className="w-13 h-13 rounded-md bg-cinnamon/20 text-cinnamon flex items-center justify-center font-bold text-2xl border border-cinnamon/30 shadow-inner px-3 py-2">
+          <div className="pt-2 sm:pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 max-w-sm sm:max-w-none mx-auto w-full">
+            <div className="p-3.5 sm:p-5 rounded-md bg-[#2C1810]/60 backdrop-blur-2xl border border-cinnamon/30 shadow-2xl text-left flex items-center gap-3.5 hover:border-cinnamon/60 transition-all w-full sm:w-auto justify-start">
+              <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-md bg-cinnamon/20 text-cinnamon flex items-center justify-center font-bold text-xl sm:text-2xl border border-cinnamon/30 shadow-inner px-2.5 sm:px-3 py-1.5 sm:py-2 shrink-0">
                 ₹{normalProduct.price}
               </div>
               <div>
-                <p className="text-xs text-cinnamon font-bold uppercase tracking-wider font-heading">Normal 20L Can</p>
-                <p className="text-base font-extrabold text-white">{formatCurrency(normalProduct.price)} / Can</p>
+                <p className="text-[11px] sm:text-xs text-cinnamon font-bold uppercase tracking-wider font-heading">Normal 20L Can</p>
+                <p className="text-sm sm:text-base font-extrabold text-white">{formatCurrency(normalProduct.price)} / Can</p>
               </div>
             </div>
 
-            <div className="p-5 rounded-md bg-[#2C1810]/60 backdrop-blur-2xl border border-amber-500/30 shadow-2xl text-left flex items-center gap-4 hover:border-amber-400/60 transition-all hover:scale-[1.02]">
-              <div className="w-13 h-13 rounded-md bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-2xl border border-amber-500/30 shadow-inner px-3 py-2">
+            <div className="p-3.5 sm:p-5 rounded-md bg-[#2C1810]/60 backdrop-blur-2xl border border-amber-500/30 shadow-2xl text-left flex items-center gap-3.5 hover:border-amber-400/60 transition-all w-full sm:w-auto justify-start">
+              <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-md bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xl sm:text-2xl border border-amber-500/30 shadow-inner px-2.5 sm:px-3 py-1.5 sm:py-2 shrink-0">
                 ₹{coolingProduct.price}
               </div>
               <div>
-                <p className="text-xs text-amber-300 font-bold uppercase tracking-wider font-heading">Cooling 20L Can</p>
-                <p className="text-base font-extrabold text-white">{formatCurrency(coolingProduct.price)} / Can</p>
+                <p className="text-[11px] sm:text-xs text-amber-300 font-bold uppercase tracking-wider font-heading">Cooling 20L Can</p>
+                <p className="text-sm sm:text-base font-extrabold text-white">{formatCurrency(coolingProduct.price)} / Can</p>
               </div>
             </div>
           </div>
