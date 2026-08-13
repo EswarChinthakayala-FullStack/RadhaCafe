@@ -1,5 +1,6 @@
 import { ESC_POS_COMMANDS } from '../../constants/printerCommands';
-import type { FormattedReceiptData } from '../../types';
+import type { FormattedReceiptData, NormalizedReceiptItem } from '../../types';
+import { formatReceiptFromTemplate, formatItemRow } from './receiptFormatter';
 
 /**
  * Low-level ESC/POS byte generator functions operating on Uint8Array
@@ -192,7 +193,225 @@ export function encodeReceiptToEscPos(
   // 7. Footer & Paper Cut
   addBytes(ESC_POS_COMMANDS.ALIGN_CENTER);
   addText(`${data.footerMessage || 'Thank You! Visit RadhaCafe Again.'}\n`);
-  addBytes(ESC_POS_COMMANDS.FEED_PAPER_3_LINES);
+  return new Uint8Array(buffer);
+}
+
+/**
+ * Advanced Template-Driven ESC/POS Byte Encoder
+ * Formats printer byte commands according to active ReceiptTemplateConfig
+ */
+export function encodeTemplateReceiptToEscPos(
+  rawOrder: any,
+  templateConfig?: any,
+  cafeSettings?: any
+): Uint8Array {
+  const { data, config, dividerLine } = formatReceiptFromTemplate(rawOrder, templateConfig, cafeSettings);
+  const encoder = new TextEncoder();
+  const buffer: number[] = [];
+
+  const addBytes = (bytes: readonly number[] | Uint8Array | number[]) => {
+    if (bytes instanceof Uint8Array) {
+      buffer.push(...Array.from(bytes));
+    } else {
+      buffer.push(...bytes);
+    }
+  };
+
+  const addText = (str: string) => {
+    const sanitized = str.replace(/₹/g, 'Rs. ');
+    buffer.push(...Array.from(encoder.encode(sanitized)));
+  };
+
+  const applyAlignment = (align: 'left' | 'center' | 'right') => {
+    if (align === 'center') addBytes(ESC_POS_COMMANDS.ALIGN_CENTER);
+    else if (align === 'right') addBytes(ESC_POS_COMMANDS.ALIGN_RIGHT);
+    else addBytes(ESC_POS_COMMANDS.ALIGN_LEFT);
+  };
+
+  const applyEmphasis = (emphasis: 'normal' | 'bold' | 'double_size') => {
+    if (emphasis === 'bold') {
+      addBytes(ESC_POS_COMMANDS.TEXT_NORMAL);
+      addBytes(ESC_POS_COMMANDS.TEXT_BOLD_ON);
+    } else if (emphasis === 'double_size') {
+      addBytes(ESC_POS_COMMANDS.TEXT_LARGE);
+      addBytes(ESC_POS_COMMANDS.TEXT_BOLD_ON);
+    } else {
+      addBytes(ESC_POS_COMMANDS.TEXT_NORMAL);
+      addBytes(ESC_POS_COMMANDS.TEXT_BOLD_OFF);
+    }
+  };
+
+  const resetEmphasis = () => {
+    addBytes(ESC_POS_COMMANDS.TEXT_NORMAL);
+    addBytes(ESC_POS_COMMANDS.TEXT_BOLD_OFF);
+  };
+
+  const width = config.paperWidth || 32;
+
+  // 1. Initialize Printer
+  addBytes(ESC_POS_COMMANDS.INIT);
+
+  // Render Sections based on configured sectionOrder
+  const sections = config.sectionOrder || ['header', 'orderInfo', 'customerInfo', 'items', 'summary', 'payment', 'footer'];
+
+  sections.forEach((sec: string) => {
+    if (sec === 'header') {
+      applyAlignment(config.header.alignment);
+      applyEmphasis(config.header.emphasis);
+
+      if (config.header.cafeNameVisible && config.header.cafeNameText) {
+        addText(`${config.header.cafeNameText}\n`);
+      }
+      resetEmphasis();
+
+      if (config.header.taglineVisible && config.header.taglineText) {
+        addText(`${config.header.taglineText}\n`);
+      }
+      if (config.header.addressVisible && config.header.addressText) {
+        addText(`${config.header.addressText}\n`);
+      }
+      if (config.header.phoneVisible && config.header.phoneText) {
+        addText(`Tel: ${config.header.phoneText}\n`);
+      }
+      if (config.header.emailVisible && config.header.emailText) {
+        addText(`Email: ${config.header.emailText}\n`);
+      }
+      if (dividerLine) addText(`${dividerLine}\n`);
+    } else if (sec === 'orderInfo') {
+      applyAlignment(config.orderInfo.alignment);
+      applyEmphasis(config.orderInfo.emphasis);
+
+      if (config.orderInfo.orderNumberVisible) {
+        addText(`Order #: ${data.orderNumber}\n`);
+      }
+      if (config.orderInfo.dateVisible) {
+        addText(`Date   : ${data.dateTime}\n`);
+      }
+      if (config.orderInfo.cashierVisible && data.cashierName) {
+        addText(`Cashier: ${data.cashierName}\n`);
+      }
+      if (config.orderInfo.statusVisible) {
+        addText(`Status : ${data.status}\n`);
+      }
+      resetEmphasis();
+      if (dividerLine) addText(`${dividerLine}\n`);
+    } else if (sec === 'customerInfo') {
+      applyAlignment(config.customerInfo.alignment);
+      let customerHasInfo = false;
+
+      if (config.customerInfo.customerNameVisible && data.customerName && data.customerName !== 'Walk-in Customer') {
+        addText(`Customer: ${data.customerName}\n`);
+        customerHasInfo = true;
+      }
+      if (config.customerInfo.phoneVisible && data.customerPhone) {
+        addText(`Phone   : ${data.customerPhone}\n`);
+        customerHasInfo = true;
+      }
+      if (config.customerInfo.paymentStatusVisible && data.isPayLater) {
+        addText(`Account : CREDIT CUSTOMER\n`);
+        customerHasInfo = true;
+      }
+
+      if (customerHasInfo && dividerLine) {
+        addText(`${dividerLine}\n`);
+      }
+    } else if (sec === 'items') {
+      applyAlignment('left');
+
+      if (config.items.showHeaders) {
+        addBytes(ESC_POS_COMMANDS.TEXT_BOLD_ON);
+        if (width >= 48) {
+          addText(formatLine('Item Description (Qty)', 'Amount', width) + '\n');
+        } else {
+          addText(formatLine('Item (Qty)', 'Amount', width) + '\n');
+        }
+        resetEmphasis();
+      }
+
+      if (config.items.dividerBefore && dividerLine) {
+        addText(`${dividerLine}\n`);
+      }
+
+      data.items.forEach((item: NormalizedReceiptItem) => {
+        const rowLines = formatItemRow(
+          item.name,
+          item.quantity,
+          item.unitPrice,
+          item.amount,
+          config.items.showUnitPrice,
+          width
+        );
+        rowLines.forEach((l: string) => addText(`${l}\n`));
+      });
+
+      if (config.items.dividerAfter && dividerLine) {
+        addText(`${dividerLine}\n`);
+      }
+    } else if (sec === 'summary') {
+      applyAlignment('left');
+
+      if (config.summary.dividerBeforeTotal && dividerLine) {
+        addText(`${dividerLine}\n`);
+      }
+
+      if (config.summary.subtotalVisible) {
+        addText(formatLine('Subtotal', `Rs. ${data.subtotal.toFixed(2)}`, width) + '\n');
+      }
+      if (config.summary.taxVisible && data.tax > 0) {
+        addText(formatLine('GST Tax', `Rs. ${data.tax.toFixed(2)}`, width) + '\n');
+      }
+      if (config.summary.discountVisible && data.discount > 0) {
+        addText(formatLine('Discount', `-Rs. ${data.discount.toFixed(2)}`, width) + '\n');
+      }
+
+      if (config.summary.grandTotalBold || config.summary.doubleSizeTotal) {
+        applyEmphasis(config.summary.doubleSizeTotal ? 'double_size' : 'bold');
+      }
+      addText(formatLine('TOTAL', `Rs. ${data.total.toFixed(2)}`, width) + '\n');
+      resetEmphasis();
+    } else if (sec === 'payment') {
+      applyAlignment('left');
+
+      if (config.payment.paymentMethodVisible) {
+        addText(formatLine('Payment', data.paymentMethod, width) + '\n');
+      }
+      if (config.payment.amountPaidVisible) {
+        addText(formatLine('Paid', `Rs. ${data.paidAmount.toFixed(2)}`, width) + '\n');
+      }
+      if (config.payment.amountDueVisible && data.dueAmount > 0) {
+        addBytes(ESC_POS_COMMANDS.TEXT_BOLD_ON);
+        addText(formatLine('Amount Due', `Rs. ${data.dueAmount.toFixed(2)}`, width) + '\n');
+        resetEmphasis();
+      }
+
+      if (dividerLine) addText(`${dividerLine}\n`);
+    } else if (sec === 'footer') {
+      applyAlignment(config.footer.alignment);
+      applyEmphasis(config.footer.emphasis);
+
+      if (config.footer.thankYouMessage) {
+        addText(`${config.footer.thankYouMessage}\n`);
+      }
+      resetEmphasis();
+
+      if (config.footer.secondaryMessage) {
+        addText(`${config.footer.secondaryMessage}\n`);
+      }
+      if (config.footer.contactMessage) {
+        addText(`${config.footer.contactMessage}\n`);
+      }
+    }
+  });
+
+  // Paper feed & cut
+  const feedCount = config.feedLines || 3;
+  if (feedCount === 3) {
+    addBytes(ESC_POS_COMMANDS.FEED_PAPER_3_LINES);
+  } else {
+    for (let i = 0; i < feedCount; i++) {
+      addBytes(ESC_POS_COMMANDS.FEED_LINE);
+    }
+  }
   addBytes(ESC_POS_COMMANDS.CUT_PAPER);
 
   return new Uint8Array(buffer);

@@ -1,63 +1,180 @@
-import type { FormattedReceiptData, Order } from '../../types';
-import { formatDate } from '../utils/formatDate';
+import type {
+  NormalizedReceiptData,
+  ReceiptTemplateConfig,
+  DividerStyleType,
+} from '../../types';
+import { normalizeOrderToReceiptData } from './receiptData';
 
-export interface CafeSettingsInput {
-  cafe_name?: string | null;
-  address?: string | null;
-  phone?: string | null;
-  receipt_footer?: string | null;
+/**
+ * Returns dynamic divider line matching configured paper width and style
+ */
+export function generateDivider(style: DividerStyleType, width = 32): string {
+  if (style === 'none') return '';
+  if (style === 'double') return '='.repeat(width);
+  if (style === 'dotted') return '.'.repeat(width);
+  if (style === 'solid') return '─'.repeat(width);
+  // Default dashed
+  return '-'.repeat(width);
 }
 
 /**
- * Creates a deterministic, shared receipt representation used by both:
- * 1. ESC/POS binary thermal printer byte generation
- * 2. Visual HTML browser receipt previews
+ * Formats a two-column line with proper spacing and right alignment according to paper width
  */
-export function formatOrderReceipt(
-  order: Order,
-  cafeSettings?: CafeSettingsInput | null
-): FormattedReceiptData {
-  let cafeName = (cafeSettings?.cafe_name || 'RadhaCafe').trim();
-  if (cafeName.toLowerCase() === 'radhacaf') {
-    cafeName = 'RadhaCafe';
+export function formatTwoColumnLine(left: string, right: string, width = 32): string {
+  const availableLeft = width - right.length - 1;
+  let leftText = left;
+  if (leftText.length > availableLeft && availableLeft > 2) {
+    leftText = leftText.substring(0, availableLeft - 1) + ' ';
   }
-  const address = cafeSettings?.address || '1A, Vellampalli Tallur Rd, opp. Pattu Office, Tallur 523264';
-  const phone = cafeSettings?.phone || '09966630913';
-  const footerMessage = cafeSettings?.receipt_footer || 'Thank You! Visit RadhaCafe Again.';
+  const spacesNeeded = Math.max(1, width - leftText.length - right.length);
+  return leftText + ' '.repeat(spacesNeeded) + right;
+}
 
-  const rawItems = order.items || (order as any).order_items || [];
+/**
+ * Formats item table row with wrapping and column spacing
+ */
+export function formatItemRow(
+  name: string,
+  qty: number,
+  unitPrice: number,
+  amount: number,
+  showUnitPrice: boolean,
+  width = 32
+): string[] {
+  const amountStr = `Rs. ${amount.toFixed(2)}`;
+  const qtyStr = `x${qty}`;
+  const lines: string[] = [];
 
-  const items = rawItems.map((item: any) => {
-    const qty = item.quantity || 1;
-    const unitPrice = Number(item.unit_price || 0);
-    const amount = Number(item.total_price || (unitPrice * qty));
-    const name = item.item_name || item.name || 'Item';
+  if (width >= 48) {
+    // 80mm wide paper (48 cols): Item (24) | Qty (5) | Unit (9) | Amount (10)
+    const unitStr = showUnitPrice ? `Rs.${unitPrice.toFixed(0)}` : '';
+    const colNameWidth = 22;
+    const nameTruncated = name.length > colNameWidth ? name.substring(0, colNameWidth - 1) + '.' : name;
+    
+    const line = 
+      nameTruncated.padEnd(23) + 
+      qtyStr.padStart(4) + 
+      unitStr.padStart(10) + 
+      amountStr.padStart(11);
+    
+    lines.push(line);
+  } else {
+    // 58mm standard paper (32 cols)
+    const rightCol = amountStr;
+    const leftMax = width - rightCol.length - 1;
+    const itemTitle = `${name} ${qtyStr}`;
 
-    return {
-      name,
-      quantity: qty,
-      amount,
-    };
-  });
+    if (itemTitle.length <= leftMax) {
+      lines.push(formatTwoColumnLine(itemTitle, rightCol, width));
+    } else {
+      // Wrap long item name onto 2 lines
+      const truncatedName = name.length > leftMax ? name.substring(0, leftMax - 1) + '.' : name;
+      lines.push(truncatedName);
+      lines.push(formatTwoColumnLine(`  ${qtyStr}`, rightCol, width));
+    }
+  }
 
-  const due = Number(order.due_amount || 0);
-  const paid = Number(order.paid_amount || (due === 0 ? order.total_amount : 0));
+  return lines;
+}
+
+/**
+ * Main Template Receipt Formatter
+ * Takes raw/normalized order data + template config -> returns formatted lines & data model
+ */
+export function formatReceiptFromTemplate(
+  rawOrder: any,
+  templateConfig?: ReceiptTemplateConfig | null,
+  cafeSettings?: any
+): {
+  data: NormalizedReceiptData;
+  config: ReceiptTemplateConfig;
+  dividerLine: string;
+} {
+  const data = normalizeOrderToReceiptData(rawOrder, cafeSettings);
+
+  // Default Template Config Fallback
+  const config: ReceiptTemplateConfig = templateConfig || {
+    paperWidth: 32,
+    dividerStyle: 'dashed',
+    previewFont: 'JetBrains Mono',
+    feedLines: 3,
+    header: {
+      logoVisible: true,
+      cafeNameVisible: true,
+      cafeNameText: data.cafeName,
+      taglineVisible: true,
+      taglineText: data.tagline,
+      addressVisible: true,
+      addressText: data.address,
+      phoneVisible: true,
+      phoneText: data.phone,
+      emailVisible: false,
+      emailText: data.email,
+      alignment: 'center',
+      emphasis: 'bold',
+    },
+    orderInfo: {
+      orderNumberVisible: true,
+      dateVisible: true,
+      timeVisible: true,
+      cashierVisible: true,
+      statusVisible: true,
+      alignment: 'left',
+      emphasis: 'normal',
+    },
+    customerInfo: {
+      customerNameVisible: true,
+      phoneVisible: true,
+      paymentStatusVisible: true,
+      alignment: 'left',
+    },
+    items: {
+      showHeaders: true,
+      showUnitPrice: true,
+      itemWrapping: true,
+      dividerBefore: true,
+      dividerAfter: true,
+    },
+    summary: {
+      subtotalVisible: true,
+      taxVisible: true,
+      discountVisible: true,
+      grandTotalBold: true,
+      doubleSizeTotal: true,
+      dividerBeforeTotal: true,
+    },
+    payment: {
+      paymentMethodVisible: true,
+      amountPaidVisible: true,
+      amountDueVisible: true,
+      payLaterIndicator: true,
+    },
+    footer: {
+      thankYouMessage: data.footerMessage,
+      secondaryMessage: data.secondaryFooter,
+      contactMessage: data.contactFooter,
+      alignment: 'center',
+      emphasis: 'normal',
+    },
+    sectionOrder: ['header', 'orderInfo', 'customerInfo', 'items', 'summary', 'payment', 'footer'],
+  };
+
+  const dividerLine = generateDivider(config.dividerStyle, config.paperWidth);
 
   return {
-    cafeName,
-    address,
-    phone,
-    orderNumber: order.order_number || `RC-${order.id.slice(0, 6).toUpperCase()}`,
-    dateTime: formatDate(order.created_at),
-    customerName: order.customer_name || 'Walk-in Customer',
-    paymentMethod: order.payment_method === 'pay_later' ? 'PAY LATER' : order.payment_method || 'cash',
-    items,
-    subtotal: Number(order.subtotal || 0),
-    tax: Number(order.tax_amount || 0),
-    discount: Number(order.discount_amount || 0),
-    total: Number(order.total_amount || 0),
-    paidAmount: paid,
-    dueAmount: due,
-    footerMessage,
+    data,
+    config,
+    dividerLine,
+  };
+}
+
+/**
+ * Backward Compatibility Wrapper
+ */
+export function formatOrderReceipt(order: any, cafeSettings?: any) {
+  const result = formatReceiptFromTemplate(order, null, cafeSettings);
+  return {
+    ...result.data,
+    dividerLine: result.dividerLine,
   };
 }

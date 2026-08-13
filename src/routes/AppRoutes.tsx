@@ -22,6 +22,7 @@ import { GalleryPage } from '../pages/admin/GalleryPage';
 import { DiscussionPage } from '../pages/admin/DiscussionPage';
 import { PrinterPage } from '../pages/admin/PrinterPage';
 import { SettingsPage } from '../pages/admin/SettingsPage';
+import { ReceiptsPage } from '../pages/admin/ReceiptsPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 
 // RadhaWater Admin Modules
@@ -67,6 +68,7 @@ export function AppRoutes() {
                 <Route path="discussions" element={<DiscussionPage />} />
                 <Route path="printer" element={<PrinterPage />} />
                 <Route path="settings" element={<SettingsPage />} />
+                <Route path="settings/receipts" element={<ReceiptsPage />} />
 
                 {/* RadhaWater Independent Admin Routes */}
                 <Route path="water" element={<WaterDashboardPage />} />

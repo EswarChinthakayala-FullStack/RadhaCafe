@@ -6,6 +6,7 @@ import { CafeProfileForm } from '../../components/admin/settings/CafeProfileForm
 import { BrandingSettings } from '../../components/admin/settings/BrandingSettings';
 import { TaxCurrencySettings } from '../../components/admin/settings/TaxCurrencySettings';
 import { PrinterSettings } from '../../components/admin/printer/PrinterSettings';
+import { ReceiptTemplateBuilder } from '../../components/admin/printer/ReceiptTemplateBuilder';
 import { GeneralPreferences } from '../../components/admin/settings/GeneralPreferences';
 import { Badge } from '../../components/ui/badge';
 import { formatDate } from '../../lib/utils/formatDate';
@@ -18,13 +19,13 @@ export function SettingsPage() {
 
   const tabParam = searchParams.get('tab') as SettingsCategory | null;
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>(
-    tabParam && ['profile', 'branding', 'tax', 'printer', 'preferences'].includes(tabParam)
+    tabParam && ['profile', 'branding', 'tax', 'printer', 'receipts', 'preferences'].includes(tabParam)
       ? tabParam
       : 'profile'
   );
 
   useEffect(() => {
-    if (tabParam && ['profile', 'branding', 'tax', 'printer', 'preferences'].includes(tabParam)) {
+    if (tabParam && ['profile', 'branding', 'tax', 'printer', 'receipts', 'preferences'].includes(tabParam)) {
       setActiveCategory(tabParam);
     }
   }, [tabParam]);
@@ -73,6 +74,7 @@ export function SettingsPage() {
           {activeCategory === 'profile' && <CafeProfileForm />}
           {activeCategory === 'branding' && <BrandingSettings />}
           {activeCategory === 'tax' && <TaxCurrencySettings />}
+          {activeCategory === 'receipts' && <ReceiptTemplateBuilder />}
           {activeCategory === 'printer' && <PrinterSettings />}
           {activeCategory === 'preferences' && <GeneralPreferences />}
         </div>

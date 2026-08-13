@@ -1,13 +1,13 @@
 import type { Order } from '../../types';
-import { formatOrderReceipt } from './receiptFormatter';
+import { formatReceiptFromTemplate } from './receiptFormatter';
 import { toast } from '../../components/ui/toast';
 
 /**
  * Fallback browser printing handler generating a clean print window when Web Bluetooth is unavailable.
  * Returns true if the popup window opened successfully, or false if blocked by browser.
  */
-export function printOrderViaBrowser(order: Order, cafeSettings?: any): boolean {
-  const receipt = formatOrderReceipt(order, cafeSettings);
+export function printOrderViaBrowser(order: Order, cafeSettings?: any, templateConfig?: any): boolean {
+  const { data: receipt } = formatReceiptFromTemplate(order, templateConfig, cafeSettings);
 
   const printWindow = window.open('', '_blank', 'width=420,height=650');
   if (!printWindow) {

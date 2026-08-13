@@ -6,3 +6,4 @@ export * from './supabase.types';
 export * from './customer.types';
 export * from './payment.types';
 export * from './water.types';
+export * from './receiptTemplate.types';

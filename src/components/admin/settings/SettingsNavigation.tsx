@@ -10,7 +10,7 @@ import {
   ArrowRight01Icon,
 } from '@hugeicons/core-free-icons';
 
-export type SettingsCategory = 'profile' | 'branding' | 'tax' | 'printer' | 'preferences';
+export type SettingsCategory = 'profile' | 'branding' | 'tax' | 'printer' | 'receipts' | 'preferences';
 
 interface NavItem {
   id: SettingsCategory;
@@ -36,6 +36,12 @@ const NAV_ITEMS: NavItem[] = [
     id: 'tax',
     label: 'Tax & Currency',
     description: 'Billing tax rates & currency unit',
+    icon: InvoiceIcon,
+  },
+  {
+    id: 'receipts',
+    label: 'Receipt Templates',
+    description: 'Customize thermal slips & formatting',
     icon: InvoiceIcon,
   },
   {

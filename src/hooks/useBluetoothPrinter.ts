@@ -7,10 +7,10 @@ import {
   isSecureContext,
   normalizePrinterError,
 } from '../lib/printer/bluetoothPrinter';
-import { formatOrderReceipt } from '../lib/printer/receiptFormatter';
-import { encodeReceiptToEscPos, encodeTestReceiptToEscPos } from '../lib/printer/escpos';
+import { encodeTestReceiptToEscPos, encodeTemplateReceiptToEscPos } from '../lib/printer/escpos';
 import { printOrderViaBrowser } from '../lib/printer/browserPrint';
 import { markOrderAsPrinted, fetchPrinterSettings, updatePrinterSettings } from '../lib/supabase/queries/printer';
+import { fetchActiveReceiptTemplate } from '../lib/supabase/queries/receiptTemplates';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Order } from '../types';
 
@@ -100,11 +100,8 @@ export function useBluetoothPrinter() {
       setStatus('printing');
       setError(null);
 
-      const printerSettings = await fetchPrinterSettings().catch(() => null);
-      const paperWidth = printerSettings?.paper_width || 32;
-
-      const formatted = formatOrderReceipt(order, cafeSettings);
-      const escposBytes = encodeReceiptToEscPos(formatted, paperWidth);
+      const activeTemplate = await fetchActiveReceiptTemplate().catch(() => null);
+      const escposBytes = encodeTemplateReceiptToEscPos(order, activeTemplate?.template_config, cafeSettings);
 
       await sendEscPosData(escposBytes);
 
