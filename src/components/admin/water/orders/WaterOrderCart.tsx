@@ -237,7 +237,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
       {/* Payment Method Selector */}
       <div className="space-y-1.5 pt-1">
         <Label className="text-xs font-semibold">Payment Method</Label>
-        <div className="grid grid-cols-5 gap-1">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-1">
           {(['cash', 'upi', 'card', 'other', 'pay_later'] as const).map((method) => {
             const isPayLater = method === 'pay_later';
             const isSelected = paymentMethod === method;
@@ -250,9 +250,9 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
                 className={
                   isSelected
                     ? isPayLater
-                      ? 'bg-amber-600 hover:bg-amber-700 text-white uppercase font-bold text-[9px] sm:text-[10px] h-8 rounded-lg shadow-xs'
-                      : 'bg-cinnamon hover:bg-cinnamon/90 text-white uppercase font-bold text-[9px] sm:text-[10px] h-8 rounded-lg shadow-xs'
-                    : 'uppercase text-[9px] sm:text-[10px] h-8 text-foreground/80 rounded-lg'
+                      ? 'bg-amber-600 hover:bg-amber-700 text-white uppercase font-bold text-[10px] sm:text-[11px] h-8.5 rounded-lg shadow-xs'
+                      : 'bg-cinnamon hover:bg-cinnamon/90 text-white uppercase font-bold text-[10px] sm:text-[11px] h-8.5 rounded-lg shadow-xs'
+                    : 'uppercase text-[10px] sm:text-[11px] h-8.5 text-foreground/80 rounded-lg'
                 }
                 onClick={() => setPaymentMethod(method)}
               >
@@ -279,8 +279,8 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
       {/* Pay Later Customer Credit Workflow Section */}
       {paymentMethod === 'pay_later' && (
         <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
+            <span className="text-xs font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5 shrink-0">
               <HugeiconsIcon icon={UserIcon} size={15} />
               <span>Water Customer Profile *</span>
             </span>
@@ -288,7 +288,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
               type="button"
               variant="outline"
               size="xs"
-              className="h-7 text-[11px] gap-1 rounded-md border-amber-500/40 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold"
+              className="h-7 text-[11px] px-2.5 gap-1 rounded-md border-amber-500/40 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold shrink-0"
               onClick={() => setShowAddCustomerModal(true)}
             >
               <HugeiconsIcon icon={UserAdd01Icon} size={13} />
