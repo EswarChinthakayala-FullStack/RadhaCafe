@@ -3,7 +3,10 @@ import { useCart } from '../../../hooks/useCart';
 import { useCreateOrder } from '../../../hooks/useOrders';
 import { useCafeSettings } from '../../../hooks/useCafeSettings';
 import { useBluetoothPrinter } from '../../../hooks/useBluetoothPrinter';
+import { useCustomerSearch } from '../../../hooks/useCustomers';
 import { formatCurrency } from '../../../lib/utils/formatCurrency';
+import type { Customer, PaymentMethod } from '../../../types';
+import { CustomerFormModal } from '../customers/CustomerFormModal';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
@@ -17,6 +20,11 @@ import {
   PrinterIcon,
   CheckmarkCircle02Icon,
   ShoppingCart01Icon,
+  UserIcon,
+  UserAdd01Icon,
+  Search01Icon,
+  AlertCircleIcon,
+  Cancel01Icon,
 } from '@hugeicons/core-free-icons';
 
 interface OrderCartProps {
@@ -30,12 +38,19 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
   const { status: printerStatus, printOrder, printBrowserFallback } = useBluetoothPrinter();
 
   const [customerName, setCustomerName] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'upi' | 'other'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerSearchQuery, setCustomerSearchQuery] = useState('');
+  const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
+  const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
+
   const [createdOrder, setCreatedOrder] = useState<any | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [printMessage, setPrintMessage] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const { data: searchResults, isLoading: isSearchLoading } = useCustomerSearch(customerSearchQuery);
 
   const grandTotal = Math.max(0, subtotal - discount);
 
@@ -45,8 +60,17 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
     setErrorMsg(null);
     setPrintMessage(null);
 
+    // Validate Pay Later customer requirement
+    if (paymentMethod === 'pay_later' && !selectedCustomer) {
+      setErrorMsg('Please select or create a customer to place a Pay Later credit order.');
+      return;
+    }
+
     const payload = {
-      customer_name: customerName.trim() || 'Walk-in Customer',
+      customer_id: selectedCustomer?.id || null,
+      customer_name: selectedCustomer
+        ? selectedCustomer.name
+        : customerName.trim() || 'Walk-in Customer',
       payment_method: paymentMethod,
       tax_amount: 0,
       discount_amount: discount,
@@ -67,6 +91,9 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
       // Clear cart immediately upon successful order creation
       clearCart();
       setCustomerName('');
+      setSelectedCustomer(null);
+      setCustomerSearchQuery('');
+      setPaymentMethod('cash');
       if (onCloseMobileCart) onCloseMobileCart();
 
       // 2. Auto-trigger bluetooth printing if printer is connected
@@ -98,6 +125,15 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
     }
   };
 
+  const handleCustomerCreatedOnTheFly = (newCustomer: Customer) => {
+    setSelectedCustomer(newCustomer);
+    setCustomerSearchQuery('');
+    setIsSearchingCustomer(false);
+  };
+
+  const existingOutstanding = Number(selectedCustomer?.total_due || 0);
+  const projectedOutstanding = existingOutstanding + grandTotal;
+
   return (
     <div className="border border-border/80 rounded-md p-5 bg-card flex flex-col h-full space-y-4 shadow-sm">
       <div className="flex justify-between items-center border-b border-border pb-3">
@@ -113,26 +149,16 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
       </div>
 
       {errorMsg && (
-        <div className="p-3 rounded-lg bg-destructive/10 text-destructive border border-destructive/20 text-xs font-medium">
-          {errorMsg}
+        <div className="p-3 rounded-lg bg-destructive/10 text-destructive border border-destructive/20 text-xs font-medium flex items-center gap-2">
+          <HugeiconsIcon icon={AlertCircleIcon} size={16} className="shrink-0 text-destructive" />
+          <span>{errorMsg}</span>
         </div>
       )}
 
-      {/* Customer Name */}
-      <div className="space-y-1.5">
-        <Label className="text-xs font-semibold">Customer Name (Optional)</Label>
-        <Input
-          placeholder="e.g. Ananya / Table 4"
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          className="h-9 text-xs bg-background rounded-md"
-        />
-      </div>
-
       {/* Cart Items List */}
-      <div className="flex-1 overflow-y-auto space-y-2.5 min-h-[200px] max-h-[350px] pr-1">
+      <div className="flex-1 overflow-y-auto space-y-2.5 min-h-[160px] max-h-[300px] pr-1">
         {items.length === 0 ? (
-          <div className="text-center py-12 space-y-2 border border-dashed border-border/60 rounded-md bg-secondary/20">
+          <div className="text-center py-10 space-y-2 border border-dashed border-border/60 rounded-md bg-secondary/20">
             <HugeiconsIcon icon={ShoppingCart01Icon} className="mx-auto text-muted-foreground/40 w-8 h-8" />
             <p className="text-xs font-semibold text-foreground">Your order is empty</p>
             <p className="text-[11px] text-muted-foreground">Select items from the menu to start a new order.</p>
@@ -211,36 +237,191 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         </div>
       </div>
 
-      {/* Payment Method Segment */}
+      {/* Payment Method Selector */}
       <div className="space-y-1.5 pt-1">
         <Label className="text-xs font-semibold">Payment Method</Label>
-        <div className="grid grid-cols-4 gap-1.5">
-          {(['cash', 'upi', 'card', 'other'] as const).map((method) => (
-            <Button
-              key={method}
-              type="button"
-              variant={paymentMethod === method ? 'default' : 'outline'}
-              size="xs"
-              className={
-                paymentMethod === method
-                  ? 'bg-cinnamon text-white uppercase font-bold text-[10px] h-8 rounded-lg shadow-xs'
-                  : 'uppercase text-[10px] h-8 text-foreground/80 rounded-lg'
-              }
-              onClick={() => setPaymentMethod(method)}
-            >
-              {method}
-            </Button>
-          ))}
+        <div className="grid grid-cols-5 gap-1">
+          {(['cash', 'upi', 'card', 'other', 'pay_later'] as const).map((method) => {
+            const isPayLater = method === 'pay_later';
+            const isSelected = paymentMethod === method;
+            return (
+              <Button
+                key={method}
+                type="button"
+                variant={isSelected ? 'default' : 'outline'}
+                size="xs"
+                className={
+                  isSelected
+                    ? isPayLater
+                      ? 'bg-amber-600 hover:bg-amber-700 text-white uppercase font-bold text-[9px] sm:text-[10px] h-8 rounded-lg shadow-xs'
+                      : 'bg-cinnamon text-white uppercase font-bold text-[9px] sm:text-[10px] h-8 rounded-lg shadow-xs'
+                    : 'uppercase text-[9px] sm:text-[10px] h-8 text-foreground/80 rounded-lg'
+                }
+                onClick={() => setPaymentMethod(method)}
+              >
+                {isPayLater ? 'Pay Later' : method}
+              </Button>
+            );
+          })}
         </div>
       </div>
+
+      {/* Customer Name input for Normal paid orders */}
+      {paymentMethod !== 'pay_later' && (
+        <div className="space-y-1.5">
+          <Label className="text-xs font-semibold">Customer Name (Optional)</Label>
+          <Input
+            placeholder="e.g. Ananya / Table 4"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            className="h-9 text-xs bg-background rounded-md"
+          />
+        </div>
+      )}
+
+      {/* Pay Later Customer Credit Workflow Section */}
+      {paymentMethod === 'pay_later' && (
+        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+              <HugeiconsIcon icon={UserIcon} size={15} />
+              <span>Credit Customer Profile *</span>
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="xs"
+              className="h-7 text-[11px] gap-1 rounded-md border-amber-500/40 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold"
+              onClick={() => setShowAddCustomerModal(true)}
+            >
+              <HugeiconsIcon icon={UserAdd01Icon} size={13} />
+              <span>New Customer</span>
+            </Button>
+          </div>
+
+          {/* If customer is selected */}
+          {selectedCustomer ? (
+            <div className="p-2.5 rounded-md bg-background border border-border/80 space-y-2 text-xs">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-bold text-foreground">{selectedCustomer.name}</p>
+                  <p className="text-[11px] text-muted-foreground font-mono">{selectedCustomer.phone}</p>
+                </div>
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                  onClick={() => setSelectedCustomer(null)}
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} size={14} />
+                </Button>
+              </div>
+
+              {/* Outstanding Balance Projections */}
+              <div className="pt-2 border-t border-border/50 space-y-1 text-[11px]">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Existing Outstanding:</span>
+                  <span className="font-semibold text-foreground">{formatCurrency(existingOutstanding)}</span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>New Order Total:</span>
+                  <span className="font-semibold text-cinnamon">+{formatCurrency(grandTotal)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-xs pt-1 border-t border-border/40 text-amber-700 dark:text-amber-400">
+                  <span>Projected Total Due:</span>
+                  <span>{formatCurrency(projectedOutstanding)}</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Search customer autocomplete */
+            <div className="relative space-y-2">
+              <div className="relative">
+                <HugeiconsIcon
+                  icon={Search01Icon}
+                  size={14}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                  placeholder="Search customer by name or phone..."
+                  value={customerSearchQuery}
+                  onChange={(e) => {
+                    setCustomerSearchQuery(e.target.value);
+                    setIsSearchingCustomer(true);
+                  }}
+                  onFocus={() => setIsSearchingCustomer(true)}
+                  className="h-9 text-xs pl-8 bg-background rounded-md"
+                />
+              </div>
+
+              {/* Search dropdown results */}
+              {isSearchingCustomer && customerSearchQuery.trim() !== '' && (
+                <div className="absolute top-full left-0 w-full z-20 mt-1 bg-card border border-border rounded-md shadow-xl max-h-48 overflow-y-auto p-1">
+                  {isSearchLoading ? (
+                    <div className="p-3 text-center text-xs text-muted-foreground">Searching customers...</div>
+                  ) : !searchResults || searchResults.length === 0 ? (
+                    <div className="p-3 text-center space-y-2">
+                      <p className="text-xs text-muted-foreground">No customer found for "{customerSearchQuery}"</p>
+                      <Button
+                        type="button"
+                        size="xs"
+                        onClick={() => {
+                          setShowAddCustomerModal(true);
+                          setIsSearchingCustomer(false);
+                        }}
+                        className="h-7 text-xs bg-cinnamon hover:bg-cinnamon/90 text-white font-bold gap-1 rounded-md"
+                      >
+                        <HugeiconsIcon icon={UserAdd01Icon} size={13} />
+                        <span>Create Customer Profile</span>
+                      </Button>
+                    </div>
+                  ) : (
+                    searchResults.map((cust) => (
+                      <button
+                        key={cust.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCustomer(cust);
+                          setIsSearchingCustomer(false);
+                          setCustomerSearchQuery('');
+                        }}
+                        className="w-full text-left p-2 hover:bg-secondary/60 rounded-md transition-all flex justify-between items-center text-xs"
+                      >
+                        <div>
+                          <p className="font-bold text-foreground">{cust.name}</p>
+                          <p className="text-[11px] text-muted-foreground font-mono">{cust.phone}</p>
+                        </div>
+                        <Badge
+                          variant={Number(cust.total_due || 0) > 0 ? 'secondary' : 'outline'}
+                          className="text-[10px] font-semibold"
+                        >
+                          Outstanding: {formatCurrency(Number(cust.total_due || 0))}
+                        </Badge>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Place Order CTA */}
       <Button
         onClick={handleCheckout}
         disabled={items.length === 0 || createOrderMutation.isPending}
-        className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-sm shadow-md rounded-md"
+        className={
+          paymentMethod === 'pay_later'
+            ? 'w-full bg-amber-600 hover:bg-amber-700 text-white font-bold h-11 text-sm shadow-md rounded-md'
+            : 'w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-sm shadow-md rounded-md'
+        }
       >
-        {createOrderMutation.isPending ? 'Processing Order...' : `Place Order (${formatCurrency(grandTotal)})`}
+        {createOrderMutation.isPending
+          ? 'Processing Order...'
+          : paymentMethod === 'pay_later'
+          ? `Place Pay Later Order (${formatCurrency(grandTotal)})`
+          : `Place Order (${formatCurrency(grandTotal)})`}
       </Button>
 
       {/* Success & Print Action Modal */}
@@ -261,75 +442,74 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 text-xs pt-1">
-            <div className="p-4 rounded-md bg-secondary/40 border border-border/60 space-y-2.5">
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground font-medium">Customer:</span>
-                <span className="font-bold text-foreground">{createdOrder?.customer_name || 'Walk-in Customer'}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground font-medium">Total Paid:</span>
-                <span className="font-bold text-cinnamon text-sm">{formatCurrency(createdOrder?.total_amount || 0)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground font-medium">Printer Status:</span>
-                <Badge
-                  variant={printerStatus === 'connected' ? 'default' : 'outline'}
-                  className={
-                    printerStatus === 'connected'
-                      ? 'bg-success text-white text-[10px] font-bold capitalize'
-                      : 'text-muted-foreground text-[10px] capitalize'
-                  }
-                >
-                  {printerStatus}
-                </Badge>
-              </div>
+          {/* Payment & Credit details recap */}
+          <div className="p-3.5 rounded-lg bg-secondary/50 border border-border/60 space-y-1.5 text-xs">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Customer:</span>
+              <span className="font-bold text-foreground">{createdOrder?.customer_name}</span>
             </div>
-
-            {printMessage && (
-              <div
-                className={`p-3 rounded-md text-xs font-medium border ${printMessage.includes('successfully')
-                  ? 'bg-success/10 text-success border-success/20'
-                  : 'bg-amber-500/10 text-amber-800 border-amber-500/20'
-                  }`}
-              >
-                {printMessage}
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Payment Method:</span>
+              <Badge variant="outline" className="uppercase text-[10px] font-bold">
+                {createdOrder?.payment_method === 'pay_later' ? 'PAY LATER' : createdOrder?.payment_method}
+              </Badge>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Total Amount:</span>
+              <span className="font-bold text-cinnamon">{formatCurrency(createdOrder?.total_amount || 0)}</span>
+            </div>
+            {createdOrder?.payment_method === 'pay_later' && (
+              <div className="flex justify-between pt-1 border-t border-border/40 text-amber-700 dark:text-amber-400 font-bold">
+                <span>Amount Due:</span>
+                <span>{formatCurrency(createdOrder?.due_amount || createdOrder?.total_amount || 0)}</span>
               </div>
             )}
+          </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={isPrinting}
-                className="text-xs font-semibold h-10 rounded-md gap-1.5 border-border/80 hover:bg-secondary/40"
-                onClick={handleManualPrint}
-              >
-                <HugeiconsIcon icon={PrinterIcon} size={15} />
-                <span>{isPrinting ? 'Printing...' : 'Bluetooth Print'}</span>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="text-xs font-semibold h-10 rounded-md gap-1.5 border-border/80 hover:bg-secondary/40"
-                onClick={() => createdOrder && printBrowserFallback(createdOrder, settings)}
-              >
-                <HugeiconsIcon icon={PrinterIcon} size={15} />
-                <span>Browser Print</span>
-              </Button>
+          {printMessage && (
+            <div className="p-3 rounded-lg bg-secondary text-xs text-center font-medium border border-border/60">
+              {printMessage}
             </div>
+          )}
+
+          <div className="space-y-2 pt-2">
+            {printerStatus === 'connected' ? (
+              <Button
+                onClick={handleManualPrint}
+                disabled={isPrinting}
+                className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 text-xs rounded-md shadow-xs gap-2"
+              >
+                <HugeiconsIcon icon={PrinterIcon} size={16} />
+                <span>{isPrinting ? 'Printing Receipt...' : 'Reprint Receipt via Bluetooth'}</span>
+              </Button>
+            ) : (
+              <Button
+                onClick={() => createdOrder && printBrowserFallback(createdOrder, settings)}
+                variant="outline"
+                className="w-full h-10 text-xs font-bold gap-2 rounded-md border-border/80"
+              >
+                <HugeiconsIcon icon={PrinterIcon} size={16} />
+                <span>Print Receipt via Browser / PDF</span>
+              </Button>
+            )}
 
             <Button
-              type="button"
-              className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs h-11 rounded-md shadow-md gap-1.5 transition-all"
               onClick={() => setShowSuccessModal(false)}
+              variant="ghost"
+              className="w-full h-9 text-xs font-semibold"
             >
-              <HugeiconsIcon icon={PlusSignIcon} size={16} />
-              <span>Start New Order</span>
+              Done & Start Next Order
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Quick Add Customer Modal */}
+      <CustomerFormModal
+        open={showAddCustomerModal}
+        onOpenChange={setShowAddCustomerModal}
+        onSuccess={handleCustomerCreatedOnTheFly}
+      />
     </div>
   );
 }

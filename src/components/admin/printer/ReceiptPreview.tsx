@@ -93,6 +93,12 @@ export function ReceiptPreview({ order, cafeSettings }: ReceiptPreviewProps) {
           <span>Payment</span>
           <span className="uppercase font-bold">{receipt.paymentMethod}</span>
         </div>
+        {Boolean(receipt.dueAmount && receipt.dueAmount > 0) && (
+          <div className="flex justify-between text-[11px] font-bold text-amber-700 dark:text-amber-400 pt-1 border-t border-dashed border-border/60">
+            <span>Amount Due</span>
+            <span className="font-mono">{formatCurrency(receipt.dueAmount || 0)}</span>
+          </div>
+        )}
       </div>
 
       <div className="border-b border-dashed border-border/80 my-2" />

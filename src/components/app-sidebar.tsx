@@ -21,6 +21,7 @@ import {
   DashboardSquare01Icon,
   PlusSignIcon,
   InvoiceIcon,
+  UserGroupIcon,
   Menu01Icon,
   Image01Icon,
   Comment01Icon,
@@ -50,6 +51,7 @@ const navGroups: NavGroup[] = [
       { title: "Dashboard", url: ROUTES.ADMIN.DASHBOARD, icon: DashboardSquare01Icon },
       { title: "New Order", url: ROUTES.ADMIN.NEW_ORDER, icon: PlusSignIcon },
       { title: "Order History", url: ROUTES.ADMIN.ORDERS, icon: InvoiceIcon },
+      { title: "Customers", url: ROUTES.ADMIN.CUSTOMERS, icon: UserGroupIcon },
     ],
   },
   {

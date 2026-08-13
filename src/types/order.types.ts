@@ -1,7 +1,8 @@
 import type { MenuItem } from './menuItem.types';
 
 export type OrderStatus = 'pending' | 'preparing' | 'completed' | 'cancelled';
-export type PaymentMethod = 'cash' | 'card' | 'upi' | 'other';
+export type PaymentMethod = 'cash' | 'card' | 'upi' | 'other' | 'pay_later';
+export type PaymentStatus = 'paid' | 'partial' | 'unpaid';
 
 export interface OrderItem {
   id?: string;
@@ -17,6 +18,7 @@ export interface OrderItem {
 export interface Order {
   id: string;
   order_number: string;
+  customer_id?: string | null;
   customer_name?: string | null;
   status: OrderStatus;
   subtotal: number;
@@ -24,6 +26,10 @@ export interface Order {
   discount_amount: number;
   total_amount: number;
   payment_method: PaymentMethod;
+  payment_status?: PaymentStatus;
+  paid_amount?: number;
+  due_amount?: number;
+  paid_at?: string | null;
   is_printed: boolean;
   created_at: string;
   completed_at?: string | null;
@@ -37,6 +43,7 @@ export interface CartItem {
 }
 
 export interface CreateOrderPayload {
+  customer_id?: string | null;
   customer_name?: string | null;
   payment_method: PaymentMethod;
   tax_amount: number;

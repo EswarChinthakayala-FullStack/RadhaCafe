@@ -37,61 +37,85 @@ export function OrderTable({ orders, onSelectOrder, onPrintOrder }: OrderTablePr
             </tr>
           </thead>
           <tbody className="divide-y divide-border/60">
-            {orders.map((order) => (
-              <tr key={order.id} className="hover:bg-secondary/20 transition-colors">
-                <td className="p-3.5 pl-4 font-bold font-mono text-primary text-xs whitespace-nowrap">
-                  {order.order_number}
-                </td>
-                <td className="p-3.5 font-medium text-foreground truncate max-w-[160px]">
-                  {order.customer_name || 'Walk-in Customer'}
-                </td>
-                <td className="p-3.5 text-muted-foreground whitespace-nowrap">
-                  {formatDate(order.created_at)}
-                </td>
-                <td className="p-3.5 font-semibold text-foreground whitespace-nowrap">
-                  {order.items?.length || 0} {order.items?.length === 1 ? 'item' : 'items'}
-                </td>
-                <td className="p-3.5 font-bold font-mono text-foreground whitespace-nowrap">
-                  {formatCurrency(order.total_amount)}
-                </td>
-                <td className="p-3.5 whitespace-nowrap">
-                  <Badge variant="outline" className="uppercase font-bold text-[10px] text-cinnamon border-cinnamon/30 bg-cinnamon/5 rounded-md px-2 py-0.5">
-                    {order.payment_method}
-                  </Badge>
-                </td>
-                <td className="p-3.5 whitespace-nowrap">
-                  <OrderStatusBadge status={order.status} />
-                </td>
-                <td className="p-3.5 text-right pr-4 whitespace-nowrap">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button variant="ghost" size="icon-sm" className="h-8 w-8 rounded-lg" />
-                      }
-                    >
-                      <HugeiconsIcon icon={MoreVerticalIcon} size={16} />
-                      <span className="sr-only">Actions</span>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-36 rounded-md p-1 bg-card">
-                      <DropdownMenuItem
-                        onClick={() => onSelectOrder(order)}
-                        className="cursor-pointer gap-2 font-semibold text-xs py-1.5 rounded-lg"
+            {orders.map((order) => {
+              const due = Number(order.due_amount || 0);
+              const isPaid = order.payment_status === 'paid' || due === 0;
+              const isPartial = order.payment_status === 'partial';
+
+              return (
+                <tr key={order.id} className="hover:bg-secondary/20 transition-colors">
+                  <td className="p-3.5 pl-4 font-bold font-mono text-primary text-xs whitespace-nowrap">
+                    {order.order_number}
+                  </td>
+                  <td className="p-3.5 font-medium text-foreground truncate max-w-[160px]">
+                    {order.customer_name || 'Walk-in Customer'}
+                  </td>
+                  <td className="p-3.5 text-muted-foreground whitespace-nowrap">
+                    {formatDate(order.created_at)}
+                  </td>
+                  <td className="p-3.5 font-semibold text-foreground whitespace-nowrap">
+                    {order.items?.length || 0} {order.items?.length === 1 ? 'item' : 'items'}
+                  </td>
+                  <td className="p-3.5 font-bold font-mono text-foreground whitespace-nowrap">
+                    <div>{formatCurrency(order.total_amount)}</div>
+                    {!isPaid && (
+                      <div className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                        Due: {formatCurrency(due)}
+                      </div>
+                    )}
+                  </td>
+                  <td className="p-3.5 whitespace-nowrap">
+                    <div className="flex items-center gap-1.5">
+                      <Badge variant="outline" className="uppercase font-bold text-[10px] text-cinnamon border-cinnamon/30 bg-cinnamon/5 rounded-md px-2 py-0.5">
+                        {order.payment_method === 'pay_later' ? 'PAY LATER' : order.payment_method}
+                      </Badge>
+                      <Badge
+                        className={
+                          isPaid
+                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 text-[10px]'
+                            : isPartial
+                            ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 text-[10px]'
+                            : 'bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30 text-[10px]'
+                        }
                       >
-                        <HugeiconsIcon icon={ViewIcon} size={14} className="text-cinnamon" />
-                        <span>View Details</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => onPrintOrder(order)}
-                        className="cursor-pointer gap-2 font-semibold text-xs py-1.5 rounded-lg"
+                        {isPaid ? 'PAID' : isPartial ? 'PARTIAL' : 'DUE'}
+                      </Badge>
+                    </div>
+                  </td>
+                  <td className="p-3.5 whitespace-nowrap">
+                    <OrderStatusBadge status={order.status} />
+                  </td>
+                  <td className="p-3.5 text-right pr-4 whitespace-nowrap">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button variant="ghost" size="icon-sm" className="h-8 w-8 rounded-lg" />
+                        }
                       >
-                        <HugeiconsIcon icon={PrinterIcon} size={14} className="text-primary" />
-                        <span>Print Receipt</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
-              </tr>
-            ))}
+                        <HugeiconsIcon icon={MoreVerticalIcon} size={16} />
+                        <span className="sr-only">Actions</span>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-36 rounded-md p-1 bg-card">
+                        <DropdownMenuItem
+                          onClick={() => onSelectOrder(order)}
+                          className="cursor-pointer gap-2 font-semibold text-xs py-1.5 rounded-lg"
+                        >
+                          <HugeiconsIcon icon={ViewIcon} size={14} className="text-cinnamon" />
+                          <span>View Details</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => onPrintOrder(order)}
+                          className="cursor-pointer gap-2 font-semibold text-xs py-1.5 rounded-lg"
+                        >
+                          <HugeiconsIcon icon={PrinterIcon} size={14} className="text-primary" />
+                          <span>Print Receipt</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

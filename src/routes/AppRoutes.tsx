@@ -13,6 +13,8 @@ import { AdminLayout } from '../components/admin/layout/AdminLayout';
 import { DashboardPage } from '../pages/admin/DashboardPage';
 import { OrdersPage } from '../pages/admin/OrdersPage';
 import { NewOrderPage } from '../pages/admin/NewOrderPage';
+import { CustomersPage } from '../pages/admin/customers/CustomersPage';
+import { CustomerDetailsPage } from '../pages/admin/customers/CustomerDetailsPage';
 import { MenuPage } from '../pages/admin/MenuPage';
 import { AnalyticsPage } from '../pages/admin/AnalyticsPage';
 import { GalleryPage } from '../pages/admin/GalleryPage';
@@ -42,6 +44,8 @@ export function AppRoutes() {
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="orders" element={<OrdersPage />} />
                 <Route path="orders/new" element={<NewOrderPage />} />
+                <Route path="customers" element={<CustomersPage />} />
+                <Route path="customers/:id" element={<CustomerDetailsPage />} />
                 <Route path="menu" element={<MenuPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="gallery" element={<GalleryPage />} />

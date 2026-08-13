@@ -213,6 +213,7 @@ export async function fetchPaymentMethodBreakdown(
     cash: { label: 'Cash', order_count: 0, revenue: 0 },
     upi: { label: 'UPI', order_count: 0, revenue: 0 },
     card: { label: 'Card', order_count: 0, revenue: 0 },
+    pay_later: { label: 'Pay Later', order_count: 0, revenue: 0 },
     other: { label: 'Other', order_count: 0, revenue: 0 },
   };
 

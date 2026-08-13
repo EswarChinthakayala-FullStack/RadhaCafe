@@ -11,6 +11,8 @@ export const ROUTES = {
     DASHBOARD: '/admin/dashboard',
     ORDERS: '/admin/orders',
     NEW_ORDER: '/admin/orders/new',
+    CUSTOMERS: '/admin/customers',
+    CUSTOMER_DETAILS: '/admin/customers/:id',
     MENU: '/admin/menu',
     ANALYTICS: '/admin/analytics',
     GALLERY: '/admin/gallery',

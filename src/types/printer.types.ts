@@ -30,5 +30,7 @@ export interface FormattedReceiptData {
   tax: number;
   discount: number;
   total: number;
+  paidAmount?: number;
+  dueAmount?: number;
   footerMessage: string;
 }

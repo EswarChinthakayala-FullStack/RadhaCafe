@@ -40,6 +40,9 @@ export function formatOrderReceipt(
     };
   });
 
+  const due = Number(order.due_amount || 0);
+  const paid = Number(order.paid_amount || (due === 0 ? order.total_amount : 0));
+
   return {
     cafeName,
     address,
@@ -47,12 +50,14 @@ export function formatOrderReceipt(
     orderNumber: order.order_number || `RC-${order.id.slice(0, 6).toUpperCase()}`,
     dateTime: formatDate(order.created_at),
     customerName: order.customer_name || 'Walk-in Customer',
-    paymentMethod: order.payment_method || 'cash',
+    paymentMethod: order.payment_method === 'pay_later' ? 'PAY LATER' : order.payment_method || 'cash',
     items,
     subtotal: Number(order.subtotal || 0),
     tax: Number(order.tax_amount || 0),
     discount: Number(order.discount_amount || 0),
     total: Number(order.total_amount || 0),
+    paidAmount: paid,
+    dueAmount: due,
     footerMessage,
   };
 }

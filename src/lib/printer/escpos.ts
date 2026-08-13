@@ -182,6 +182,11 @@ export function encodeReceiptToEscPos(
   if (data.paymentMethod) {
     addText(formatLine('Payment', data.paymentMethod.toUpperCase(), paperWidth) + '\n');
   }
+  if (data.dueAmount && data.dueAmount > 0) {
+    addBytes(ESC_POS_COMMANDS.TEXT_BOLD_ON);
+    addText(formatLine('Amount Due', `Rs. ${data.dueAmount.toFixed(2)}`, paperWidth) + '\n');
+    addBytes(ESC_POS_COMMANDS.TEXT_BOLD_OFF);
+  }
   addText(divider);
 
   // 7. Footer & Paper Cut

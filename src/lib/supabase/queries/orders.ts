@@ -6,6 +6,8 @@ export interface OrderFilterParams {
   limit?: number;
   status?: string;
   paymentMethod?: string;
+  paymentStatus?: string;
+  customerId?: string;
   date?: string;
   startDate?: string;
   endDate?: string;
@@ -13,7 +15,19 @@ export interface OrderFilterParams {
 }
 
 export async function fetchOrders(params: OrderFilterParams = {}): Promise<{ orders: Order[]; count: number }> {
-  const { page = 1, limit = 20, status, paymentMethod, date, startDate, endDate, search } = params;
+  const {
+    page = 1,
+    limit = 20,
+    status,
+    paymentMethod,
+    paymentStatus,
+    customerId,
+    date,
+    startDate,
+    endDate,
+    search,
+  } = params;
+
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
@@ -22,6 +36,7 @@ export async function fetchOrders(params: OrderFilterParams = {}): Promise<{ ord
     .select(`
       id,
       order_number,
+      customer_id,
       customer_name,
       status,
       subtotal,
@@ -29,6 +44,10 @@ export async function fetchOrders(params: OrderFilterParams = {}): Promise<{ ord
       discount_amount,
       total_amount,
       payment_method,
+      payment_status,
+      paid_amount,
+      due_amount,
+      paid_at,
       is_printed,
       created_at,
       completed_at,
@@ -41,6 +60,14 @@ export async function fetchOrders(params: OrderFilterParams = {}): Promise<{ ord
 
   if (paymentMethod && paymentMethod !== 'all') {
     query = query.eq('payment_method', paymentMethod);
+  }
+
+  if (paymentStatus && paymentStatus !== 'all') {
+    query = query.eq('payment_status', paymentStatus);
+  }
+
+  if (customerId) {
+    query = query.eq('customer_id', customerId);
   }
 
   if (startDate && endDate) {
@@ -85,6 +112,7 @@ export async function createOrder(payload: CreateOrderPayload): Promise<Order> {
     p_tax_amount: payload.tax_amount,
     p_discount_amount: payload.discount_amount,
     p_payment_method: payload.payment_method,
+    p_customer_id: payload.customer_id || null,
   });
 
   if (error) throw new Error(error.message);

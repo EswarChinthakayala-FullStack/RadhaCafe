@@ -14,6 +14,10 @@ interface OrderCardProps {
 }
 
 export function OrderCard({ order, onSelectOrder, onPrintOrder }: OrderCardProps) {
+  const due = Number(order.due_amount || 0);
+  const isPaid = order.payment_status === 'paid' || due === 0;
+  const isPartial = order.payment_status === 'partial';
+
   return (
     <div className="p-4 rounded-md border border-border/80 bg-card shadow-xs hover:border-cinnamon/40 transition-all flex flex-col justify-between space-y-3">
       {/* Top Header Row */}
@@ -26,7 +30,20 @@ export function OrderCard({ order, onSelectOrder, onPrintOrder }: OrderCardProps
             {formatDate(order.created_at)}
           </span>
         </div>
-        <OrderStatusBadge status={order.status} />
+        <div className="flex items-center gap-1.5">
+          <Badge
+            className={
+              isPaid
+                ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 text-[10px]'
+                : isPartial
+                ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 text-[10px]'
+                : 'bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30 text-[10px]'
+            }
+          >
+            {isPaid ? 'PAID' : isPartial ? 'PARTIAL' : 'DUE'}
+          </Badge>
+          <OrderStatusBadge status={order.status} />
+        </div>
       </div>
 
       {/* Details Row */}
@@ -53,11 +70,18 @@ export function OrderCard({ order, onSelectOrder, onPrintOrder }: OrderCardProps
 
         <div className="flex justify-between items-center pt-1 border-t border-border/40">
           <Badge variant="outline" className="uppercase font-bold text-[10px] text-cinnamon border-cinnamon/30 bg-cinnamon/5 rounded-md px-2 py-0.5">
-            {order.payment_method}
+            {order.payment_method === 'pay_later' ? 'PAY LATER' : order.payment_method}
           </Badge>
-          <span className="font-bold text-sm text-primary font-mono">
-            {formatCurrency(order.total_amount)}
-          </span>
+          <div className="text-right">
+            <span className="font-bold text-sm text-primary font-mono block">
+              {formatCurrency(order.total_amount)}
+            </span>
+            {!isPaid && (
+              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 block">
+                Due: {formatCurrency(due)}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 

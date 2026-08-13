@@ -38,6 +38,38 @@ export interface Database {
           updated_at?: string
         }
       }
+      customers: {
+        Row: {
+          id: string
+          name: string
+          phone: string
+          notes: string | null
+          credit_limit: number | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          phone: string
+          notes?: string | null
+          credit_limit?: number | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          phone?: string
+          notes?: string | null
+          credit_limit?: number | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
       categories: {
         Row: {
           id: string
@@ -100,6 +132,7 @@ export interface Database {
         Row: {
           id: string
           order_number: string
+          customer_id: string | null
           customer_name: string | null
           status: string
           subtotal: number
@@ -107,6 +140,10 @@ export interface Database {
           discount_amount: number
           total_amount: number
           payment_method: string
+          payment_status: string
+          paid_amount: number
+          due_amount: number
+          paid_at: string | null
           is_printed: boolean
           created_at: string
           completed_at: string | null
@@ -114,6 +151,7 @@ export interface Database {
         Insert: {
           id?: string
           order_number: string
+          customer_id?: string | null
           customer_name?: string | null
           status?: string
           subtotal?: number
@@ -121,6 +159,10 @@ export interface Database {
           discount_amount?: number
           total_amount?: number
           payment_method?: string
+          payment_status?: string
+          paid_amount?: number
+          due_amount?: number
+          paid_at?: string | null
           is_printed?: boolean
           created_at?: string
           completed_at?: string | null
@@ -128,6 +170,7 @@ export interface Database {
         Update: {
           id?: string
           order_number?: string
+          customer_id?: string | null
           customer_name?: string | null
           status?: string
           subtotal?: number
@@ -135,6 +178,10 @@ export interface Database {
           discount_amount?: number
           total_amount?: number
           payment_method?: string
+          payment_status?: string
+          paid_amount?: number
+          due_amount?: number
+          paid_at?: string | null
           is_printed?: boolean
           created_at?: string
           completed_at?: string | null
@@ -167,6 +214,35 @@ export interface Database {
           unit_price?: number
           quantity?: number
           total_price?: number
+        }
+      }
+      payments: {
+        Row: {
+          id: string
+          order_id: string
+          customer_id: string | null
+          amount: number
+          payment_method: string
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          customer_id?: string | null
+          amount: number
+          payment_method: string
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          customer_id?: string | null
+          amount?: number
+          payment_method?: string
+          notes?: string | null
+          created_at?: string
         }
       }
       cafe_settings: {
@@ -308,8 +384,19 @@ export interface Database {
           p_tax_amount: number
           p_discount_amount: number
           p_payment_method: string
+          p_customer_id?: string | null
         }
         Returns: Database['public']['Tables']['orders']['Row']
+      }
+      record_customer_payment: {
+        Args: {
+          p_customer_id: string
+          p_amount: number
+          p_payment_method: string
+          p_notes?: string | null
+          p_order_id?: string | null
+        }
+        Returns: Json
       }
     }
     Enums: {
