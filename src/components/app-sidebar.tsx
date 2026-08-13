@@ -120,12 +120,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border" {...props}>
-      <SidebarHeader className="h-14 border-b border-sidebar-border px-4 flex items-center justify-between shrink-0">
-        <Link to={ROUTES.ADMIN.DASHBOARD} className="flex items-center gap-2 group overflow-hidden">
-          <div className="w-8 h-8 shrink-0">
+      <SidebarHeader className="h-14 border-b border-sidebar-border px-4 flex items-center justify-between shrink-0 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+        <Link to={ROUTES.ADMIN.DASHBOARD} className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:justify-center">
+          <div className="w-8 h-8 shrink-0 flex items-center justify-center">
             <RadhaCafeLogo />
           </div>
-          <span className="font-heading font-bold text-sm text-sidebar-foreground truncate">
+          <span className="font-heading font-bold text-sm text-sidebar-foreground truncate group-data-[collapsible=icon]:hidden">
             Radha<span className="text-cinnamon">Cafe</span>
           </span>
         </Link>
@@ -134,7 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent className="px-2 py-4 space-y-4 no-scrollbar">
         {navGroups.map((group, groupIdx) => (
           <SidebarGroup key={group.title} className="p-0">
-            <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/60 mb-1">
+            <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/60 mb-1 group-data-[collapsible=icon]:hidden">
               {group.title}
             </SidebarGroupLabel>
             <SidebarMenu>
@@ -166,13 +166,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       }
                     >
                       <HugeiconsIcon icon={item.icon} size={16} className="shrink-0" />
-                      <span className="truncate">{item.title}</span>
+                      <span className="truncate group-data-[collapsible=icon]:hidden">{item.title}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )
               })}
             </SidebarMenu>
-            {groupIdx < navGroups.length - 1 && <SidebarSeparator className="my-3 opacity-40" />}
+            {groupIdx < navGroups.length - 1 && <SidebarSeparator className="my-3 opacity-40 group-data-[collapsible=icon]:hidden" />}
           </SidebarGroup>
         ))}
       </SidebarContent>
@@ -182,10 +182,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleSignOut}
+              tooltip="Sign Out"
               className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive text-xs font-semibold rounded-md flex items-center gap-3 px-3 py-2 transition-all"
             >
               <HugeiconsIcon icon={Logout01Icon} size={16} className="shrink-0" />
-              <span>Sign Out</span>
+              <span className="group-data-[collapsible=icon]:hidden">Sign Out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
