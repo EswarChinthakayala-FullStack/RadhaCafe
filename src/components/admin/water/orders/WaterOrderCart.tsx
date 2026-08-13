@@ -117,20 +117,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
 
       // Auto-Print Receipt if Auto-Print setting is enabled
       if (autoPrint) {
-        if (printerStatus === 'connected') {
-          setIsPrinting(true);
-          const success = await printOrder(fullOrder as any);
-          setIsPrinting(false);
-          if (success) {
-            setPrintMessage('Water thermal slip auto-printed via Bluetooth!');
-          } else {
-            printBrowserFallback(fullOrder as any);
-          }
-        } else {
-          setTimeout(() => {
-            printBrowserFallback(fullOrder as any);
-          }, 150);
-        }
+        await triggerSmartReceiptPrint(fullOrder);
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to place water order. Please try again.');
@@ -145,25 +132,44 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
     }
   };
 
-  const handleBluetoothPrint = async () => {
-    if (!createdOrder) return;
+  const triggerSmartReceiptPrint = async (targetOrder: any) => {
+    if (!targetOrder) return;
     setIsPrinting(true);
     setPrintMessage(null);
-    try {
-      if (printerStatus !== 'connected') {
-        await connect();
+
+    // 1. First check if Bluetooth thermal printer is connected
+    if (printerStatus === 'connected') {
+      try {
+        const success = await printOrder(targetOrder as any);
+        setIsPrinting(false);
+        if (success) {
+          setPrintMessage('Water receipt printed successfully via Bluetooth ESC/POS printer!');
+          return; // Printed via Bluetooth, skip browser fallback
+        }
+      } catch {
+        setIsPrinting(false);
       }
-      const success = await printOrder(createdOrder as any);
-      if (success) {
-        setPrintMessage('Water receipt printed successfully via Bluetooth!');
-      } else {
-        setPrintMessage('Bluetooth print attempt failed. Check printer connection.');
-      }
-    } catch (err: any) {
-      setPrintMessage(err.message || 'Bluetooth connection failed.');
-    } finally {
-      setIsPrinting(false);
     }
+
+    // 2. Fallback to browser thermal slip print if Bluetooth printer is NOT connected
+    setIsPrinting(false);
+    setPrintMessage('No Bluetooth printer connected. Opening browser print slip...');
+    setTimeout(() => {
+      printBrowserFallback(targetOrder as any);
+    }, 150);
+  };
+
+  const handleBluetoothPrint = async () => {
+    if (!createdOrder) return;
+    if (printerStatus !== 'connected') {
+      try {
+        await connect();
+      } catch (err: any) {
+        setPrintMessage(err.message || 'Bluetooth connection failed.');
+        return;
+      }
+    }
+    await triggerSmartReceiptPrint(createdOrder);
   };
 
   const handleCustomerCreatedOnTheFly = (newCustomer: WaterCustomer) => {
