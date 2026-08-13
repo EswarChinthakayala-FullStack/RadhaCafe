@@ -25,6 +25,7 @@ export function useRecordWaterPayment() {
         queryClient.invalidateQueries({ queryKey: ['waterOrder', variables.water_order_id] });
       }
       queryClient.invalidateQueries({ queryKey: ['waterAnalytics'] });
+      queryClient.invalidateQueries({ queryKey: ['water_analytics'] });
     },
   });
 }

@@ -22,6 +22,7 @@ export function useCreateWaterEventInquiry() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['waterEvents'] });
       queryClient.invalidateQueries({ queryKey: ['waterAnalytics'] });
+      queryClient.invalidateQueries({ queryKey: ['water_analytics'] });
     },
   });
 }
@@ -35,6 +36,7 @@ export function useUpdateWaterEventStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['waterEvents'] });
       queryClient.invalidateQueries({ queryKey: ['waterAnalytics'] });
+      queryClient.invalidateQueries({ queryKey: ['water_analytics'] });
     },
   });
 }

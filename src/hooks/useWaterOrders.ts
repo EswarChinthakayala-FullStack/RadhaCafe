@@ -36,6 +36,7 @@ export function useCreateWaterOrder() {
         queryClient.invalidateQueries({ queryKey: ['waterCustomer', variables.customer_id] });
       }
       queryClient.invalidateQueries({ queryKey: ['waterAnalytics'] });
+      queryClient.invalidateQueries({ queryKey: ['water_analytics'] });
     },
   });
 }

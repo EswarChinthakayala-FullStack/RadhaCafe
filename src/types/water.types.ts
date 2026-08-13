@@ -155,3 +155,91 @@ export interface WaterCartItem {
   product: WaterProduct;
   quantity: number;
 }
+
+export type WaterAnalyticsDateRange =
+  | 'today'
+  | 'yesterday'
+  | 'week'
+  | 'days_30'
+  | 'month'
+  | 'last_month'
+  | 'custom';
+
+export interface WaterKpiSummary {
+  totalOrders: number;
+  totalRevenue: number;
+  avgOrderValue: number;
+  totalCansSold: number;
+  normalCansSold: number;
+  coolingCansSold: number;
+  totalPaid: number;
+  totalDue: number;
+  totalEvents: number;
+  confirmedEvents: number;
+  revenueChangePct?: number | null;
+  ordersChangePct?: number | null;
+  cansChangePct?: number | null;
+}
+
+export interface WaterRevenuePoint {
+  date: string;
+  label: string;
+  revenue: number;
+  orders: number;
+}
+
+export interface WaterOrderVolumePoint {
+  date: string;
+  label: string;
+  completed: number;
+  cancelled: number;
+  total: number;
+}
+
+export interface WaterProductPerfItem {
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  revenue: number;
+  percentage: number;
+}
+
+export interface WaterPaymentStatusItem {
+  status: string;
+  label: string;
+  count: number;
+  amount: number;
+  percentage: number;
+}
+
+export interface WaterOutstandingPoint {
+  date: string;
+  label: string;
+  due: number;
+}
+
+export interface WaterEventAnalyticsData {
+  timeData: {
+    date: string;
+    label: string;
+    new: number;
+    contacted: number;
+    confirmed: number;
+    completed: number;
+    cancelled: number;
+    estimated_cans: number;
+  }[];
+  typeData: {
+    type: string;
+    count: number;
+    estimated_cans: number;
+  }[];
+  summary: {
+    totalEvents: number;
+    newEvents: number;
+    confirmedEvents: number;
+    completedEvents: number;
+    cancelledEvents: number;
+    totalEstimatedCans: number;
+  };
+}
