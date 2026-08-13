@@ -165,7 +165,7 @@ export function OrderItemSelector() {
           <button
             type="button"
             onClick={() => scroll('left')}
-            className="absolute left-0 top-[18px] -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-card border border-border/80 shadow-md flex items-center justify-center p-0 text-foreground hover:bg-secondary active:scale-95 transition-all shrink-0"
+            className="absolute left-0 top-4 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-card border border-border/80 shadow-md flex items-center justify-center p-0 text-foreground hover:bg-secondary active:scale-95 transition-all shrink-0"
             aria-label="Scroll Left"
           >
             <HugeiconsIcon icon={ArrowLeft01Icon} size={14} className="shrink-0" />
@@ -218,7 +218,7 @@ export function OrderItemSelector() {
           <button
             type="button"
             onClick={() => scroll('right')}
-            className="absolute right-0 top-[18px] -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-card border border-border/80 shadow-md flex items-center justify-center p-0 text-foreground hover:bg-secondary active:scale-95 transition-all shrink-0"
+            className="absolute right-0 top-4 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-card border border-border/80 shadow-md flex items-center justify-center p-0 text-foreground hover:bg-secondary active:scale-95 transition-all shrink-0"
             aria-label="Scroll Right"
           >
             <HugeiconsIcon icon={ArrowRight01Icon} size={14} className="shrink-0" />
