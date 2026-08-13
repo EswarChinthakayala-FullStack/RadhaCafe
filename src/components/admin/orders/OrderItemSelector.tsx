@@ -88,11 +88,11 @@ export function OrderItemSelector() {
       </div>
 
       {/* Category Tabs Navigation */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar">
+      <div className="flex items-center gap-2 overflow-x-auto touch-pan-x overscroll-x-contain pb-1.5 scrollbar-none snap-x snap-mandatory scroll-smooth w-full">
         <button
           type="button"
           onClick={() => setSelectedCategoryId(null)}
-          className={`px-3 py-1.5 rounded-md text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${selectedCategoryId === null
+          className={`snap-start shrink-0 min-w-max px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${selectedCategoryId === null
             ? 'bg-cinnamon text-white shadow-xs'
             : 'bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/50'
             }`}
@@ -107,7 +107,7 @@ export function OrderItemSelector() {
               key={cat.id}
               type="button"
               onClick={() => setSelectedCategoryId(cat.id)}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${selectedCategoryId === cat.id
+              className={`snap-start shrink-0 min-w-max px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${selectedCategoryId === cat.id
                 ? 'bg-cinnamon text-white shadow-xs'
                 : 'bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/50'
                 }`}

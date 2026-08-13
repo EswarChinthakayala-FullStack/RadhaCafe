@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Store01Icon,
@@ -55,20 +56,36 @@ interface SettingsNavigationProps {
 }
 
 export function SettingsNavigation({ activeCategory, onSelectCategory }: SettingsNavigationProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll selected tab into view on mobile/tablet
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      const activeEl = scrollContainerRef.current.querySelector('[data-active="true"]');
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  }, [activeCategory]);
+
   return (
     <>
       {/* Mobile & Tablet Horizontal Scroll Navigation */}
-      <div className="lg:hidden w-full overflow-x-auto no-scrollbar pb-2">
-        <div className="flex items-center gap-2 min-w-max">
+      <div 
+        ref={scrollContainerRef}
+        className="lg:hidden w-full overflow-x-auto touch-pan-x overscroll-x-contain pb-2 scrollbar-none snap-x snap-mandatory scroll-smooth"
+      >
+        <div className="flex items-center gap-2 min-w-max px-0.5">
           {NAV_ITEMS.map((item) => {
             const isActive = activeCategory === item.id;
             return (
               <button
                 key={item.id}
                 type="button"
+                data-active={isActive ? "true" : "false"}
                 onClick={() => onSelectCategory(item.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-semibold transition-all border shadow-xs ${isActive
-                  ? 'bg-cinnamon text-white border-cinnamon'
+                className={`snap-start shrink-0 min-w-max flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all border shadow-xs active:scale-95 ${isActive
+                  ? 'bg-cinnamon text-white border-cinnamon shadow-sm'
                   : 'bg-card text-muted-foreground border-border/80 hover:text-foreground hover:bg-secondary/40'
                   }`}
               >
@@ -91,6 +108,7 @@ export function SettingsNavigation({ activeCategory, onSelectCategory }: Setting
             <button
               key={item.id}
               type="button"
+              data-active={isActive ? "true" : "false"}
               onClick={() => onSelectCategory(item.id)}
               className={`w-full flex items-start gap-3 p-3 rounded-md text-left transition-all ${isActive
                 ? 'bg-cinnamon text-white font-semibold shadow-xs'
