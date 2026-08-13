@@ -77,14 +77,14 @@ export function WaterAnalyticsPage() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12 min-w-0 max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-4 sm:pb-5">
-        <div className="flex items-start sm:items-center gap-2.5">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 border-b border-border/80 pb-4 sm:pb-5">
+        <div className="flex items-start sm:items-center gap-2.5 min-w-0">
           <div className="p-2 sm:p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs mt-0.5 sm:mt-0">
             <HugeiconsIcon icon={DropletIcon} size={20} />
           </div>
-          <div>
+          <div className="min-w-0">
             <h2 className="text-lg sm:text-2xl font-bold font-heading text-foreground tracking-tight">
               RadhaWater Performance Analytics
             </h2>
@@ -95,11 +95,11 @@ export function WaterAnalyticsPage() {
         </div>
 
         {/* CSV Export Dropdown / Actions */}
-        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto pt-1 sm:pt-0">
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
           <Button
             size="sm"
             onClick={handleExportAllOrders}
-            className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-9 text-xs gap-1.5 rounded-md shadow-xs flex-1 sm:flex-none justify-center"
+            className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-9 text-xs gap-1.5 rounded-md shadow-xs justify-center"
           >
             <HugeiconsIcon icon={Download01Icon} size={15} />
             <span>Export Orders CSV</span>
@@ -109,7 +109,7 @@ export function WaterAnalyticsPage() {
             size="sm"
             variant="outline"
             onClick={handleExportProducts}
-            className="h-9 text-xs font-semibold gap-1.5 rounded-md border-border/80 flex-1 sm:flex-none justify-center"
+            className="h-9 text-xs font-semibold gap-1.5 rounded-md border-border/80 justify-center"
           >
             <HugeiconsIcon icon={Invoice01Icon} size={15} />
             <span>Products CSV</span>
@@ -214,7 +214,7 @@ export function WaterAnalyticsPage() {
         ) : (
           <>
             {/* Desktop Table View */}
-            <div className="hidden md:block border border-border/80 rounded-md bg-card overflow-hidden shadow-2xs">
+            <div className="hidden md:block border border-border/80 rounded-md bg-card overflow-x-auto shadow-2xs">
               <table className="w-full text-left text-xs">
                 <thead className="bg-secondary/60 text-muted-foreground font-bold uppercase text-[10px] tracking-wider border-b border-border/80">
                   <tr>

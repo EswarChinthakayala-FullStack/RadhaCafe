@@ -46,7 +46,7 @@ export function WaterDashboardPage() {
   const recentOrders = recentOrdersData?.orders || [];
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12 min-w-0 max-w-full overflow-x-hidden">
       {/* Page Header */}
       <div className="flex flex-col gap-3.5 border-b border-border/80 pb-4 sm:pb-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

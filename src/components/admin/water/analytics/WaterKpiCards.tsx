@@ -24,7 +24,7 @@ interface WaterKpiCardsProps {
 export const WaterKpiCards: React.FC<WaterKpiCardsProps> = ({ data, isLoading, isError }) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4">
         {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
           <Skeleton key={i} className="h-24 rounded-md" />
         ))}
@@ -105,7 +105,7 @@ export const WaterKpiCards: React.FC<WaterKpiCardsProps> = ({ data, isLoading, i
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4">
       {kpis.map((kpi, idx) => (
         <Card key={idx} className={`border rounded-md shadow-2xs ${kpi.accent}`}>
           <CardContent className="p-4 flex items-center justify-between">

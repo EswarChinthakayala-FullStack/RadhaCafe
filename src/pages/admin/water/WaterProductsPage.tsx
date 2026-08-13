@@ -198,7 +198,7 @@ export function WaterProductsPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {products.map((prod) => {
             const isCooling = prod.water_type === 'cooling';
             return (
@@ -210,18 +210,20 @@ export function WaterProductsPage() {
                     : 'border border-border/50 bg-secondary/20 rounded-md opacity-75'
                 }
               >
-                <CardContent className="p-5 flex flex-col justify-between h-full space-y-4">
+                <CardContent className="p-4 sm:p-5 flex flex-col justify-between h-full space-y-4">
                   <div className="space-y-2">
-                    <div className="flex justify-between items-start gap-2">
-                      <h3 className="font-bold text-base text-foreground font-heading">{prod.name}</h3>
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <h3 className="font-bold text-sm sm:text-base text-foreground font-heading leading-snug flex-1 min-w-[140px]">
+                        {prod.name}
+                      </h3>
                       <Badge
                         variant={prod.is_available ? 'default' : 'outline'}
                         className={
                           prod.is_available
                             ? isCooling
-                              ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 text-[10px] uppercase font-bold'
-                              : 'bg-cinnamon/15 text-cinnamon border-cinnamon/30 text-[10px] uppercase font-bold'
-                            : 'text-muted-foreground text-[10px] uppercase'
+                              ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 text-[10px] uppercase font-bold shrink-0'
+                              : 'bg-cinnamon/15 text-cinnamon border-cinnamon/30 text-[10px] uppercase font-bold shrink-0'
+                            : 'text-muted-foreground text-[10px] uppercase shrink-0'
                         }
                       >
                         {prod.water_type} • {prod.unit_name}
@@ -233,20 +235,20 @@ export function WaterProductsPage() {
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-border/50">
-                    <div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-border/50">
+                    <div className="shrink-0">
                       <p className="text-[10px] text-muted-foreground uppercase font-semibold">Database Price</p>
-                      <p className="text-xl font-bold font-heading text-cinnamon">
+                      <p className="text-lg sm:text-xl font-bold font-heading text-cinnamon">
                         {formatCurrency(prod.price)}
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <Button
                         size="xs"
                         variant={prod.is_available ? 'outline' : 'secondary'}
                         onClick={() => handleToggleAvailability(prod)}
-                        className="h-8 text-[11px] font-semibold rounded-md"
+                        className="h-8 text-[11px] font-semibold rounded-md px-2.5"
                       >
                         {prod.is_available ? 'Make Unavailable' : 'Make Available'}
                       </Button>
@@ -254,7 +256,7 @@ export function WaterProductsPage() {
                         size="xs"
                         variant="ghost"
                         onClick={() => handleOpenEditModal(prod)}
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground rounded-md"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground rounded-md shrink-0"
                       >
                         <HugeiconsIcon icon={PencilEdit01Icon} size={14} />
                       </Button>
