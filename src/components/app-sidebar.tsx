@@ -139,11 +139,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroupLabel>
             <SidebarMenu>
               {group.items.map((item) => {
-                const isActive =
-                  location.pathname === item.url ||
-                  (item.url !== "/admin/dashboard" &&
-                    item.url !== "/admin/water" &&
-                    location.pathname.startsWith(item.url))
+                const isActive = (() => {
+                  if (location.pathname === item.url) return true
+                  const hasExactMatch = allNavItems.some((nav) => nav.url === location.pathname)
+                  if (hasExactMatch) return false
+                  if (item.url !== "/admin/dashboard" && item.url !== "/admin/water") {
+                    return location.pathname.startsWith(item.url + "/")
+                  }
+                  return false
+                })()
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
