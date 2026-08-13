@@ -6,7 +6,7 @@ import { WaterOrderCart } from '../../../components/admin/water/orders/WaterOrde
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../../components/ui/sheet';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '../../../components/ui/drawer';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
@@ -18,57 +18,57 @@ import {
 
 export function NewWaterOrderPage() {
   const { data: products, isLoading, isError } = useWaterProducts(true);
-  const { addItem, items, subtotal } = useWaterCart();
+  const { items, addItem, total } = useWaterCart();
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
   const cartItemsCount = items.reduce((sum, i) => sum + i.quantity, 0);
+  const subtotal = total;
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Header */}
+    <div className="space-y-6 max-w-7xl mx-auto min-w-0 w-full overflow-x-hidden">
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4 sm:pb-5">
-        <div>
+        <div className="space-y-1">
           <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
             <div className="p-2.5 rounded-md bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs">
               <HugeiconsIcon icon={DropletIcon} size={22} />
             </div>
-            <span>New Water Order (POS)</span>
+            <span>New RadhaWater Order POS</span>
           </h2>
           <p className="text-xs text-muted-foreground mt-1">
-            Select 20L drinking water products and complete counter orders or Pay-Later deliveries.
+            Create 20L water can orders, assign daily delivery routes, or manage pay later credit accounts.
           </p>
         </div>
 
         {/* Mobile View Cart Drawer Button */}
         <div className="lg:hidden">
-          <Sheet open={isMobileCartOpen} onOpenChange={setIsMobileCartOpen}>
-            <SheetTrigger
-              render={
-                <Button
-                  className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 px-4 text-xs gap-2 rounded-md shadow-sm w-full sm:w-auto"
-                />
-              }
-            >
-              <HugeiconsIcon icon={ShoppingCart01Icon} size={16} />
-              <span>View Water Cart ({cartItemsCount})</span>
-              {cartItemsCount > 0 && (
-                <Badge className="bg-white text-cinnamon font-bold ml-1 font-mono text-[10px]">
-                  {formatCurrency(subtotal)}
-                </Badge>
-              )}
-            </SheetTrigger>
-            <SheetContent side="right" className="w-full sm:max-w-md p-0 bg-card">
-              <SheetHeader className="p-4 border-b border-border">
-                <SheetTitle className="text-base font-bold font-heading text-foreground flex items-center gap-2">
+          <Button
+            type="button"
+            onClick={() => setIsMobileCartOpen(true)}
+            className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 px-4 text-xs gap-2 rounded-md shadow-sm w-full sm:w-auto flex items-center justify-center"
+          >
+            <HugeiconsIcon icon={ShoppingCart01Icon} size={16} />
+            <span>View Water Cart ({cartItemsCount})</span>
+            {cartItemsCount > 0 && (
+              <Badge className="bg-white text-cinnamon font-bold ml-1 font-mono text-[10px]">
+                {formatCurrency(subtotal)}
+              </Badge>
+            )}
+          </Button>
+
+          <Drawer open={isMobileCartOpen} onOpenChange={setIsMobileCartOpen}>
+            <DrawerContent className="p-4 bg-card max-h-[85vh] overflow-y-auto no-scrollbar rounded-t-2xl">
+              <DrawerHeader className="pb-2 border-b border-border/60 flex items-center justify-between">
+                <DrawerTitle className="text-base font-bold font-heading text-foreground flex items-center gap-2">
                   <HugeiconsIcon icon={ShoppingCart01Icon} size={18} className="text-cinnamon" />
                   <span>RadhaWater Order Cart</span>
-                </SheetTitle>
-              </SheetHeader>
-              <div className="p-4 h-[calc(100vh-80px)] overflow-y-auto">
+                </DrawerTitle>
+              </DrawerHeader>
+              <div className="pt-2">
                 <WaterOrderCart onCloseMobileCart={() => setIsMobileCartOpen(false)} />
               </div>
-            </SheetContent>
-          </Sheet>
+            </DrawerContent>
+          </Drawer>
         </div>
       </div>
 

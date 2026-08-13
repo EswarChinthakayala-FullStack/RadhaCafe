@@ -20,7 +20,7 @@ interface CartState {
 export const useCartStore = create<CartState>((set, get) => ({
   items: [],
   discount: 0,
-  taxRate: 0.05,
+  taxRate: 0,
   notes: '',
 
   addItem: (menuItem, quantity = 1) => {

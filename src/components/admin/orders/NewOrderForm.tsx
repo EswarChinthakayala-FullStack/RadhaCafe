@@ -3,7 +3,7 @@ import { OrderItemSelector } from './OrderItemSelector';
 import { OrderCart } from './OrderCart';
 import { useCart } from '../../../hooks/useCart';
 import { formatCurrency } from '../../../lib/utils/formatCurrency';
-import { Sheet, SheetContent } from '../../ui/sheet';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '../../ui/drawer';
 import { Button } from '../../ui/button';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ShoppingCart01Icon } from '@hugeicons/core-free-icons';
@@ -32,7 +32,7 @@ export function NewOrderForm() {
         <Button
           type="button"
           onClick={() => setIsMobileCartOpen(true)}
-          className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-12 rounded-md shadow-2xl flex items-center justify-between px-5 transition-all"
+          className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-12 rounded-xl shadow-2xl flex items-center justify-between px-5 transition-all"
         >
           <div className="flex items-center gap-2 text-xs">
             <div className="p-1 rounded-lg bg-white/20">
@@ -50,12 +50,20 @@ export function NewOrderForm() {
         </Button>
       </div>
 
-      {/* Mobile Cart Sheet Drawer */}
-      <Sheet open={isMobileCartOpen} onOpenChange={setIsMobileCartOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md p-4 bg-card overflow-y-auto no-scrollbar">
-          <OrderCart onCloseMobileCart={() => setIsMobileCartOpen(false)} />
-        </SheetContent>
-      </Sheet>
+      {/* Native Mobile Bottom Cart Drawer */}
+      <Drawer open={isMobileCartOpen} onOpenChange={setIsMobileCartOpen} showSwipeHandle>
+        <DrawerContent className="p-4 bg-card max-h-[85vh] overflow-y-auto no-scrollbar rounded-t-2xl">
+          <DrawerHeader className="pb-2 border-b border-border/60 flex items-center justify-between">
+            <DrawerTitle className="text-base font-bold font-heading text-foreground flex items-center gap-2">
+              <HugeiconsIcon icon={ShoppingCart01Icon} size={18} className="text-cinnamon" />
+              <span>Live Order Cart</span>
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="pt-2">
+            <OrderCart onCloseMobileCart={() => setIsMobileCartOpen(false)} />
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
