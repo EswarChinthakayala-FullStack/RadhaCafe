@@ -266,38 +266,38 @@ export function ReceiptTemplateBuilder() {
     <div className="space-y-6">
       {/* Top Header & Actions Bar */}
       <Card className="border border-border/80 shadow-xs bg-card">
-        <CardContent className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Select
-                value={selectedTemplateId}
-                onValueChange={(val) => {
-                  if (val) setSelectedTemplateId(val);
-                }}
-              >
-                <SelectTrigger className="w-[240px] font-bold text-sm h-10 border-border/80">
-                  <SelectValue placeholder="Select Template">
-                    {currentTemplate?.name || 'Select Template'}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {templates?.map((t) => (
-                    <SelectItem key={t.id} value={t.id} label={t.name} className="font-medium text-xs">
-                      <div className="flex items-center gap-2">
-                        <span>{t.name}</span>
-                        {t.is_active && (
-                          <Badge className="bg-emerald-600/90 text-white text-[9px] px-1.5 py-0">
-                            Active
-                          </Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <CardContent className="p-3.5 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full md:w-auto">
+            <Select
+              value={selectedTemplateId}
+              onValueChange={(val) => {
+                if (val) setSelectedTemplateId(val);
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-[220px] font-bold text-sm h-10 border-border/80">
+                <SelectValue placeholder="Select Template">
+                  {currentTemplate?.name || 'Select Template'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {templates?.map((t) => (
+                  <SelectItem key={t.id} value={t.id} label={t.name} className="font-medium text-xs">
+                    <div className="flex items-center gap-2">
+                      <span>{t.name}</span>
+                      {t.is_active && (
+                        <Badge className="bg-emerald-600/90 text-white text-[9px] px-1.5 py-0">
+                          Active
+                        </Badge>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
+            <div className="flex items-center gap-2">
               {isActive ? (
-                <Badge className="bg-emerald-600 text-white gap-1 py-1 px-2.5 rounded-md text-xs font-bold shadow-2xs">
+                <Badge className="bg-emerald-600 text-white gap-1 py-1.5 px-2.5 rounded-md text-xs font-bold shadow-2xs">
                   <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} />
                   <span>Active Template</span>
                 </Badge>
@@ -324,12 +324,12 @@ export function ReceiptTemplateBuilder() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-border/60">
             <Button
               onClick={handleSave}
               disabled={!hasUnsavedChanges || updateMutation.isPending}
               size="sm"
-              className="bg-cinnamon hover:bg-cinnamon/90 text-white text-xs font-bold h-9 gap-1.5 shadow-2xs"
+              className="bg-cinnamon hover:bg-cinnamon/90 text-white text-xs font-bold h-9 gap-1.5 shadow-2xs justify-center"
             >
               <HugeiconsIcon icon={FloppyDiskIcon} size={14} />
               <span>{updateMutation.isPending ? 'Saving...' : 'Save Template'}</span>
@@ -342,7 +342,7 @@ export function ReceiptTemplateBuilder() {
               }}
               variant="outline"
               size="sm"
-              className="text-xs font-semibold h-9 gap-1.5 border-border/80"
+              className="text-xs font-semibold h-9 gap-1.5 border-border/80 justify-center"
             >
               <HugeiconsIcon icon={Copy01Icon} size={14} />
               <span>Save As New</span>
@@ -350,9 +350,9 @@ export function ReceiptTemplateBuilder() {
 
             <Button
               onClick={handleDuplicate}
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="text-xs font-semibold h-9 gap-1.5 text-muted-foreground hover:text-foreground"
+              className="text-xs font-semibold h-9 gap-1.5 border-border/80 sm:border-0 justify-center"
             >
               <HugeiconsIcon icon={Copy01Icon} size={14} />
               <span>Duplicate</span>
@@ -363,7 +363,7 @@ export function ReceiptTemplateBuilder() {
                 onClick={() => setShowDeleteDialog(true)}
                 variant="ghost"
                 size="sm"
-                className="text-xs font-semibold h-9 gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-500/10"
+                className="text-xs font-semibold h-9 gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-500/10 justify-center col-span-2 sm:col-span-1"
               >
                 <HugeiconsIcon icon={Delete02Icon} size={14} />
                 <span>Delete</span>
