@@ -58,7 +58,7 @@ export function WaterCustomersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-4 sm:pb-5">
         <div className="flex items-start sm:items-center gap-2.5">
-          <div className="p-2 sm:p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs mt-0.5 sm:mt-0">
+          <div className="p-2 sm:p-2.5 rounded-md bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs mt-0.5 sm:mt-0">
             <HugeiconsIcon icon={UserGroupIcon} size={20} />
           </div>
           <div>
@@ -88,7 +88,7 @@ export function WaterCustomersPage() {
               <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Total Water Customers</p>
               <p className="text-2xl font-bold text-foreground font-heading">{totalCustomers}</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-secondary text-foreground flex items-center justify-center">
+            <div className="w-10 h-10 rounded-md bg-secondary text-foreground flex items-center justify-center">
               <HugeiconsIcon icon={UserGroupIcon} size={20} />
             </div>
           </CardContent>
@@ -100,7 +100,7 @@ export function WaterCustomersPage() {
               <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">With Outstanding</p>
               <p className="text-2xl font-bold text-amber-700 dark:text-amber-400 font-heading">{customersWithDue}</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
+            <div className="w-10 h-10 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
               <HugeiconsIcon icon={InvoiceIcon} size={20} />
             </div>
           </CardContent>
@@ -112,7 +112,7 @@ export function WaterCustomersPage() {
               <p className="text-[11px] font-semibold text-cinnamon uppercase tracking-wider">Total Water Credit Due</p>
               <p className="text-2xl font-bold text-cinnamon font-heading">{formatCurrency(totalOutstandingAmount)}</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-cinnamon/15 text-cinnamon flex items-center justify-center border border-cinnamon/20">
+            <div className="w-10 h-10 rounded-md bg-cinnamon/15 text-cinnamon flex items-center justify-center border border-cinnamon/20">
               <HugeiconsIcon icon={Wallet01Icon} size={20} />
             </div>
           </CardContent>

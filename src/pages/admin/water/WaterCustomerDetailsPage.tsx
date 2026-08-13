@@ -92,7 +92,7 @@ export function WaterCustomerDetailsPage() {
       <div className="p-5 rounded-md bg-card border border-border/80 shadow-2xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 flex items-center justify-center font-bold text-xl font-heading shadow-2xs shrink-0">
+            <div className="w-12 h-12 rounded-md bg-cinnamon/10 text-cinnamon border border-cinnamon/20 flex items-center justify-center font-bold text-xl font-heading shadow-2xs shrink-0">
               <HugeiconsIcon icon={UserIcon} size={24} />
             </div>
             <div>

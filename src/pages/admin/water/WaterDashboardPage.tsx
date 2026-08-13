@@ -51,7 +51,7 @@ export function WaterDashboardPage() {
       <div className="flex flex-col gap-3.5 border-b border-border/80 pb-4 sm:pb-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-start sm:items-center gap-2.5">
-            <div className="p-2 sm:p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs mt-0.5 sm:mt-0">
+            <div className="p-2 sm:p-2.5 rounded-md bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs mt-0.5 sm:mt-0">
               <HugeiconsIcon icon={DropletIcon} size={20} />
             </div>
             <div>

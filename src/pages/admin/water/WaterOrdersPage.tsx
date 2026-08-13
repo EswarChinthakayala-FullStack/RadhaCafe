@@ -42,7 +42,7 @@ export function WaterOrdersPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-4 sm:pb-5">
         <div className="flex items-start sm:items-center gap-2.5">
-          <div className="p-2 sm:p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs mt-0.5 sm:mt-0">
+          <div className="p-2 sm:p-2.5 rounded-md bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs mt-0.5 sm:mt-0">
             <HugeiconsIcon icon={InvoiceIcon} size={20} />
           </div>
           <div>
@@ -183,8 +183,8 @@ export function WaterOrdersPage() {
                             isPaid
                               ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 text-[10px]'
                               : isPartial
-                              ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 text-[10px]'
-                              : 'bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30 text-[10px]'
+                                ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 text-[10px]'
+                                : 'bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30 text-[10px]'
                           }
                         >
                           {isPaid ? 'PAID' : isPartial ? 'PARTIAL' : 'DUE'}

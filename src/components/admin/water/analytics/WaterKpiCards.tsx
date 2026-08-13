@@ -134,7 +134,7 @@ export const WaterKpiCards: React.FC<WaterKpiCardsProps> = ({ data, isLoading, i
               )}
             </div>
 
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 ${kpi.iconBg}`}>
+            <div className={`w-10 h-10 rounded-md flex items-center justify-center border shrink-0 ${kpi.iconBg}`}>
               <HugeiconsIcon icon={kpi.icon} size={20} />
             </div>
           </CardContent>

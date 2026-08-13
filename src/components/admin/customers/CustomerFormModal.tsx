@@ -64,7 +64,7 @@ export function CustomerFormModal({ open, onOpenChange, onSuccess }: CustomerFor
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md bg-card border border-border/80 rounded-md p-6 shadow-2xl space-y-4">
         <DialogHeader className="space-y-1 text-left">
-          <div className="w-10 h-10 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 flex items-center justify-center mb-2 shadow-2xs">
+          <div className="w-10 h-10 rounded-md bg-cinnamon/10 text-cinnamon border border-cinnamon/20 flex items-center justify-center mb-2 shadow-2xs">
             <HugeiconsIcon icon={UserAdd01Icon} size={20} />
           </div>
           <DialogTitle className="text-xl font-bold font-heading text-foreground">

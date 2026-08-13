@@ -61,7 +61,7 @@ export function CustomersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4 sm:pb-5">
         <div>
           <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs">
+            <div className="p-2.5 rounded-md bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs">
               <HugeiconsIcon icon={UserGroupIcon} size={22} />
             </div>
             <span>Customers & Credit Ledger</span>
@@ -88,7 +88,7 @@ export function CustomersPage() {
               <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Total Customers</p>
               <p className="text-2xl font-bold text-foreground font-heading">{totalCustomers}</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-secondary/80 text-foreground flex items-center justify-center">
+            <div className="w-10 h-10 rounded-md bg-secondary/80 text-foreground flex items-center justify-center">
               <HugeiconsIcon icon={UserGroupIcon} size={20} />
             </div>
           </CardContent>
@@ -100,7 +100,7 @@ export function CustomersPage() {
               <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">With Outstanding</p>
               <p className="text-2xl font-bold text-amber-700 dark:text-amber-400 font-heading">{customersWithDue}</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
+            <div className="w-10 h-10 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
               <HugeiconsIcon icon={InvoiceIcon} size={20} />
             </div>
           </CardContent>
@@ -112,7 +112,7 @@ export function CustomersPage() {
               <p className="text-[11px] font-semibold text-cinnamon uppercase tracking-wider">Total Credit Due</p>
               <p className="text-2xl font-bold text-cinnamon font-heading">{formatCurrency(totalOutstandingAmount)}</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-cinnamon/15 text-cinnamon flex items-center justify-center border border-cinnamon/20">
+            <div className="w-10 h-10 rounded-md bg-cinnamon/15 text-cinnamon flex items-center justify-center border border-cinnamon/20">
               <HugeiconsIcon icon={Wallet01Icon} size={20} />
             </div>
           </CardContent>

@@ -170,8 +170,8 @@ export function PublicWaterPage() {
 
           {/* Glassmorphism Pricing Cards */}
           <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
-            <div className="p-5 rounded-2xl bg-[#2C1810]/60 backdrop-blur-2xl border border-cinnamon/30 shadow-2xl text-left flex items-center gap-4 hover:border-cinnamon/60 transition-all hover:scale-[1.02]">
-              <div className="w-13 h-13 rounded-xl bg-cinnamon/20 text-cinnamon flex items-center justify-center font-bold text-2xl border border-cinnamon/30 shadow-inner px-3 py-2">
+            <div className="p-5 rounded-md bg-[#2C1810]/60 backdrop-blur-2xl border border-cinnamon/30 shadow-2xl text-left flex items-center gap-4 hover:border-cinnamon/60 transition-all hover:scale-[1.02]">
+              <div className="w-13 h-13 rounded-md bg-cinnamon/20 text-cinnamon flex items-center justify-center font-bold text-2xl border border-cinnamon/30 shadow-inner px-3 py-2">
                 ₹{normalProduct.price}
               </div>
               <div>
@@ -180,8 +180,8 @@ export function PublicWaterPage() {
               </div>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#2C1810]/60 backdrop-blur-2xl border border-amber-500/30 shadow-2xl text-left flex items-center gap-4 hover:border-amber-400/60 transition-all hover:scale-[1.02]">
-              <div className="w-13 h-13 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-2xl border border-amber-500/30 shadow-inner px-3 py-2">
+            <div className="p-5 rounded-md bg-[#2C1810]/60 backdrop-blur-2xl border border-amber-500/30 shadow-2xl text-left flex items-center gap-4 hover:border-amber-400/60 transition-all hover:scale-[1.02]">
+              <div className="w-13 h-13 rounded-md bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-2xl border border-amber-500/30 shadow-inner px-3 py-2">
                 ₹{coolingProduct.price}
               </div>
               <div>
@@ -206,9 +206,9 @@ export function PublicWaterPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="border border-cinnamon/20 bg-[#1C120C]/80 backdrop-blur-md rounded-2xl shadow-xl hover:border-cinnamon/50 hover:bg-[#2C1810]/60 transition-all">
+            <Card className="border border-cinnamon/20 bg-[#1C120C]/80 backdrop-blur-md rounded-md shadow-xl hover:border-cinnamon/50 hover:bg-[#2C1810]/60 transition-all">
               <CardContent className="p-6 space-y-3">
-                <div className="w-12 h-12 rounded-xl bg-cinnamon/15 text-cinnamon flex items-center justify-center border border-cinnamon/25 shadow-inner">
+                <div className="w-12 h-12 rounded-md bg-cinnamon/15 text-cinnamon flex items-center justify-center border border-cinnamon/25 shadow-inner">
                   <HugeiconsIcon icon={TruckIcon} size={24} />
                 </div>
                 <h3 className="font-bold text-base text-[#F5E6D3] font-heading">Daily Can Supply</h3>
@@ -218,9 +218,9 @@ export function PublicWaterPage() {
               </CardContent>
             </Card>
 
-            <Card className="border border-amber-500/20 bg-[#1C120C]/80 backdrop-blur-md rounded-2xl shadow-xl hover:border-amber-500/50 hover:bg-[#2C1810]/60 transition-all">
+            <Card className="border border-amber-500/20 bg-[#1C120C]/80 backdrop-blur-md rounded-md shadow-xl hover:border-amber-500/50 hover:bg-[#2C1810]/60 transition-all">
               <CardContent className="p-6 space-y-3">
-                <div className="w-12 h-12 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center border border-amber-500/25 shadow-inner">
+                <div className="w-12 h-12 rounded-md bg-amber-500/15 text-amber-400 flex items-center justify-center border border-amber-500/25 shadow-inner">
                   <HugeiconsIcon icon={SparklesIcon} size={24} />
                 </div>
                 <h3 className="font-bold text-base text-[#F5E6D3] font-heading">Weddings & Parties</h3>
@@ -230,9 +230,9 @@ export function PublicWaterPage() {
               </CardContent>
             </Card>
 
-            <Card className="border border-cinnamon/20 bg-[#1C120C]/80 backdrop-blur-md rounded-2xl shadow-xl hover:border-cinnamon/50 hover:bg-[#2C1810]/60 transition-all">
+            <Card className="border border-cinnamon/20 bg-[#1C120C]/80 backdrop-blur-md rounded-md shadow-xl hover:border-cinnamon/50 hover:bg-[#2C1810]/60 transition-all">
               <CardContent className="p-6 space-y-3">
-                <div className="w-12 h-12 rounded-xl bg-cinnamon/15 text-cinnamon flex items-center justify-center border border-cinnamon/25 shadow-inner">
+                <div className="w-12 h-12 rounded-md bg-cinnamon/15 text-cinnamon flex items-center justify-center border border-cinnamon/25 shadow-inner">
                   <HugeiconsIcon icon={Building01Icon} size={24} />
                 </div>
                 <h3 className="font-bold text-base text-[#F5E6D3] font-heading">Corporate & Institutions</h3>
@@ -247,7 +247,7 @@ export function PublicWaterPage() {
 
       {/* Event Inquiry Form Section */}
       <section className="py-16 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
-        <Card className="border border-cinnamon/25 bg-[#1C120C]/80 backdrop-blur-2xl rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
+        <Card className="border border-cinnamon/25 bg-[#1C120C]/80 backdrop-blur-2xl rounded-md p-6 sm:p-8 shadow-2xl space-y-6">
           <div className="space-y-2 text-center sm:text-left border-b border-[#E5A88B]/15 pb-4">
             <Badge className="bg-cinnamon/15 text-cinnamon border-cinnamon/30 text-xs font-bold px-3 py-1 mb-1">
               <HugeiconsIcon icon={SparklesIcon} size={14} className="mr-1 text-cinnamon" /> Event Booking
@@ -261,7 +261,7 @@ export function PublicWaterPage() {
           </div>
 
           {submittedSuccess ? (
-            <div className="p-8 text-center space-y-4 rounded-xl bg-emerald-500/15 border border-emerald-500/25 backdrop-blur-md">
+            <div className="p-8 text-center space-y-4 rounded-md bg-emerald-500/15 border border-emerald-500/25 backdrop-blur-md">
               <div className="w-14 h-14 mx-auto rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-inner border border-emerald-400/30">
                 <HugeiconsIcon icon={CheckmarkCircle02Icon} size={32} />
               </div>
@@ -297,7 +297,7 @@ export function PublicWaterPage() {
                     id="req-name"
                     placeholder="e.g. Ananya Rao"
                     {...register('customer_name')}
-                    className="h-10 text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] placeholder:text-[#E5A88B]/30 rounded-xl focus:border-cinnamon"
+                    className="h-10 text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] placeholder:text-[#E5A88B]/30 rounded-md focus:border-cinnamon"
                   />
                   {errors.customer_name && (
                     <p className="text-[11px] text-red-400 font-medium">{errors.customer_name.message}</p>
@@ -315,7 +315,7 @@ export function PublicWaterPage() {
                     type="tel"
                     placeholder="e.g. 9876543210"
                     {...register('phone')}
-                    className="h-10 text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] placeholder:text-[#E5A88B]/30 rounded-xl focus:border-cinnamon"
+                    className="h-10 text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] placeholder:text-[#E5A88B]/30 rounded-md focus:border-cinnamon"
                   />
                   {errors.phone && (
                     <p className="text-[11px] text-red-400 font-medium">{errors.phone.message}</p>
@@ -333,7 +333,7 @@ export function PublicWaterPage() {
                     id="req-type"
                     placeholder="e.g. Wedding / Birthday"
                     {...register('event_type')}
-                    className="h-10 text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] placeholder:text-[#E5A88B]/30 rounded-xl focus:border-cinnamon"
+                    className="h-10 text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] placeholder:text-[#E5A88B]/30 rounded-md focus:border-cinnamon"
                   />
                   {errors.event_type && (
                     <p className="text-[11px] text-red-400 font-medium">{errors.event_type.message}</p>
@@ -351,7 +351,7 @@ export function PublicWaterPage() {
                       render={
                         <Button
                           variant="outline"
-                          className="w-full h-10 justify-start text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] rounded-xl gap-2 px-3 font-normal hover:bg-[#1C120C]/60"
+                          className="w-full h-10 justify-start text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] rounded-md gap-2 px-3 font-normal hover:bg-[#1C120C]/60"
                         />
                       }
                     >
@@ -362,7 +362,7 @@ export function PublicWaterPage() {
                           : 'Select Event Date from Calendar'}
                       </span>
                     </PopoverTrigger>
-                    <PopoverContent align="start" className="w-auto p-0 rounded-xl bg-[#1C120C] border border-cinnamon/30 shadow-2xl z-50">
+                    <PopoverContent align="start" className="w-auto p-0 rounded-md bg-[#1C120C] border border-cinnamon/30 shadow-2xl z-50">
                       <Calendar
                         mode="single"
                         selected={watch('event_date') ? new Date(watch('event_date') + 'T00:00:00') : undefined}
@@ -392,7 +392,7 @@ export function PublicWaterPage() {
                     type="number"
                     min={1}
                     {...register('estimated_quantity', { valueAsNumber: true })}
-                    className="h-10 text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] rounded-xl font-bold"
+                    className="h-10 text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] rounded-md font-bold"
                   />
                   {errors.estimated_quantity && (
                     <p className="text-[11px] text-red-400 font-medium">{errors.estimated_quantity.message}</p>
@@ -433,7 +433,7 @@ export function PublicWaterPage() {
                     id="req-loc"
                     placeholder="e.g. Royal Function Hall, Main Road, Tallur"
                     {...register('location')}
-                    className="h-10 text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] placeholder:text-[#E5A88B]/30 rounded-xl focus:border-cinnamon pr-10"
+                    className="h-10 text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] placeholder:text-[#E5A88B]/30 rounded-md focus:border-cinnamon pr-10"
                   />
                   <button
                     type="button"
@@ -467,14 +467,14 @@ export function PublicWaterPage() {
                   placeholder="e.g. Prefer 30 Normal cans and 20 Cooling cans with dispensers"
                   rows={3}
                   {...register('notes')}
-                  className="text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] placeholder:text-[#E5A88B]/30 rounded-xl resize-none"
+                  className="text-xs bg-[#0C0603]/60 border-cinnamon/25 text-[#F5E6D3] placeholder:text-[#E5A88B]/30 rounded-md resize-none"
                 />
               </div>
 
               <Button
                 type="submit"
                 disabled={isSubmitting || createInquiryMutation.isPending}
-                className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-sm rounded-xl shadow-lg shadow-cinnamon/25 transition-all"
+                className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-sm rounded-md shadow-lg shadow-cinnamon/25 transition-all"
               >
                 {isSubmitting || createInquiryMutation.isPending
                   ? 'Submitting Inquiry...'

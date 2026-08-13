@@ -172,7 +172,7 @@ export function SettingsNavigation({ activeCategory, onSelectCategory }: Setting
                   type="button"
                   data-active={isActive ? "true" : "false"}
                   onClick={() => onSelectCategory(item.id)}
-                  className={`snap-start shrink-0 min-w-max flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all border shadow-2xs active:scale-95 ${isActive
+                  className={`snap-start shrink-0 min-w-max flex items-center gap-2 px-4 py-2.5 rounded-md text-xs font-semibold transition-all border shadow-2xs active:scale-95 ${isActive
                     ? 'bg-cinnamon text-white border-cinnamon shadow-sm font-bold'
                     : 'bg-card text-muted-foreground border-border/80 hover:text-foreground hover:bg-secondary/50'
                     }`}

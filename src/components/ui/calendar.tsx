@@ -32,7 +32,7 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn(
-        "group/calendar bg-card border border-border/80 rounded-2xl shadow-xl p-3.5 sm:p-4 select-none w-fit",
+        "group/calendar bg-card border border-border/80 rounded-md shadow-xl p-3.5 sm:p-4 select-none w-fit",
         className
       )}
       captionLayout={captionLayout}
