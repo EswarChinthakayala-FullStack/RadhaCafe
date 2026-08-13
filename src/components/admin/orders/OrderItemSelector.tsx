@@ -149,7 +149,7 @@ export function OrderItemSelector() {
           <p className="text-[11px] text-muted-foreground">Try adjusting your search or category filter.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-2.5 sm:gap-3">
           {filteredItems.map((item) => {
             const qty = getCartQuantity(item.id);
             const hasImage = item.image_url && !failedImages[item.id];
@@ -161,7 +161,7 @@ export function OrderItemSelector() {
               <div
                 key={item.id}
                 onClick={() => addItem(item)}
-                className={`group relative p-3 sm:p-3.5 rounded-md border bg-card cursor-pointer transition-all duration-200 flex flex-col justify-between select-none shadow-xs ${qty > 0
+                className={`group relative p-2.5 sm:p-3 rounded-md border bg-card cursor-pointer transition-all duration-200 flex flex-col justify-between select-none shadow-xs ${qty > 0
                   ? 'border-cinnamon ring-1 ring-cinnamon/30 bg-cinnamon/5'
                   : 'border-border/80 hover:border-cinnamon/60 hover:shadow-md'
                   }`}
@@ -174,7 +174,7 @@ export function OrderItemSelector() {
 
                 <div className="space-y-2">
                   {/* Thumbnail */}
-                  <div className="w-full h-24 sm:h-28 rounded-md overflow-hidden bg-secondary/40 border border-border/60 flex items-center justify-center relative p-1.5">
+                  <div className="w-full h-20 sm:h-24 rounded-md overflow-hidden bg-secondary/40 border border-border/60 flex items-center justify-center relative p-1.5">
                     {hasImage ? (
                       <div className="w-full h-full bg-white rounded-md flex items-center justify-center p-0.5 overflow-hidden shadow-2xs">
                         <img
@@ -186,23 +186,23 @@ export function OrderItemSelector() {
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center text-muted-foreground/40">
-                        <HugeiconsIcon icon={Image01Icon} size={24} />
+                        <HugeiconsIcon icon={Image01Icon} size={22} />
                       </div>
                     )}
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     {categoryName && (
-                      <div className="inline-flex items-center gap-1 text-[10px] font-bold text-cinnamon bg-cinnamon/10 px-2 py-0.5 rounded-md border border-cinnamon/20">
-                        <HugeiconsIcon icon={CategoryIconComp} size={11} className="shrink-0" />
-                        <span className="truncate max-w-[110px]">{categoryName}</span>
+                      <div className="inline-flex items-center gap-1 text-[9px] font-bold text-cinnamon bg-cinnamon/10 px-1.5 py-0.5 rounded-md border border-cinnamon/20 max-w-full">
+                        <HugeiconsIcon icon={CategoryIconComp} size={10} className="shrink-0" />
+                        <span className="truncate max-w-[90px] sm:max-w-[110px]">{categoryName}</span>
                       </div>
                     )}
                     <h4 className="font-bold text-xs sm:text-sm text-foreground line-clamp-1 group-hover:text-cinnamon transition-colors">
                       {item.name}
                     </h4>
                     {item.description && (
-                      <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-tight">
+                      <p className="text-[10px] sm:text-[11px] text-muted-foreground line-clamp-1 leading-tight">
                         {item.description}
                       </p>
                     )}

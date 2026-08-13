@@ -28,7 +28,7 @@ export function NewOrderForm() {
       </div>
 
       {/* Floating Bottom Cart Bar for Mobile & Tablet (<1024px) */}
-      <div className="lg:hidden fixed bottom-4 left-4 right-4 z-40">
+      <div className="lg:hidden fixed bottom-4 inset-x-4 z-40 max-w-lg mx-auto">
         <Button
           type="button"
           onClick={() => setIsMobileCartOpen(true)}
