@@ -399,7 +399,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
       {/* Responsive Side-by-Side Laptop / Stacked Mobile Success Modal */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-        <DialogContent className="max-w-md sm:max-w-2xl md:max-w-3xl bg-card rounded-2xl border border-border/80 p-5 sm:p-6 shadow-2xl space-y-4 no-scrollbar">
+        <DialogContent className="max-w-md sm:max-w-2xl md:max-w-3xl max-h-[90vh] overflow-y-auto bg-card rounded-2xl border border-border/80 p-4 sm:p-6 shadow-2xl space-y-4 no-scrollbar">
           <DialogHeader className="text-center pb-2 border-b border-border/60 space-y-1">
             <div className="w-12 h-12 mx-auto rounded-full bg-success/15 border border-success/30 flex items-center justify-center text-success shadow-2xs">
               <HugeiconsIcon icon={CheckmarkCircle02Icon} size={24} />

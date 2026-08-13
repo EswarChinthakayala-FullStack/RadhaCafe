@@ -63,14 +63,14 @@ export function NewOrderForm() {
 
       {/* Native Mobile Bottom Cart Drawer */}
       <Drawer open={isMobileCartOpen} onOpenChange={setIsMobileCartOpen} showSwipeHandle>
-        <DrawerContent className="p-4 bg-card max-h-[85vh] overflow-y-auto no-scrollbar rounded-t-2xl">
-          <DrawerHeader className="pb-2 border-b border-border/60 flex items-center justify-between">
+        <DrawerContent className="p-4 bg-card max-h-[90vh] overflow-hidden rounded-t-2xl flex flex-col">
+          <DrawerHeader className="pb-2 border-b border-border/60 flex items-center justify-between shrink-0">
             <DrawerTitle className="text-base font-bold font-heading text-foreground flex items-center gap-2">
               <HugeiconsIcon icon={ShoppingCart01Icon} size={18} className="text-cinnamon" />
               <span>Live Order Cart</span>
             </DrawerTitle>
           </DrawerHeader>
-          <div className="pt-2">
+          <div className="pt-2 pb-6 overflow-y-auto max-h-[calc(90vh-70px)] no-scrollbar flex-1">
             <OrderCart onCloseMobileCart={() => setIsMobileCartOpen(false)} />
           </div>
         </DrawerContent>
