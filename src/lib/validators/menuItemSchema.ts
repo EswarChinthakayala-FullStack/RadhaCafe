@@ -7,6 +7,8 @@ export const menuItemSchema = z.object({
   category_id: z.string().min(1, 'Please select a category'),
   image_url: z.string().nullable().optional(),
   is_available: z.boolean().default(true),
+  daily_special_date: z.string().nullable().optional(),
+  tags: z.array(z.string()).default([]),
   display_order: z.number().optional(),
 });
 

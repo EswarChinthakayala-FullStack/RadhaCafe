@@ -10,10 +10,20 @@ import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Textarea } from '../../ui/textarea';
 import { Switch } from '../../ui/switch';
+import { Badge } from '../../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { ItemImageUpload } from './ItemImageUpload';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Coffee02Icon, Tag01Icon, Invoice01Icon, Image01Icon, ToggleOffIcon } from '@hugeicons/core-free-icons';
+import {
+  Coffee02Icon,
+  Tag01Icon,
+  Invoice01Icon,
+  Image01Icon,
+  ToggleOffIcon,
+  StarIcon,
+  Cancel01Icon,
+  PlusSignIcon,
+} from '@hugeicons/core-free-icons';
 
 interface MenuItemFormProps {
   initialData?: MenuItem | null;
@@ -26,6 +36,16 @@ export function MenuItemForm({ initialData, onSuccess, onCancel }: MenuItemFormP
   const createMutation = useCreateMenuItem();
   const updateMutation = useUpdateMenuItem();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const [isTodaySpecial, setIsTodaySpecial] = useState<boolean>(() => {
+    return Boolean(initialData?.daily_special_date && initialData.daily_special_date === todayStr);
+  });
+  const [tagsList, setTagsList] = useState<string[]>(() => initialData?.tags || []);
+  const [newTagInput, setNewTagInput] = useState('');
+
+  const PRESET_TAGS = ['Popular', 'Classic', 'Spicy', 'New', 'Cold', 'Hot', 'Vegetarian', 'Special', 'Premium'];
 
   const {
     register,
@@ -40,11 +60,16 @@ export function MenuItemForm({ initialData, onSuccess, onCancel }: MenuItemFormP
       is_available: true,
       description: null,
       image_url: null,
+      daily_special_date: null,
+      tags: [],
     },
   });
 
   useEffect(() => {
     if (initialData) {
+      const isSpec = Boolean(initialData.daily_special_date && initialData.daily_special_date === todayStr);
+      setIsTodaySpecial(isSpec);
+      setTagsList(initialData.tags || []);
       reset({
         name: initialData.name,
         description: initialData.description || null,
@@ -52,8 +77,12 @@ export function MenuItemForm({ initialData, onSuccess, onCancel }: MenuItemFormP
         category_id: initialData.category_id || '',
         is_available: initialData.is_available,
         image_url: initialData.image_url || null,
+        daily_special_date: isSpec ? todayStr : null,
+        tags: initialData.tags || [],
       });
     } else {
+      setIsTodaySpecial(false);
+      setTagsList([]);
       reset({
         name: '',
         description: null,
@@ -61,11 +90,30 @@ export function MenuItemForm({ initialData, onSuccess, onCancel }: MenuItemFormP
         category_id: categories?.[0]?.id || '',
         is_available: true,
         image_url: null,
+        daily_special_date: null,
+        tags: [],
       });
     }
-  }, [initialData, categories, reset]);
+  }, [initialData, categories, reset, todayStr]);
 
   const selectedCategory = watch('category_id');
+
+  const handleAddTag = (tagToAdd: string) => {
+    const trimmed = tagToAdd.trim();
+    if (!trimmed) return;
+    if (!tagsList.includes(trimmed)) {
+      const updated = [...tagsList, trimmed];
+      setTagsList(updated);
+      setValue('tags', updated);
+    }
+    setNewTagInput('');
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    const updated = tagsList.filter((t) => t !== tagToRemove);
+    setTagsList(updated);
+    setValue('tags', updated);
+  };
 
   const onSubmit = async (data: MenuItemFormData) => {
     try {
@@ -77,6 +125,8 @@ export function MenuItemForm({ initialData, onSuccess, onCancel }: MenuItemFormP
         category_id: data.category_id,
         image_url: data.image_url || null,
         is_available: data.is_available,
+        daily_special_date: isTodaySpecial ? todayStr : null,
+        tags: tagsList,
       };
 
       if (initialData) {
@@ -194,6 +244,106 @@ export function MenuItemForm({ initialData, onSuccess, onCancel }: MenuItemFormP
               checked={watch('is_available')}
               onCheckedChange={(c) => setValue('is_available', c)}
             />
+          </div>
+
+          {/* Today's Special Toggle Section */}
+          <div className="flex items-center justify-between p-4.5 rounded-md bg-amber-500/10 border border-amber-500/30">
+            <div className="space-y-0.5 pr-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-300">
+                <HugeiconsIcon icon={StarIcon} size={16} className="text-amber-600 dark:text-amber-400" />
+                <span>Today's Special Item</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Prioritizes this product at the top of POS ordering for today ({todayStr}).
+              </p>
+            </div>
+            <Switch
+              id="today-special"
+              checked={isTodaySpecial}
+              onCheckedChange={(c) => setIsTodaySpecial(c)}
+            />
+          </div>
+
+          {/* Item Tags Section */}
+          <div className="space-y-3 p-4.5 rounded-md bg-secondary/40 border border-border/60">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <HugeiconsIcon icon={Tag01Icon} size={15} className="text-primary" />
+              <span>ITEM TAGS</span>
+            </div>
+
+            {/* Selected Tags Badge Row */}
+            <div className="flex flex-wrap gap-1.5 min-h-[32px] p-2 rounded-md bg-background border border-border/50 items-center">
+              {tagsList.length === 0 ? (
+                <span className="text-[11px] text-muted-foreground italic">No tags selected. Add tags below.</span>
+              ) : (
+                tagsList.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="secondary"
+                    className="gap-1 text-[11px] py-0.5 px-2 bg-cinnamon/10 text-cinnamon border-cinnamon/20 hover:bg-cinnamon/20"
+                  >
+                    <span>{tag}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(tag)}
+                      className="hover:text-destructive transition-colors ml-0.5"
+                    >
+                      <HugeiconsIcon icon={Cancel01Icon} size={12} />
+                    </button>
+                  </Badge>
+                ))
+              )}
+            </div>
+
+            {/* Quick Preset Tags Chips */}
+            <div className="space-y-1">
+              <Label className="text-[11px] text-muted-foreground font-semibold">Common Tag Presets:</Label>
+              <div className="flex flex-wrap gap-1">
+                {PRESET_TAGS.map((preset) => {
+                  const isSelected = tagsList.includes(preset);
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => (isSelected ? handleRemoveTag(preset) : handleAddTag(preset))}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md border transition-all ${
+                        isSelected
+                          ? 'bg-cinnamon text-white border-cinnamon'
+                          : 'bg-background hover:bg-secondary text-muted-foreground border-border/60'
+                      }`}
+                    >
+                      {isSelected ? `✓ ${preset}` : `+ ${preset}`}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Custom Tag Input */}
+            <div className="flex items-center gap-2 pt-1">
+              <Input
+                placeholder="Enter custom tag..."
+                value={newTagInput}
+                onChange={(e) => setNewTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddTag(newTagInput);
+                  }
+                }}
+                className="h-8 text-xs bg-background rounded-md flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                onClick={() => handleAddTag(newTagInput)}
+                className="h-8 px-2.5 text-xs font-bold gap-1"
+              >
+                <HugeiconsIcon icon={PlusSignIcon} size={13} />
+                <span>Add Tag</span>
+              </Button>
+            </div>
           </div>
         </div>
 

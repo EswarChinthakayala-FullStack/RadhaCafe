@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCart } from '../../../hooks/useCart';
 import { useCreateOrder } from '../../../hooks/useOrders';
 import { useCafeSettings } from '../../../hooks/useCafeSettings';
@@ -31,6 +32,7 @@ interface OrderCartProps {
 }
 
 export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
+  const queryClient = useQueryClient();
   const { items, updateQuantity, removeItem, clearCart, subtotal, discount, setDiscount } = useCart();
   const { data: settings } = useCafeSettings();
   const createOrderMutation = useCreateOrder();
@@ -115,6 +117,9 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
       setPaymentMethod('cash');
       if (onCloseMobileCart) onCloseMobileCart();
 
+      // Invalidate best-sellers analytics in background
+      queryClient.invalidateQueries({ queryKey: ['menu', 'best-sellers'] });
+
       // Auto-Print Receipt if Auto-Print setting is enabled
       if (autoPrint) {
         await triggerSmartReceiptPrint(fullOrder);
@@ -182,7 +187,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
   const projectedOutstanding = existingOutstanding + grandTotal;
 
   return (
-    <div className="border border-border/80 rounded-xl p-4 sm:p-5 bg-card flex flex-col space-y-4 shadow-sm max-h-[calc(100vh-6.5rem)] overflow-y-auto no-scrollbar">
+    <div className="border border-border/80 rounded-md p-4 sm:p-5 bg-card flex flex-col space-y-4 shadow-sm max-h-[calc(100vh-6.5rem)] overflow-y-auto no-scrollbar">
       <div className="flex justify-between items-center border-b border-border pb-3">
         <div className="flex items-center gap-2">
           <HugeiconsIcon icon={ShoppingCart01Icon} className="text-cinnamon" size={20} />
@@ -193,11 +198,10 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
             type="button"
             onClick={toggleAutoPrint}
             title={autoPrint ? 'Auto-Print is ON: Thermal slip generates automatically upon order creation' : 'Click to enable Auto-Print receipt'}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold border transition-all ${
-              autoPrint
-                ? 'bg-cinnamon/15 text-cinnamon border-cinnamon/30 shadow-2xs'
-                : 'bg-secondary/40 text-muted-foreground border-border/50 hover:bg-secondary'
-            }`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold border transition-all ${autoPrint
+              ? 'bg-cinnamon/15 text-cinnamon border-cinnamon/30 shadow-2xs'
+              : 'bg-secondary/40 text-muted-foreground border-border/50 hover:bg-secondary'
+              }`}
           >
             <HugeiconsIcon icon={PrinterIcon} size={12} />
             <span>Auto-Print: {autoPrint ? 'ON' : 'OFF'}</span>
@@ -452,13 +456,13 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         {createOrderMutation.isPending
           ? 'Processing Order...'
           : paymentMethod === 'pay_later'
-          ? `Place Pay Later Order (${formatCurrency(grandTotal)})`
-          : `Place Order (${formatCurrency(grandTotal)})`}
+            ? `Place Pay Later Order (${formatCurrency(grandTotal)})`
+            : `Place Order (${formatCurrency(grandTotal)})`}
       </Button>
 
       {/* Responsive Side-by-Side Laptop / Stacked Mobile Success Modal */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-        <DialogContent className="max-w-md sm:max-w-2xl md:max-w-3xl max-h-[90vh] overflow-y-auto bg-card rounded-2xl border border-border/80 p-4 sm:p-6 shadow-2xl space-y-4 no-scrollbar">
+        <DialogContent className="max-w-md sm:max-w-2xl md:max-w-3xl max-h-[90vh] overflow-y-auto bg-card rounded-md border border-border/80 p-4 sm:p-6 shadow-2xl space-y-4 no-scrollbar">
           <DialogHeader className="text-center pb-2 border-b border-border/60 space-y-1">
             <div className="w-12 h-12 mx-auto rounded-full bg-success/15 border border-success/30 flex items-center justify-center text-success shadow-2xs">
               <HugeiconsIcon icon={CheckmarkCircle02Icon} size={24} />
@@ -477,7 +481,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
           {/* 2-Column Responsive Layout: Thermal Paper Slip (Left) & Actions (Right) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start pt-1">
             {/* Left Column: Authentic Thermal Receipt Paper Slip */}
-            <div className="bg-[#fefdfa] dark:bg-stone-900 text-stone-900 dark:text-stone-100 font-mono text-[11px] leading-relaxed p-4 rounded-xl border border-stone-300/80 dark:border-stone-700 shadow-md space-y-2 select-text max-h-[380px] overflow-y-auto no-scrollbar relative">
+            <div className="bg-[#fefdfa] dark:bg-stone-900 text-stone-900 dark:text-stone-100 font-mono text-[11px] leading-relaxed p-4 rounded-md border border-stone-300/80 dark:border-stone-700 shadow-md space-y-2 select-text max-h-[380px] overflow-y-auto no-scrollbar relative">
               <div className="text-center space-y-0.5 pb-2 border-b border-dashed border-stone-400 dark:border-stone-700">
                 <p className="font-bold text-sm tracking-widest text-cinnamon uppercase font-heading">RADHACAFE</p>
                 <p className="text-[10px] text-stone-600 dark:text-stone-400">1A, Vellampalli Tallur Rd, opposite Pattu Office</p>
@@ -546,7 +550,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
             {/* Right Column: Actions & Summary */}
             <div className="space-y-3.5 flex flex-col justify-between h-full">
-              <div className="p-3.5 rounded-xl bg-secondary/50 border border-border/60 space-y-2 text-xs">
+              <div className="p-3.5 rounded-md bg-secondary/50 border border-border/60 space-y-2 text-xs">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Customer Profile:</span>
                   <span className="font-bold text-foreground">{createdOrder?.customer_name}</span>
@@ -573,22 +577,22 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                 <Button
                   onClick={handleBluetoothPrint}
                   disabled={isPrinting}
-                  className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-xs rounded-xl shadow-md gap-2 transition-all active:scale-[0.98]"
+                  className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-xs rounded-md shadow-md gap-2 transition-all active:scale-[0.98]"
                 >
                   <HugeiconsIcon icon={PrinterIcon} size={16} />
                   <span>
                     {isPrinting
                       ? 'Printing Thermal Receipt...'
                       : printerStatus === 'connected'
-                      ? 'Print Thermal Receipt (Bluetooth Connected)'
-                      : 'Connect & Print Thermal Receipt (Bluetooth)'}
+                        ? 'Print Thermal Receipt (Bluetooth Connected)'
+                        : 'Connect & Print Thermal Receipt (Bluetooth)'}
                   </span>
                 </Button>
 
                 <Button
                   onClick={() => createdOrder && printBrowserFallback(createdOrder, settings)}
                   variant="outline"
-                  className="w-full h-10 text-xs font-bold gap-2 rounded-xl border-border/80 hover:bg-secondary"
+                  className="w-full h-10 text-xs font-bold gap-2 rounded-md border-border/80 hover:bg-secondary"
                 >
                   <HugeiconsIcon icon={PrinterIcon} size={16} />
                   <span>Print Receipt via Browser / PDF</span>

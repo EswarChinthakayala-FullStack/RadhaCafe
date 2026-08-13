@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMenuItems } from '../../../hooks/useMenuItems';
 import { useCategories } from '../../../hooks/useCategories';
+import { useTodaysSpecials, useBestSellingItems } from '../../../hooks/useMenuRecommendations';
 import { useCart } from '../../../hooks/useCart';
 import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import { Input } from '../../ui/input';
@@ -8,6 +9,8 @@ import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import { Loader } from '../../shared/Loader';
 import { LazyImage } from '../../ui/lazy-image';
+import { TodaySpecialsSection } from './TodaySpecialsSection';
+import { BestSellersSection } from './BestSellersSection';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Search01Icon,
@@ -66,9 +69,13 @@ export function OrderItemSelector() {
 
   const { data: menuItems, isLoading: isMenuItemsLoading } = useMenuItems(true);
   const { data: categories, isLoading: isCategoriesLoading } = useCategories();
+  const { data: todaysSpecials } = useTodaysSpecials();
+  const { data: bestSellers, isLoading: isBestSellersLoading } = useBestSellingItems(6);
   const { addItem, updateQuantity, items: cartItems } = useCart();
 
   const categoryMap = new Map(categories?.map((c) => [c.id, c]));
+  const bestSellerIdSet = new Set(bestSellers?.map((b) => b.id));
+  const todayStr = new Date().toISOString().split('T')[0];
 
   const updateScrollButtons = () => {
     const el = scrollContainerRef.current;
@@ -113,14 +120,38 @@ export function OrderItemSelector() {
     scrollContainerRef.current.scrollBy({ left: amount, behavior: 'smooth' });
   };
 
-  const filteredItems = menuItems?.filter((item) => {
-    const matchesCategory = !selectedCategoryId || item.category_id === selectedCategoryId;
-    const matchesSearch =
-      !search.trim() ||
-      item.name.toLowerCase().includes(search.toLowerCase()) ||
-      (item.description && item.description.toLowerCase().includes(search.toLowerCase()));
-    return matchesCategory && matchesSearch;
-  });
+  // Multi-field search across Name, Description, Category Name, and Item Tags
+  const filteredItems = menuItems
+    ?.filter((item) => {
+      const matchesCategory = !selectedCategoryId || item.category_id === selectedCategoryId;
+      const category = categoryMap.get(item.category_id);
+      const categoryName = category?.name || '';
+      const tagsStr = (item.tags || []).join(' ');
+
+      const query = search.trim().toLowerCase();
+      const matchesSearch =
+        !query ||
+        item.name.toLowerCase().includes(query) ||
+        (item.description && item.description.toLowerCase().includes(query)) ||
+        categoryName.toLowerCase().includes(query) ||
+        tagsStr.toLowerCase().includes(query);
+
+      return matchesCategory && matchesSearch;
+    })
+    ?.sort((a, b) => {
+      // Prioritize Today's Special -> Best Seller -> Remaining items
+      const aIsSpecial = a.daily_special_date === todayStr;
+      const bIsSpecial = b.daily_special_date === todayStr;
+      if (aIsSpecial && !bIsSpecial) return -1;
+      if (!aIsSpecial && bIsSpecial) return 1;
+
+      const aIsBest = bestSellerIdSet.has(a.id);
+      const bIsBest = bestSellerIdSet.has(b.id);
+      if (aIsBest && !bIsBest) return -1;
+      if (!aIsBest && bIsBest) return 1;
+
+      return a.name.localeCompare(b.name);
+    });
 
   const getCartQuantity = (menuItemId: string) => {
     const cartItem = cartItems.find((i) => i.menuItem.id === menuItemId);
@@ -130,6 +161,8 @@ export function OrderItemSelector() {
   const handleImageError = (id: string) => {
     setFailedImages((prev) => ({ ...prev, [id]: true }));
   };
+
+  const isSearching = Boolean(search.trim());
 
   if (isMenuItemsLoading || isCategoriesLoading) {
     return <Loader label="Loading POS menu catalog..." />;
@@ -143,10 +176,10 @@ export function OrderItemSelector() {
           <HugeiconsIcon icon={Search01Icon} size={15} />
         </div>
         <Input
-          placeholder="Search menu items by name or description..."
+          placeholder="Search menu by name, description, category, or tag (e.g. Spicy, Cold)..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-card pl-9 pr-9 text-xs h-10 rounded-md"
+          className="w-full bg-card pl-9 pr-9 text-xs h-10 rounded-md shadow-2xs"
         />
         {search && (
           <button
@@ -159,6 +192,19 @@ export function OrderItemSelector() {
           </button>
         )}
       </div>
+
+      {/* Recommendation Priorities: Today's Specials & Best Sellers (Visible when All Items selected & no active search) */}
+      {!isSearching && selectedCategoryId === null && (
+        <div className="space-y-4">
+          {/* Today's Specials Priority Row */}
+          {todaysSpecials && todaysSpecials.length > 0 && (
+            <TodaySpecialsSection specials={todaysSpecials} />
+          )}
+
+          {/* Best Sellers Priority Section */}
+          <BestSellersSection bestSellers={bestSellers || []} isLoading={isBestSellersLoading} />
+        </div>
+      )}
 
       {/* Category Tabs Navigation — Scrollable with Drag & Arrows */}
       <div className="relative group/tabs w-full min-w-0 max-w-full overflow-hidden">
@@ -187,10 +233,11 @@ export function OrderItemSelector() {
             <button
               type="button"
               onClick={() => setSelectedCategoryId(null)}
-              className={`snap-start shrink-0 min-w-max px-3.5 py-2 rounded-md text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${selectedCategoryId === null
-                ? 'bg-cinnamon text-white shadow-xs'
-                : 'bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/50'
-                }`}
+              className={`snap-start shrink-0 min-w-max px-3.5 py-2 rounded-md text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${
+                selectedCategoryId === null
+                  ? 'bg-cinnamon text-white shadow-xs'
+                  : 'bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/50'
+              }`}
             >
               <HugeiconsIcon icon={GridIcon} size={13} />
               <span>All Items ({menuItems?.length || 0})</span>
@@ -202,10 +249,11 @@ export function OrderItemSelector() {
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategoryId(cat.id)}
-                  className={`snap-start shrink-0 min-w-max px-3.5 py-2 rounded-md text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${selectedCategoryId === cat.id
-                    ? 'bg-cinnamon text-white shadow-xs'
-                    : 'bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/50'
-                    }`}
+                  className={`snap-start shrink-0 min-w-max px-3.5 py-2 rounded-md text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${
+                    selectedCategoryId === cat.id
+                      ? 'bg-cinnamon text-white shadow-xs'
+                      : 'bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/50'
+                  }`}
                 >
                   <HugeiconsIcon icon={IconComp} size={13} />
                   <span>{cat.name}</span>
@@ -227,7 +275,7 @@ export function OrderItemSelector() {
         )}
       </div>
 
-      {/* Menu Item Grid — 2, 3, 4 responsive grid */}
+      {/* Main Menu Item Grid */}
       {!filteredItems || filteredItems.length === 0 ? (
         <div className="p-10 text-center bg-card rounded-md border border-dashed border-border/80 space-y-2">
           <div className="w-10 h-10 mx-auto rounded-full bg-secondary flex items-center justify-center text-muted-foreground/50">
@@ -245,14 +293,21 @@ export function OrderItemSelector() {
             const categoryName = category?.name;
             const CategoryIconComp = ICON_MAP[(category as any)?.icon_name || ''] || Tag01Icon;
 
+            const isTodaySpec = item.daily_special_date === todayStr;
+            const isBestSell = bestSellerIdSet.has(item.id);
+            const tags = item.tags || [];
+
             return (
               <div
                 key={item.id}
                 onClick={() => addItem(item)}
-                className={`group relative p-2.5 sm:p-3 rounded-md border bg-card cursor-pointer transition-all duration-200 flex flex-col justify-between select-none shadow-xs ${qty > 0
-                  ? 'border-cinnamon ring-1 ring-cinnamon/30 bg-cinnamon/5'
-                  : 'border-border/80 hover:border-cinnamon/60 hover:shadow-md'
-                  }`}
+                className={`group relative p-2.5 sm:p-3 rounded-md border bg-card cursor-pointer transition-all duration-200 flex flex-col justify-between select-none shadow-xs ${
+                  qty > 0
+                    ? 'border-cinnamon ring-1 ring-cinnamon/30 bg-cinnamon/5'
+                    : isTodaySpec
+                    ? 'border-amber-500/50 bg-amber-500/5 hover:border-amber-500'
+                    : 'border-border/80 hover:border-cinnamon/60 hover:shadow-md'
+                }`}
               >
                 {qty > 0 && (
                   <Badge className="absolute top-2 right-2 bg-cinnamon text-white font-bold font-mono text-[11px] h-6 w-6 rounded-full p-0 flex items-center justify-center shadow-md z-20">
@@ -261,7 +316,7 @@ export function OrderItemSelector() {
                 )}
 
                 <div className="space-y-2">
-                  {/* Thumbnail */}
+                  {/* Thumbnail Container */}
                   <div className="w-full h-20 sm:h-24 rounded-md overflow-hidden bg-secondary/40 border border-border/60 flex items-center justify-center relative p-1.5">
                     {hasImage ? (
                       <div className="w-full h-full bg-white rounded-md flex items-center justify-center p-0.5 overflow-hidden shadow-2xs">
@@ -277,22 +332,59 @@ export function OrderItemSelector() {
                         <HugeiconsIcon icon={Image01Icon} size={22} />
                       </div>
                     )}
+
+                    {/* System Badges Overlay */}
+                    {isTodaySpec && (
+                      <div className="absolute top-1 left-1">
+                        <Badge className="bg-amber-600 text-white text-[9px] px-1 py-0.2 font-bold shadow-xs">
+                          Today's Special
+                        </Badge>
+                      </div>
+                    )}
+                    {!isTodaySpec && isBestSell && (
+                      <div className="absolute top-1 left-1">
+                        <Badge className="bg-orange-600 text-white text-[9px] px-1 py-0.2 font-bold shadow-xs">
+                          Best Seller
+                        </Badge>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="space-y-0.5">
+                  <div className="space-y-1">
                     {categoryName && (
                       <div className="inline-flex items-center gap-1 text-[9px] font-bold text-cinnamon bg-cinnamon/10 px-1.5 py-0.5 rounded-md border border-cinnamon/20 max-w-full">
                         <HugeiconsIcon icon={CategoryIconComp} size={10} className="shrink-0" />
                         <span className="truncate max-w-[90px] sm:max-w-[110px]">{categoryName}</span>
                       </div>
                     )}
+
                     <h4 className="font-bold text-xs sm:text-sm text-foreground line-clamp-1 group-hover:text-cinnamon transition-colors">
                       {item.name}
                     </h4>
+
                     {item.description && (
                       <p className="text-[10px] sm:text-[11px] text-muted-foreground line-clamp-1 leading-tight">
                         {item.description}
                       </p>
+                    )}
+
+                    {/* Manual Item Tags Row */}
+                    {tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 pt-0.5">
+                        {tags.slice(0, 2).map((t) => (
+                          <span
+                            key={t}
+                            className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-secondary text-secondary-foreground border border-border/40"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                        {tags.length > 2 && (
+                          <span className="text-[9px] font-semibold text-muted-foreground self-center">
+                            +{tags.length - 2}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

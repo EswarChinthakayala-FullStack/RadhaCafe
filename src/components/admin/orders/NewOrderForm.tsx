@@ -43,7 +43,7 @@ export function NewOrderForm() {
         <Button
           type="button"
           onClick={() => setIsMobileCartOpen(true)}
-          className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-12 rounded-xl shadow-2xl flex items-center justify-between px-5 transition-all"
+          className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-12 rounded-md shadow-2xl flex items-center justify-between px-5 transition-all"
         >
           <div className="flex items-center gap-2 text-xs">
             <div className="p-1 rounded-lg bg-white/20">

@@ -27,6 +27,8 @@ export async function createMenuItem(input: CreateMenuItemInput): Promise<MenuIt
     category_id: input.category_id || null,
     image_url: input.image_url || null,
     is_available: input.is_available ?? true,
+    daily_special_date: input.daily_special_date || null,
+    tags: input.tags || [],
     updated_at: new Date().toISOString(),
   };
 
@@ -51,6 +53,8 @@ export async function updateMenuItem(id: string, input: UpdateMenuItemInput): Pr
     ...(input.category_id !== undefined && { category_id: input.category_id }),
     ...(input.image_url !== undefined && { image_url: input.image_url }),
     ...(input.is_available !== undefined && { is_available: input.is_available }),
+    ...(input.daily_special_date !== undefined && { daily_special_date: input.daily_special_date }),
+    ...(input.tags !== undefined && { tags: input.tags }),
     updated_at: new Date().toISOString(),
   };
 
