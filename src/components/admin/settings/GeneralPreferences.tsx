@@ -82,10 +82,10 @@ export function GeneralPreferences() {
             </div>
             <div className="space-y-0.5">
               <Label htmlFor="auto-print-order" className="font-bold text-foreground block">
-                Auto-Print Receipt on Order Completion
+                Auto-Print Receipt on Order Creation
               </Label>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Automatically trigger thermal printer receipt byte stream when marking an order as completed.
+                Automatically generate and print thermal receipts immediately upon placing POS orders for 1-click rapid crowd checkout.
               </p>
             </div>
           </div>

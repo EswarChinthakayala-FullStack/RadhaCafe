@@ -48,21 +48,32 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
   const [isPrinting, setIsPrinting] = useState(false);
   const [printMessage, setPrintMessage] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [autoPrint, setAutoPrint] = useState<boolean>(() => {
+    return localStorage.getItem('radhacafe_autoprint_completion') === 'true';
+  });
 
   const { data: customerSearchResults } = useCustomerSearch(customerSearchQuery);
 
   const grandTotal = Math.max(0, subtotal - discount);
 
-  const handlePlaceOrder = async () => {
+  const toggleAutoPrint = () => {
+    const nextState = !autoPrint;
+    setAutoPrint(nextState);
+    localStorage.setItem('radhacafe_autoprint_completion', String(nextState));
+  };
+
+  const handlePlaceOrder = async (overrideMethod?: PaymentMethod) => {
     setErrorMsg(null);
     setPrintMessage(null);
+
+    const activeMethod = overrideMethod || paymentMethod;
 
     if (items.length === 0) {
       setErrorMsg('Cart is empty. Please add items before placing order.');
       return;
     }
 
-    if (paymentMethod === 'pay_later' && !selectedCustomer) {
+    if (activeMethod === 'pay_later' && !selectedCustomer) {
       setErrorMsg('Please select a credit customer for Pay Later orders.');
       return;
     }
@@ -71,7 +82,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
       customer_id: selectedCustomer ? selectedCustomer.id : null,
       customer_name: selectedCustomer ? selectedCustomer.name : customerName.trim() || 'Walk-in Customer',
       customer_phone: selectedCustomer ? selectedCustomer.phone : null,
-      payment_method: paymentMethod,
+      payment_method: activeMethod,
       discount_amount: discount,
       tax_amount: 0,
       notes: null,
@@ -103,8 +114,34 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
       setCustomerSearchQuery('');
       setPaymentMethod('cash');
       if (onCloseMobileCart) onCloseMobileCart();
+
+      // Auto-Print Receipt if Auto-Print setting is enabled
+      if (autoPrint) {
+        if (printerStatus === 'connected') {
+          setIsPrinting(true);
+          const success = await printOrder(fullOrder as any);
+          setIsPrinting(false);
+          if (success) {
+            setPrintMessage('Thermal slip auto-printed via Bluetooth!');
+          } else {
+            printBrowserFallback(fullOrder as any);
+          }
+        } else {
+          setTimeout(() => {
+            printBrowserFallback(fullOrder as any);
+          }, 150);
+        }
+      }
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to place order. Please try again.');
+    }
+  };
+
+  const handlePaymentMethodClick = (method: PaymentMethod) => {
+    setPaymentMethod(method);
+    // If Auto-Print is ON and cart has items, 1-click checkout on CASH/UPI/CARD!
+    if (autoPrint && items.length > 0 && method !== 'pay_later') {
+      handlePlaceOrder(method);
     }
   };
 
@@ -145,16 +182,32 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
           <HugeiconsIcon icon={ShoppingCart01Icon} className="text-cinnamon" size={20} />
           <h3 className="font-bold text-base font-heading text-foreground">Live Order Cart</h3>
         </div>
-        {items.length > 0 && (
-          <Button
-            size="xs"
-            variant="ghost"
-            className="text-xs text-muted-foreground hover:text-destructive transition-colors h-7"
-            onClick={clearCart}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleAutoPrint}
+            title={autoPrint ? 'Auto-Print is ON: Thermal slip generates automatically upon order creation' : 'Click to enable Auto-Print receipt'}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold border transition-all ${
+              autoPrint
+                ? 'bg-cinnamon/15 text-cinnamon border-cinnamon/30 shadow-2xs'
+                : 'bg-secondary/40 text-muted-foreground border-border/50 hover:bg-secondary'
+            }`}
           >
-            Clear All
-          </Button>
-        )}
+            <HugeiconsIcon icon={PrinterIcon} size={12} />
+            <span>Auto-Print: {autoPrint ? 'ON' : 'OFF'}</span>
+          </button>
+
+          {items.length > 0 && (
+            <Button
+              size="xs"
+              variant="ghost"
+              className="text-xs text-muted-foreground hover:text-destructive transition-colors h-7"
+              onClick={clearCart}
+            >
+              Clear All
+            </Button>
+          )}
+        </div>
       </div>
 
       {errorMsg && (
@@ -262,7 +315,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                       : 'bg-cinnamon text-white uppercase font-bold text-[10px] sm:text-[11px] h-8.5 rounded-lg shadow-xs'
                     : 'uppercase text-[10px] sm:text-[11px] h-8.5 text-foreground/80 rounded-lg'
                 }
-                onClick={() => setPaymentMethod(method)}
+                onClick={() => handlePaymentMethodClick(method)}
               >
                 {isPayLater ? 'Pay Later' : method}
               </Button>
@@ -386,7 +439,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
       <Button
         type="button"
         size="lg"
-        onClick={handlePlaceOrder}
+        onClick={() => handlePlaceOrder()}
         disabled={items.length === 0 || createOrderMutation.isPending}
         className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-sm rounded-md shadow-md transition-all active:scale-[0.99] mt-2"
       >
