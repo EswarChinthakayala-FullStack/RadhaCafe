@@ -133,8 +133,8 @@ export function SettingsNavigation({ activeCategory, onSelectCategory }: Setting
 
   return (
     <>
-      {/* Mobile & Tablet Horizontal Scroll Navigation with Drag & Buttons */}
-      <div className="lg:hidden relative w-full min-w-0">
+      {/* Mobile-Only Horizontal Scroll Navigation with Drag & Buttons */}
+      <div className="md:hidden relative w-full min-w-0">
         {/* Left Scroll Button */}
         {canScrollLeft && (
           <button
@@ -192,8 +192,8 @@ export function SettingsNavigation({ activeCategory, onSelectCategory }: Setting
         </div>
       </div>
 
-      {/* Desktop Vertical Card Navigation */}
-      <div className="hidden lg:block space-y-1 bg-card border border-border/80 p-2 rounded-md shadow-xs">
+      {/* Tablet & Desktop Sticky Vertical Card Navigation */}
+      <div className="hidden md:block space-y-1 bg-card border border-border/80 p-2 rounded-md shadow-xs sticky top-4">
         <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-3 py-2">
           Settings Categories
         </p>

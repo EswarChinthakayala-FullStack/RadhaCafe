@@ -60,9 +60,9 @@ export function SettingsPage() {
       </div>
 
       {/* Main Responsive Settings Layout */}
-      <div className="grid lg:grid-cols-4 gap-6 items-start">
+      <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6 items-start">
         {/* Left Column: Navigation / Category List */}
-        <div className="lg:col-span-1 min-w-0 w-full">
+        <div className="md:col-span-1 min-w-0 w-full">
           <SettingsNavigation
             activeCategory={activeCategory}
             onSelectCategory={handleSelectCategory}
@@ -70,7 +70,7 @@ export function SettingsPage() {
         </div>
 
         {/* Right Column: Active Settings Section Content */}
-        <div className="lg:col-span-3">
+        <div className="md:col-span-2 lg:col-span-3 min-w-0 w-full">
           {activeCategory === 'profile' && <CafeProfileForm />}
           {activeCategory === 'branding' && <BrandingSettings />}
           {activeCategory === 'tax' && <TaxCurrencySettings />}
