@@ -58,7 +58,7 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
                   <LazyImage
                     src={item.image_url || undefined}
                     alt={item.name}
-                    className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                    className="h-full w-full object-cover"
                   />
                   <div className="absolute top-2 left-2">
                     <Badge className="bg-amber-600/90 backdrop-blur-xs text-white text-[10px] px-1.5 py-0.5 font-bold shadow-xs">

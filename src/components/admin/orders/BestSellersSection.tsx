@@ -78,7 +78,7 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
                   <LazyImage
                     src={item.image_url || undefined}
                     alt={item.name}
-                    className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                    className="h-full w-full object-cover"
                   />
                   <div className="absolute top-1.5 left-1.5">
                     <Badge className="bg-orange-600/90 text-white text-[9px] px-1 py-0.2 font-bold shadow-2xs">
