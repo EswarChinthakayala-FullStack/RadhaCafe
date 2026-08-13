@@ -74,7 +74,7 @@ export const WaterRevenueChart: React.FC<WaterRevenueChartProps> = ({
           </div>
         ) : (
           <div className="h-64 w-full min-w-0 [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="waterRevenueGradient" x1="0" y1="0" x2="0" y2="1">

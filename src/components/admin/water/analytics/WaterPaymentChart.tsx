@@ -78,7 +78,7 @@ export const WaterPaymentChart: React.FC<WaterPaymentChartProps> = ({
         ) : (
           <>
             <div className="h-60 w-full min-w-0 [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <PieChart>
                   <Pie
                     data={data}
