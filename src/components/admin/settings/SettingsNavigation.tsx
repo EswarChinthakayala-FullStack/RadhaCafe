@@ -134,7 +134,7 @@ export function SettingsNavigation({ activeCategory, onSelectCategory }: Setting
           <button
             type="button"
             onClick={() => scrollByAmount(-180)}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-card border border-border/80 text-foreground shadow-md hover:bg-secondary active:scale-95"
+            className="absolute left-0 top-[19px] -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-card border border-border/80 text-foreground shadow-md hover:bg-secondary active:scale-95"
             aria-label="Scroll Left"
           >
             <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
@@ -146,7 +146,7 @@ export function SettingsNavigation({ activeCategory, onSelectCategory }: Setting
           <button
             type="button"
             onClick={() => scrollByAmount(180)}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-card border border-border/80 text-foreground shadow-md hover:bg-secondary active:scale-95"
+            className="absolute right-0 top-[19px] -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-card border border-border/80 text-foreground shadow-md hover:bg-secondary active:scale-95"
             aria-label="Scroll Right"
           >
             <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
