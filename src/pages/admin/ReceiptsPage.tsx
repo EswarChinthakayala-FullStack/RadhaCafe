@@ -15,7 +15,6 @@ import type { ReceiptTemplate, ReceiptTemplateConfig } from '../../types';
 import { ReceiptGalleryHeader } from '../../components/admin/receipts/ReceiptGalleryHeader';
 import { ActiveTemplateHero } from '../../components/admin/receipts/ActiveTemplateHero';
 import { ReceiptTemplateCard } from '../../components/admin/receipts/ReceiptTemplateCard';
-import { ReceiptPreviewModal } from '../../components/admin/receipts/ReceiptPreviewModal';
 import { CreateTemplateModal } from '../../components/admin/receipts/CreateTemplateModal';
 import { toast } from '../../components/ui/toast';
 import { Button } from '../../components/ui/button';
@@ -45,10 +44,14 @@ export function ReceiptsPage() {
     deleteMutation,
   } = useReceiptTemplateMutations();
 
-  // Dialog states
-  const [previewModalTemplate, setPreviewModalTemplate] = useState<ReceiptTemplate | null>(null);
+  // Dialog state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [isTestPrinting, setIsTestPrinting] = useState<boolean>(false);
+
+  // Navigate to dedicated full-page preview
+  const handlePreviewTemplate = (template: ReceiptTemplate) => {
+    navigate(`/admin/settings/receipts/${template.id}/preview`);
+  };
 
   // Convert built-in presets to standard ReceiptTemplate format
   const presetTemplates = BUILT_IN_PRESETS.map((p) => presetToReceiptTemplate(p));
@@ -265,7 +268,7 @@ export function ReceiptsPage() {
           activeTemplate={activeTemplate}
           cafeSettings={cafeSettings}
           onCustomize={handleCustomizeTemplate}
-          onPreview={(tmpl) => setPreviewModalTemplate(tmpl)}
+          onPreview={handlePreviewTemplate}
           onTestPrint={() => handleTestPrint(activeTemplate)}
           isTestPrinting={isTestPrinting}
           onScrollToGallery={handleScrollToGallery}
@@ -299,7 +302,7 @@ export function ReceiptsPage() {
                 isPreset={true}
                 isActive={isThisActive}
                 cafeSettings={cafeSettings}
-                onPreview={(tmpl) => setPreviewModalTemplate(tmpl)}
+                onPreview={handlePreviewTemplate}
                 onUseTemplate={handleUseTemplate}
                 onCustomize={handleCustomizeTemplate}
                 isActivating={activateMutation.isPending}
@@ -343,7 +346,7 @@ export function ReceiptsPage() {
                 isPreset={false}
                 isActive={tmpl.is_active}
                 cafeSettings={cafeSettings}
-                onPreview={(t) => setPreviewModalTemplate(t)}
+                onPreview={handlePreviewTemplate}
                 onUseTemplate={handleUseTemplate}
                 onCustomize={handleCustomizeTemplate}
                 onDuplicate={handleDuplicateTemplate}
@@ -378,18 +381,7 @@ export function ReceiptsPage() {
         )}
       </div>
 
-      {/* 5. Modals */}
-      <ReceiptPreviewModal
-        template={previewModalTemplate}
-        isOpen={Boolean(previewModalTemplate)}
-        onClose={() => setPreviewModalTemplate(null)}
-        cafeSettings={cafeSettings}
-        onCustomize={handleCustomizeTemplate}
-        onUseTemplate={handleUseTemplate}
-        onTestPrint={handleTestPrint}
-        isTestPrinting={isTestPrinting}
-      />
-
+      {/* 5. Create Template Modal */}
       <CreateTemplateModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}

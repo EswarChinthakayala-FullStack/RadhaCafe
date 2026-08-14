@@ -25,6 +25,7 @@ export const ROUTES = {
     RECEIPTS: '/admin/settings/receipts',
     RECEIPT_NEW: '/admin/settings/receipts/new',
     RECEIPT_EDIT: '/admin/settings/receipts/:templateId/edit',
+    RECEIPT_PREVIEW: '/admin/settings/receipts/:templateId/preview',
     WATER: {
       DASHBOARD: '/admin/water',
       ORDERS: '/admin/water/orders',

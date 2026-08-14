@@ -177,7 +177,11 @@ export function ReceiptTemplateEditorPage() {
   }, [draftConfig, initialConfig]);
 
   // Safe navigation with unsaved changes prompt
-  const handleSafeBack = (targetUrl: string = ROUTES.ADMIN.RECEIPTS) => {
+  const handleSafeBack = () => {
+    const targetUrl =
+      loadedTemplateId && loadedTemplateId !== 'new' && !loadedTemplateId.startsWith('preset-')
+        ? `/admin/settings/receipts/${loadedTemplateId}/preview`
+        : ROUTES.ADMIN.RECEIPTS;
     if (hasUnsavedChanges) {
       setPendingNavigateUrl(targetUrl);
       setShowDiscardAlert(true);
@@ -281,6 +285,14 @@ export function ReceiptTemplateEditorPage() {
         type: 'error',
       });
       return null;
+    }
+  };
+
+  // Save and directly navigate to full preview
+  const handleSaveAndPreview = async () => {
+    const saved = await handleSave(false);
+    if (saved) {
+      navigate(`/admin/settings/receipts/${saved.id}/preview`);
     }
   };
 
@@ -466,7 +478,7 @@ export function ReceiptTemplateEditorPage() {
           <Button
             type="button"
             size="sm"
-            onClick={() => handleSave(false)}
+            onClick={handleSaveAndPreview}
             disabled={updateMutation.isPending || createMutation.isPending}
             className="h-8.5 text-xs font-bold rounded-xl bg-cinnamon hover:bg-cinnamon/90 text-white gap-1.5 shadow-2xs"
           >
@@ -477,8 +489,8 @@ export function ReceiptTemplateEditorPage() {
               </>
             ) : (
               <>
-                <HugeiconsIcon icon={FloppyDiskIcon} size={14} />
-                <span>Save Changes</span>
+                <HugeiconsIcon icon={ViewIcon} size={14} />
+                <span>Save & Preview</span>
               </>
             )}
           </Button>
@@ -511,7 +523,27 @@ export function ReceiptTemplateEditorPage() {
             >
               <HugeiconsIcon icon={MoreVerticalIcon} size={16} />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44 rounded-xl p-1 text-xs">
+            <DropdownMenuContent align="end" className="w-48 rounded-xl p-1 text-xs">
+              <DropdownMenuItem
+                onClick={() => handleSave(false)}
+                className="cursor-pointer gap-2 font-medium"
+              >
+                <HugeiconsIcon icon={FloppyDiskIcon} size={13} />
+                <span>Save Without Leaving</span>
+              </DropdownMenuItem>
+
+              {loadedTemplateId && loadedTemplateId !== 'new' && (
+                <DropdownMenuItem
+                  onClick={() => navigate(`/admin/settings/receipts/${loadedTemplateId}/preview`)}
+                  className="cursor-pointer gap-2 font-medium"
+                >
+                  <HugeiconsIcon icon={ViewIcon} size={13} />
+                  <span>View Full Preview</span>
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuSeparator />
+
               <DropdownMenuItem
                 onClick={() => {
                   setSaveAsName(`${templateName} Copy`);
