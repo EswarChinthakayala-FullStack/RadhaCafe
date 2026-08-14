@@ -4,7 +4,6 @@ import { AppLogo } from '../../components/brand/AppLogo';
 import { LiveCafeTime } from '../../components/contact/LiveCafeTime';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  LockKeyIcon,
   LockedIcon,
   ArrowLeft01Icon,
 } from '@hugeicons/core-free-icons';
@@ -34,11 +33,6 @@ export function LoginPage() {
 
         {/* Center Editorial Brand Statement */}
         <div className="relative z-10 space-y-6 my-auto max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E5A88B]/10 border border-[#E5A88B]/25 text-[#E5A88B] text-xs font-bold uppercase tracking-widest">
-            <HugeiconsIcon icon={LockKeyIcon} size={14} />
-            <span>RADHACAFE MANAGEMENT PLATFORM</span>
-          </div>
-
           <div className="space-y-3">
             <h1 className="font-heading font-extrabold text-4xl xl:text-5xl text-cream leading-[1.1] tracking-tight">
               Everything your cafe needs,{' '}
