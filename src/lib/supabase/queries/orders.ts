@@ -1,5 +1,5 @@
 import { supabase } from '../client';
-import type { CreateOrderPayload, Order } from '../../../types';
+import type { CreateOrderPayload, Order, OrderOperationalSummary, OrderSort } from '../../../types';
 
 export interface OrderFilterParams {
   page?: number;
@@ -12,6 +12,7 @@ export interface OrderFilterParams {
   startDate?: string;
   endDate?: string;
   search?: string;
+  sort?: OrderSort;
 }
 
 export async function fetchOrders(params: OrderFilterParams = {}): Promise<{ orders: Order[]; count: number }> {
@@ -26,6 +27,7 @@ export async function fetchOrders(params: OrderFilterParams = {}): Promise<{ ord
     startDate,
     endDate,
     search,
+    sort = 'newest',
   } = params;
 
   const from = (page - 1) * limit;
@@ -63,7 +65,15 @@ export async function fetchOrders(params: OrderFilterParams = {}): Promise<{ ord
   }
 
   if (paymentStatus && paymentStatus !== 'all') {
-    query = query.eq('payment_status', paymentStatus);
+    if (paymentStatus === 'outstanding' || paymentStatus === 'unpaid') {
+      query = query.gt('due_amount', 0);
+    } else if (paymentStatus === 'paid') {
+      query = query.eq('due_amount', 0);
+    } else if (paymentStatus === 'partial') {
+      query = query.eq('payment_status', 'partial');
+    } else {
+      query = query.eq('payment_status', paymentStatus);
+    }
   }
 
   if (customerId) {
@@ -79,13 +89,37 @@ export async function fetchOrders(params: OrderFilterParams = {}): Promise<{ ord
   }
 
   if (search && search.trim()) {
-    const term = `%${search.trim()}%`;
-    query = query.or(`order_number.ilike.${term},customer_name.ilike.${term}`);
+    const term = search.trim();
+    // Prioritize exact order number match if search starts with RC- or contains order number
+    if (/^RC-/i.test(term)) {
+      query = query.ilike('order_number', `%${term}%`);
+    } else {
+      const wildcard = `%${term}%`;
+      query = query.or(`order_number.ilike.${wildcard},customer_name.ilike.${wildcard}`);
+    }
   }
 
-  const { data, error, count } = await query
-    .order('created_at', { ascending: false })
-    .range(from, to);
+  // Deterministic server-side sorting
+  switch (sort) {
+    case 'oldest':
+      query = query.order('created_at', { ascending: true });
+      break;
+    case 'highest':
+      query = query.order('total_amount', { ascending: false });
+      break;
+    case 'lowest':
+      query = query.order('total_amount', { ascending: true });
+      break;
+    case 'largest_due':
+      query = query.order('due_amount', { ascending: false });
+      break;
+    case 'newest':
+    default:
+      query = query.order('created_at', { ascending: false });
+      break;
+  }
+
+  const { data, error, count } = await query.range(from, to);
 
   if (error) throw new Error(error.message);
   return { orders: (data as unknown as Order[]) || [], count: count || 0 };
@@ -103,6 +137,66 @@ export async function fetchOrderById(id: string): Promise<Order | null> {
 
   if (error) throw new Error(error.message);
   return (data as unknown as Order) || null;
+}
+
+export async function fetchOrderOperationalSummary(startDate?: string, endDate?: string): Promise<OrderOperationalSummary> {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).toISOString();
+  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).toISOString();
+
+  const start = startDate || todayStart;
+  const end = endDate || todayEnd;
+
+  // 1. Fetch count and total of completed orders in range
+  const { data: rangeOrders, error: rangeError } = await (supabase as any)
+    .from('orders')
+    .select('id, status, total_amount, due_amount')
+    .gte('created_at', start)
+    .lte('created_at', end);
+
+  if (rangeError) throw new Error(rangeError.message);
+
+  const ordersList = (rangeOrders || []) as Array<{ id: string; status: string; total_amount: number; due_amount: number }>;
+  
+  const ordersToday = ordersList.length;
+  const completedOrders = ordersList.filter((o) => o.status === 'completed').length;
+  const totalSales = ordersList
+    .filter((o) => o.status === 'completed')
+    .reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
+
+  // 2. Fetch total outstanding orders count across all active orders
+  const { count: outstandingCount, error: outError } = await (supabase as any)
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .gt('due_amount', 0)
+    .neq('status', 'cancelled');
+
+  if (outError) throw new Error(outError.message);
+
+  return {
+    ordersToday,
+    completedOrders,
+    outstandingOrders: outstandingCount || 0,
+    totalSales,
+  };
+}
+
+export async function cancelOrder(orderId: string): Promise<Order> {
+  const { data, error } = await (supabase as any)
+    .from('orders')
+    .update({
+      status: 'cancelled',
+      completed_at: new Date().toISOString(),
+    })
+    .eq('id', orderId)
+    .select(`
+      *,
+      items:order_items(*)
+    `)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data as unknown as Order;
 }
 
 export async function createOrder(payload: CreateOrderPayload): Promise<Order> {

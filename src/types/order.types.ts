@@ -3,6 +3,28 @@ import type { MenuItem } from './menuItem.types';
 export type OrderStatus = 'pending' | 'preparing' | 'completed' | 'cancelled';
 export type PaymentMethod = 'cash' | 'card' | 'upi' | 'other' | 'pay_later';
 export type PaymentStatus = 'paid' | 'partial' | 'unpaid';
+export type OrderSort = 'newest' | 'oldest' | 'highest' | 'lowest' | 'largest_due';
+
+export interface OrderOperationalSummary {
+  ordersToday: number;
+  completedOrders: number;
+  outstandingOrders: number;
+  totalSales: number;
+}
+
+export interface OrderListFilters {
+  search?: string;
+  status?: OrderStatus | 'all';
+  paymentMethod?: PaymentMethod | 'all';
+  paymentStatus?: PaymentStatus | 'all' | 'outstanding';
+  datePreset?: 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'custom';
+  startDate?: string;
+  endDate?: string;
+  customDate?: string;
+  sort?: OrderSort;
+  page?: number;
+  limit?: number;
+}
 
 export interface OrderItem {
   id?: string;

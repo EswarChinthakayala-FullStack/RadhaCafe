@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useOrders } from '../../../hooks/useOrders';
+import { useOrders, useCancelOrder } from '../../../hooks/useOrders';
 import { useBluetoothPrinter } from '../../../hooks/useBluetoothPrinter';
+import { useCustomer } from '../../../hooks/useCustomers';
 import { OrderSummaryCards } from './OrderSummaryCards';
 import { OrderFilters, type OrderFiltersState } from './OrderFilters';
 import { OrderTable } from './OrderTable';
@@ -11,39 +12,44 @@ import { OrderEmptyState } from './OrderEmptyState';
 import { OrderErrorState } from './OrderErrorState';
 import { OrderPagination } from './OrderPagination';
 import { OrderDetailsModal } from './OrderDetailsModal';
-import type { Order } from '../../../types';
+import { ReceivePaymentDialog } from '../customers/ReceivePaymentDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../ui/alert-dialog';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { CancelCircleIcon } from '@hugeicons/core-free-icons';
+import { toast } from '../../ui/toast';
+import type { Order, OrderSort } from '../../../types';
 
 function getDateRangeForPreset(preset: OrderFiltersState['datePreset'], customDate: string) {
   const now = new Date();
   if (preset === 'today') {
-    const start = new Date(now);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(now);
-    end.setHours(23, 59, 59, 999);
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
     return { startDate: start.toISOString(), endDate: end.toISOString() };
   }
   if (preset === 'yesterday') {
-    const start = new Date(now);
-    start.setDate(now.getDate() - 1);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(now);
-    end.setDate(now.getDate() - 1);
-    end.setHours(23, 59, 59, 999);
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59, 999);
     return { startDate: start.toISOString(), endDate: end.toISOString() };
   }
   if (preset === 'week') {
     const day = now.getDay();
     const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday
-    const start = new Date(now.setDate(diff));
-    start.setHours(0, 0, 0, 0);
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
+    const start = new Date(now.getFullYear(), now.getMonth(), diff, 0, 0, 0);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
     return { startDate: start.toISOString(), endDate: end.toISOString() };
   }
   if (preset === 'month') {
     const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
     return { startDate: start.toISOString(), endDate: end.toISOString() };
   }
   if (preset === 'custom' && customDate) {
@@ -60,16 +66,22 @@ export function OrderList() {
   // Initialize filters from URL params or defaults
   const [page, setPage] = useState<number>(Number(searchParams.get('page')) || 1);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [paymentOrder, setPaymentOrder] = useState<Order | null>(null);
+  const [cancelOrderTarget, setCancelOrderTarget] = useState<Order | null>(null);
 
   const [filters, setFilters] = useState<OrderFiltersState>({
     search: searchParams.get('search') || '',
     status: searchParams.get('status') || 'all',
-    paymentMethod: searchParams.get('payment') || 'all',
+    paymentStatus: searchParams.get('payment_status') || 'all',
+    paymentMethod: searchParams.get('method') || 'all',
     datePreset: (searchParams.get('preset') as any) || 'all',
     customDate: searchParams.get('date') || '',
+    sort: (searchParams.get('sort') as OrderSort) || 'newest',
   });
 
   const { printOrder } = useBluetoothPrinter();
+  const cancelOrderMutation = useCancelOrder();
+  const { data: customerForPayment } = useCustomer(paymentOrder?.customer_id || undefined);
 
   // Compute date bounds for current preset
   const { startDate, endDate } = getDateRangeForPreset(filters.datePreset, filters.customDate);
@@ -80,9 +92,11 @@ export function OrderList() {
     if (page > 1) newParams.page = String(page);
     if (filters.search) newParams.search = filters.search;
     if (filters.status !== 'all') newParams.status = filters.status;
-    if (filters.paymentMethod !== 'all') newParams.payment = filters.paymentMethod;
+    if (filters.paymentStatus !== 'all') newParams.payment_status = filters.paymentStatus;
+    if (filters.paymentMethod !== 'all') newParams.method = filters.paymentMethod;
     if (filters.datePreset !== 'all') newParams.preset = filters.datePreset;
     if (filters.customDate) newParams.date = filters.customDate;
+    if (filters.sort !== 'newest') newParams.sort = filters.sort;
     setSearchParams(newParams, { replace: true });
   }, [page, filters, setSearchParams]);
 
@@ -91,11 +105,13 @@ export function OrderList() {
     page,
     limit: 20,
     status: filters.status,
+    paymentStatus: filters.paymentStatus,
     paymentMethod: filters.paymentMethod,
     startDate,
     endDate,
     date: filters.datePreset === 'custom' ? filters.customDate : undefined,
     search: filters.search,
+    sort: filters.sort,
   });
 
   const totalPages = Math.ceil((data?.count || 0) / 20) || 1;
@@ -109,24 +125,47 @@ export function OrderList() {
     setFilters({
       search: '',
       status: 'all',
+      paymentStatus: 'all',
       paymentMethod: 'all',
       datePreset: 'all',
       customDate: '',
+      sort: 'newest',
     });
     setPage(1);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelOrderTarget) return;
+    try {
+      await cancelOrderMutation.mutateAsync(cancelOrderTarget.id);
+      toast.add({
+        title: 'Order Cancelled',
+        description: `Order #${cancelOrderTarget.order_number} marked as cancelled.`,
+        type: 'info',
+      });
+      setCancelOrderTarget(null);
+    } catch (err: any) {
+      toast.add({
+        title: 'Failed',
+        description: err.message || 'Unable to cancel order.',
+        type: 'error',
+      });
+    }
   };
 
   const isFiltered =
     Boolean(filters.search) ||
     filters.status !== 'all' ||
+    filters.paymentStatus !== 'all' ||
     filters.paymentMethod !== 'all' ||
     filters.datePreset !== 'all' ||
-    Boolean(filters.customDate);
+    Boolean(filters.customDate) ||
+    filters.sort !== 'newest';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Top Quick Summary Statistics */}
-      <OrderSummaryCards />
+      <OrderSummaryCards startDate={startDate} endDate={endDate} />
 
       {/* Filter Toolbar */}
       <OrderFilters
@@ -150,17 +189,20 @@ export function OrderList() {
               orders={data.orders}
               onSelectOrder={(ord) => setSelectedOrder(ord)}
               onPrintOrder={(ord) => printOrder(ord)}
+              onReceivePayment={(ord) => setPaymentOrder(ord)}
+              onCancelOrder={(ord) => setCancelOrderTarget(ord)}
             />
           </div>
 
           {/* Mobile Cards View (< 768px) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:hidden gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:hidden gap-3">
             {data.orders.map((ord) => (
               <OrderCard
                 key={ord.id}
                 order={ord}
                 onSelectOrder={(o) => setSelectedOrder(o)}
                 onPrintOrder={(o) => printOrder(o)}
+                onReceivePayment={(o) => setPaymentOrder(o)}
               />
             ))}
           </div>
@@ -183,6 +225,57 @@ export function OrderList() {
           onClose={() => setSelectedOrder(null)}
         />
       )}
+
+      {/* Quick Collect Payment Modal */}
+      {paymentOrder && (
+        <ReceivePaymentDialog
+          open={Boolean(paymentOrder)}
+          onOpenChange={(open) => !open && setPaymentOrder(null)}
+          customer={
+            customerForPayment || {
+              id: paymentOrder.customer_id || 'walk-in',
+              name: paymentOrder.customer_name || 'Walk-in Customer',
+              phone: '',
+              is_active: true,
+              created_at: '',
+              updated_at: '',
+              total_due: Number(paymentOrder.due_amount || 0),
+            }
+          }
+          order={paymentOrder}
+          onSuccess={() => setPaymentOrder(null)}
+        />
+      )}
+
+      {/* Row Cancel Order Confirmation Dialog */}
+      <AlertDialog
+        open={Boolean(cancelOrderTarget)}
+        onOpenChange={(open) => !open && setCancelOrderTarget(null)}
+      >
+        <AlertDialogContent className="max-w-md bg-card border border-border rounded-xl p-6 shadow-2xl">
+          <AlertDialogHeader className="space-y-2 text-left">
+            <div className="w-10 h-10 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 flex items-center justify-center mb-1">
+              <HugeiconsIcon icon={CancelCircleIcon} size={20} />
+            </div>
+            <AlertDialogTitle className="font-heading text-lg font-bold text-foreground">
+              Cancel Order #{cancelOrderTarget?.order_number}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground">
+              This will mark the order as cancelled in reports and history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="pt-3 border-t border-border/60">
+            <AlertDialogCancel className="h-9 text-xs rounded-lg">Keep Order</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmCancel}
+              disabled={cancelOrderMutation.isPending}
+              className="h-9 text-xs bg-destructive text-white hover:bg-destructive/90 font-bold rounded-lg"
+            >
+              {cancelOrderMutation.isPending ? 'Cancelling...' : 'Yes, Cancel Order'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
