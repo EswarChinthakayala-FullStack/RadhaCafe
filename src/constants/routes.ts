@@ -19,6 +19,7 @@ export const ROUTES = {
     ANALYTICS: '/admin/analytics',
     GALLERY: '/admin/gallery',
     DISCUSSIONS: '/admin/discussions',
+    DISCUSSION_DETAILS: '/admin/discussion/:reviewId',
     PRINTER: '/admin/printer',
     SETTINGS: '/admin/settings',
     WATER: {

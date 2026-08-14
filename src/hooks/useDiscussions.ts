@@ -13,6 +13,9 @@ import {
   deleteReview,
   fetchAllReviews,
   fetchPublicReviews,
+  fetchAdminReviewById,
+  fetchAdminReviewNavigation,
+  type AdminReviewNavigationInfo,
   type PublicReviewQueryParams,
   type PublicReviewSummary,
   type PublicReviewsResponse,
@@ -27,6 +30,32 @@ export const REVIEW_SUMMARY_QUERY_KEY = ['reviews', 'summary'] as const;
 export const PUBLIC_REVIEWS_QUERY_KEY = ['reviews', 'public-list'] as const;
 export const ADMIN_REVIEW_SUMMARY_QUERY_KEY = ['reviews', 'admin-summary'] as const;
 export const ADMIN_REVIEWS_QUERY_KEY = ['reviews', 'admin-list'] as const;
+export const ADMIN_REVIEW_DETAIL_QUERY_KEY = ['reviews', 'admin-detail'] as const;
+export const ADMIN_REVIEW_NAV_QUERY_KEY = ['reviews', 'admin-nav'] as const;
+
+/**
+ * Admin Single Review Detail Hook
+ */
+export function useAdminReviewDetail(reviewId: string) {
+  return useQuery<DiscussionReview | null>({
+    queryKey: [...ADMIN_REVIEW_DETAIL_QUERY_KEY, reviewId],
+    queryFn: () => fetchAdminReviewById(reviewId),
+    enabled: Boolean(reviewId),
+    staleTime: 20 * 1000,
+  });
+}
+
+/**
+ * Admin Review Navigation Hook (Previous, Next, Current Index, Total)
+ */
+export function useAdminReviewNavigation(reviewId: string, params: AdminReviewQueryParams) {
+  return useQuery<AdminReviewNavigationInfo>({
+    queryKey: [...ADMIN_REVIEW_NAV_QUERY_KEY, reviewId, params],
+    queryFn: () => fetchAdminReviewNavigation(reviewId, params),
+    enabled: Boolean(reviewId),
+    staleTime: 15 * 1000,
+  });
+}
 
 /**
  * Public Review Summary Hook (Average rating, 5-to-1 distribution, total reviews)

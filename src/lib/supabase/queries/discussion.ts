@@ -569,9 +569,9 @@ export async function fetchAdminReviewsList({
 
   // Reply Filter
   if (reply === 'needed') {
-    query = query.is('admin_reply', null);
+    query = query.or('admin_reply.is.null,admin_reply.eq.');
   } else if (reply === 'replied') {
-    query = query.not('admin_reply', 'is', null);
+    query = query.not('admin_reply', 'is', null).neq('admin_reply', '');
   }
 
   // Search Filter
@@ -615,3 +615,123 @@ export async function fetchAdminReviewsList({
     page,
   };
 }
+
+export interface AdminReviewNavigationInfo {
+  currentIndex: number;
+  totalCount: number;
+  prevReviewId: string | null;
+  nextReviewId: string | null;
+  hasPrev: boolean;
+  hasNext: boolean;
+}
+
+/**
+ * Fetch single review by ID
+ */
+export async function fetchAdminReviewById(reviewId: string): Promise<DiscussionReview | null> {
+  if (!reviewId) return null;
+
+  const { data, error } = await (supabase as any)
+    .from('discussions')
+    .select('*')
+    .eq('id', reviewId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data || null;
+}
+
+/**
+ * Fetch navigation context (previous review, next review, current position, total) matching active filters
+ */
+export async function fetchAdminReviewNavigation(
+  reviewId: string,
+  params: AdminReviewQueryParams = {}
+): Promise<AdminReviewNavigationInfo> {
+  const {
+    search = '',
+    status = 'all',
+    rating = 'all',
+    reply = 'all',
+    sort = 'newest',
+  } = params;
+
+  let query = (supabase as any)
+    .from('discussions')
+    .select('id', { count: 'exact' });
+
+  // Status Filter
+  if (status === 'pending') {
+    query = query.eq('is_approved', false);
+  } else if (status === 'approved') {
+    query = query.eq('is_approved', true);
+  }
+
+  // Rating Filter
+  const numRating = typeof rating === 'string' && rating !== 'all' ? Number(rating) : rating;
+  if (typeof numRating === 'number' && !isNaN(numRating) && numRating >= 1 && numRating <= 5) {
+    query = query.eq('rating', numRating);
+  }
+
+  // Reply Filter
+  if (reply === 'needed') {
+    query = query.or('admin_reply.is.null,admin_reply.eq.');
+  } else if (reply === 'replied') {
+    query = query.not('admin_reply', 'is', null).neq('admin_reply', '');
+  }
+
+  // Search Filter
+  const trimmedSearch = search.trim();
+  if (trimmedSearch) {
+    query = query.or(
+      `customer_name.ilike.%${trimmedSearch}%,message.ilike.%${trimmedSearch}%,admin_reply.ilike.%${trimmedSearch}%`
+    );
+  }
+
+  // Sort Order (matching list ordering)
+  if (sort === 'oldest') {
+    query = query.order('created_at', { ascending: true }).order('id', { ascending: true });
+  } else if (sort === 'highest') {
+    query = query.order('rating', { ascending: false }).order('created_at', { ascending: false }).order('id', { ascending: false });
+  } else if (sort === 'lowest') {
+    query = query.order('rating', { ascending: true }).order('created_at', { ascending: false }).order('id', { ascending: false });
+  } else if (sort === 'helpful') {
+    query = query.order('helpful_count', { ascending: false }).order('created_at', { ascending: false }).order('id', { ascending: false });
+  } else {
+    query = query.order('created_at', { ascending: false }).order('id', { ascending: false });
+  }
+
+  // Limit to reasonable navigation pool (up to 500 IDs)
+  query = query.limit(500);
+
+  const { data, error, count } = await query;
+  if (error) throw new Error(error.message);
+
+  const ids: string[] = (data || []).map((row: any) => row.id);
+  const totalCount = count || ids.length;
+  const indexInList = ids.indexOf(reviewId);
+
+  if (indexInList === -1) {
+    return {
+      currentIndex: 1,
+      totalCount: Math.max(1, totalCount),
+      prevReviewId: null,
+      nextReviewId: ids.length > 0 ? ids[0] : null,
+      hasPrev: false,
+      hasNext: ids.length > 0,
+    };
+  }
+
+  const prevReviewId = indexInList > 0 ? ids[indexInList - 1] : null;
+  const nextReviewId = indexInList < ids.length - 1 ? ids[indexInList + 1] : null;
+
+  return {
+    currentIndex: indexInList + 1,
+    totalCount,
+    prevReviewId,
+    nextReviewId,
+    hasPrev: Boolean(prevReviewId),
+    hasNext: Boolean(nextReviewId),
+  };
+}
+

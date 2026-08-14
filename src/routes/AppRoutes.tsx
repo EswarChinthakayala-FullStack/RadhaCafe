@@ -20,6 +20,7 @@ import { MenuPage } from '../pages/admin/MenuPage';
 import { AnalyticsPage } from '../pages/admin/AnalyticsPage';
 import { GalleryPage } from '../pages/admin/GalleryPage';
 import { DiscussionPage } from '../pages/admin/DiscussionPage';
+import { AdminReviewViewerPage } from '../pages/admin/AdminReviewViewerPage';
 import { PrinterPage } from '../pages/admin/PrinterPage';
 import { SettingsPage } from '../pages/admin/SettingsPage';
 import { ReceiptsPage } from '../pages/admin/ReceiptsPage';
@@ -66,7 +67,9 @@ export function AppRoutes() {
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="gallery" element={<GalleryPage />} />
                 <Route path="discussion" element={<DiscussionPage />} />
+                <Route path="discussion/:reviewId" element={<AdminReviewViewerPage />} />
                 <Route path="discussions" element={<DiscussionPage />} />
+                <Route path="discussions/:reviewId" element={<AdminReviewViewerPage />} />
                 <Route path="printer" element={<PrinterPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="settings/receipts" element={<ReceiptsPage />} />

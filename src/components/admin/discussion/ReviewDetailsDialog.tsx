@@ -8,7 +8,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '../../ui/dialog';
 import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
@@ -56,6 +55,7 @@ interface ReviewDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleteRequest: (review: DiscussionReview) => void;
+  onStatusChange?: (updatedReview: DiscussionReview) => void;
   onNavigatePrev?: () => void;
   onNavigateNext?: () => void;
   hasPrev?: boolean;
@@ -67,12 +67,14 @@ export function ReviewDetailsDialog({
   open,
   onOpenChange,
   onDeleteRequest,
+  onStatusChange,
   onNavigatePrev,
   onNavigateNext,
   hasPrev = false,
   hasNext = false,
 }: ReviewDetailsDialogProps) {
   const [activeTab, setActiveTab] = useState<'details' | 'preview'>('details');
+  const [currentReview, setCurrentReview] = useState<DiscussionReview | null>(review);
 
   const approveMutation = useApproveDiscussion();
   const unpublishMutation = useUnpublishDiscussion();
@@ -94,26 +96,34 @@ export function ReviewDetailsDialog({
 
   const replyText = watch('reply') || '';
 
+  // Synchronize local review state whenever prop changes
   useEffect(() => {
-    if (review && open) {
+    if (review) {
+      setCurrentReview(review);
       reset({
         reply: review.admin_reply || '',
       });
-      setActiveTab('details');
+      if (open) {
+        setActiveTab('details');
+      }
     }
   }, [review, open, reset]);
 
-  if (!review) return null;
+  if (!currentReview) return null;
 
-  const isApproved = review.is_approved;
-  const hasReply = Boolean(review.admin_reply);
+  const isApproved = currentReview.is_approved;
+  const hasReply = Boolean(currentReview.admin_reply);
 
   const handleApprove = async () => {
     try {
-      await approveMutation.mutateAsync(review.id);
+      await approveMutation.mutateAsync(currentReview.id);
+      const updated = { ...currentReview, is_approved: true };
+      setCurrentReview(updated);
+      if (onStatusChange) onStatusChange(updated);
+
       toast.add({
         title: 'Review Approved',
-        description: 'This review is now published and visible to the public.',
+        description: 'This review is now published and live on the website.',
         type: 'success',
       });
     } catch (err: any) {
@@ -127,7 +137,11 @@ export function ReviewDetailsDialog({
 
   const handleUnpublish = async () => {
     try {
-      await unpublishMutation.mutateAsync(review.id);
+      await unpublishMutation.mutateAsync(currentReview.id);
+      const updated = { ...currentReview, is_approved: false };
+      setCurrentReview(updated);
+      if (onStatusChange) onStatusChange(updated);
+
       toast.add({
         title: 'Review Unpublished',
         description: 'This review has been moved back to pending moderation.',
@@ -144,10 +158,19 @@ export function ReviewDetailsDialog({
 
   const onSubmitReply = async (data: ReplyFormData) => {
     try {
+      const trimmed = data.reply.trim();
       await replyMutation.mutateAsync({
-        reviewId: review.id,
-        reply: data.reply.trim(),
+        reviewId: currentReview.id,
+        reply: trimmed,
       });
+
+      const updated = {
+        ...currentReview,
+        admin_reply: trimmed,
+        admin_replied_at: new Date().toISOString(),
+      };
+      setCurrentReview(updated);
+      if (onStatusChange) onStatusChange(updated);
 
       toast.add({
         title: 'Response Saved',
@@ -165,8 +188,16 @@ export function ReviewDetailsDialog({
 
   const handleDeleteReply = async () => {
     try {
-      await deleteReplyMutation.mutateAsync(review.id);
+      await deleteReplyMutation.mutateAsync(currentReview.id);
       reset({ reply: '' });
+      const updated = {
+        ...currentReview,
+        admin_reply: null,
+        admin_replied_at: null,
+      };
+      setCurrentReview(updated);
+      if (onStatusChange) onStatusChange(updated);
+
       toast.add({
         title: 'Response Removed',
         description: 'Official response removed from this review.',
@@ -192,23 +223,23 @@ export function ReviewDetailsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col bg-card border-border/80 p-0 rounded-2xl shadow-2xl overflow-hidden">
         {/* Top Header Bar */}
-        <DialogHeader className="p-4 sm:p-5 border-b border-border/80 bg-secondary/30 shrink-0 space-y-2">
+        <DialogHeader className="p-4 sm:p-5 pr-12 border-b border-border/80 bg-secondary/30 shrink-0 space-y-2.5">
           <div className="flex items-center justify-between gap-3">
             {/* Customer Information */}
-            <div className="flex items-center gap-3">
-              <Avatar className="h-11 w-11 border border-border bg-cinnamon/15 text-cinnamon font-bold shadow-2xs shrink-0">
-                <AvatarFallback>{review.customer_name.slice(0, 2).toUpperCase()}</AvatarFallback>
+            <div className="flex items-center gap-3 min-w-0">
+              <Avatar className="h-10 w-10 sm:h-11 sm:w-11 border border-border bg-cinnamon/15 text-cinnamon font-bold shadow-2xs shrink-0">
+                <AvatarFallback>{currentReview.customer_name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
 
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <DialogTitle className="font-heading font-extrabold text-base sm:text-lg text-foreground">
-                    {review.customer_name}
+                  <DialogTitle className="font-heading font-extrabold text-base sm:text-lg text-foreground truncate">
+                    {currentReview.customer_name}
                   </DialogTitle>
 
                   <Badge
                     variant={isApproved ? 'default' : 'outline'}
-                    className={`text-[10px] font-bold rounded-md px-2 py-0.5 ${
+                    className={`text-[10px] font-bold rounded-md px-2 py-0.5 shrink-0 ${
                       isApproved
                         ? 'bg-emerald-600 hover:bg-emerald-600 text-white'
                         : 'text-amber-700 border-amber-500/40 bg-amber-500/10'
@@ -218,12 +249,12 @@ export function ReviewDetailsDialog({
                   </Badge>
                 </div>
 
-                <DialogDescription className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
-                  <span>{formatDate(review.created_at)}</span>
-                  {review.helpful_count && review.helpful_count > 0 ? (
+                <DialogDescription className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5 flex-wrap">
+                  <span>{formatDate(currentReview.created_at)}</span>
+                  {currentReview.helpful_count && currentReview.helpful_count > 0 ? (
                     <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
                       <HugeiconsIcon icon={ThumbsUpIcon} size={11} />
-                      <span>{review.helpful_count} people found this helpful</span>
+                      <span>{currentReview.helpful_count} found helpful</span>
                     </span>
                   ) : null}
                 </DialogDescription>
@@ -238,7 +269,7 @@ export function ReviewDetailsDialog({
                   variant="outline"
                   disabled={!hasPrev}
                   onClick={onNavigatePrev}
-                  className="h-8 w-8 rounded-lg border-border/80"
+                  className="h-8 w-8 rounded-lg border-border/80 bg-background"
                   title="Previous review"
                 >
                   <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
@@ -250,7 +281,7 @@ export function ReviewDetailsDialog({
                   variant="outline"
                   disabled={!hasNext}
                   onClick={onNavigateNext}
-                  className="h-8 w-8 rounded-lg border-border/80"
+                  className="h-8 w-8 rounded-lg border-border/80 bg-background"
                   title="Next review"
                 >
                   <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
@@ -260,18 +291,18 @@ export function ReviewDetailsDialog({
           </div>
 
           {/* Star Rating Display */}
-          <div className="flex items-center gap-2 pt-1">
+          <div className="flex items-center gap-2 pt-0.5">
             <div className="flex items-center gap-0.5 text-amber-500">
               {Array.from({ length: 5 }).map((_, i) => (
                 <HugeiconsIcon
                   key={i}
                   icon={StarIcon}
                   size={15}
-                  className={i < review.rating ? 'fill-amber-500 text-amber-500' : 'text-muted/40'}
+                  className={i < currentReview.rating ? 'fill-amber-500 text-amber-500' : 'text-muted/40'}
                 />
               ))}
             </div>
-            <span className="text-xs font-bold text-foreground">{review.rating} out of 5 stars</span>
+            <span className="text-xs font-bold text-foreground">{currentReview.rating} out of 5 stars</span>
           </div>
         </DialogHeader>
 
@@ -297,7 +328,7 @@ export function ReviewDetailsDialog({
                   Customer Review
                 </Label>
                 <div className="p-4 rounded-xl bg-secondary/30 border border-border/80 text-foreground text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
-                  {review.message}
+                  {currentReview.message}
                 </div>
               </div>
 
@@ -308,9 +339,9 @@ export function ReviewDetailsDialog({
                     <HugeiconsIcon icon={Coffee02Icon} size={14} />
                     <span>Response from RadhaCafe</span>
                   </div>
-                  {review.admin_replied_at && (
+                  {currentReview.admin_replied_at && (
                     <span className="text-[11px] text-muted-foreground font-mono">
-                      Last updated {formatDate(review.admin_replied_at)}
+                      Last updated {formatDate(currentReview.admin_replied_at)}
                     </span>
                   )}
                 </div>
@@ -382,42 +413,42 @@ export function ReviewDetailsDialog({
               </p>
               <div className="p-3 sm:p-4 rounded-xl bg-[#140A06] border border-[#3E2519]">
                 <ReviewCard
-                  id={review.id}
-                  customerName={review.customer_name}
-                  message={review.message}
-                  rating={review.rating}
-                  createdAt={review.created_at}
-                  adminReply={replyText.trim() || review.admin_reply}
-                  adminRepliedAt={review.admin_replied_at || new Date().toISOString()}
-                  helpfulCount={review.helpful_count || 0}
+                  id={currentReview.id}
+                  customerName={currentReview.customer_name}
+                  message={currentReview.message}
+                  rating={currentReview.rating}
+                  createdAt={currentReview.created_at}
+                  adminReply={replyText.trim() || currentReview.admin_reply}
+                  adminRepliedAt={currentReview.admin_replied_at || new Date().toISOString()}
+                  helpfulCount={currentReview.helpful_count || 0}
                 />
               </div>
             </TabsContent>
           </Tabs>
         </div>
 
-        {/* Bottom Moderation Actions Footer */}
-        <DialogFooter className="p-4 sm:p-5 border-t border-border/80 bg-secondary/30 flex items-center justify-between gap-2 shrink-0">
+        {/* Bottom Moderation Actions Footer (Clean Responsive Layout) */}
+        <div className="p-4 sm:p-5 border-t border-border/80 bg-secondary/30 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => onDeleteRequest(review)}
+            onClick={() => onDeleteRequest(currentReview)}
             disabled={isPending}
-            className="text-xs text-destructive border-destructive/30 hover:bg-destructive/10 gap-1.5 rounded-lg h-9"
+            className="text-xs text-destructive border-destructive/30 hover:bg-destructive/10 gap-1.5 rounded-lg h-9 w-full sm:w-auto justify-center"
           >
             <HugeiconsIcon icon={Delete02Icon} size={14} />
             <span>Delete Review</span>
           </Button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             {!isApproved ? (
               <Button
                 type="button"
                 size="sm"
                 onClick={handleApprove}
                 disabled={isPending}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg gap-1.5 h-9 px-4 shadow-2xs"
+                className="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg gap-1.5 h-9 px-4 shadow-2xs justify-center"
               >
                 <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} />
                 <span>{isPending ? 'Approving...' : 'Approve & Publish'}</span>
@@ -429,7 +460,7 @@ export function ReviewDetailsDialog({
                 size="sm"
                 onClick={handleUnpublish}
                 disabled={isPending}
-                className="text-xs font-semibold text-amber-600 border-amber-500/40 hover:bg-amber-500/10 gap-1.5 rounded-lg h-9 px-4"
+                className="flex-1 sm:flex-initial text-xs font-semibold text-amber-600 border-amber-500/40 hover:bg-amber-500/10 gap-1.5 rounded-lg h-9 px-4 justify-center"
               >
                 <HugeiconsIcon icon={Cancel01Icon} size={14} />
                 <span>Unpublish Review</span>
@@ -441,12 +472,12 @@ export function ReviewDetailsDialog({
               variant="ghost"
               size="sm"
               onClick={() => onOpenChange(false)}
-              className="text-xs rounded-lg h-9"
+              className="text-xs rounded-lg h-9 px-3 shrink-0"
             >
               Close
             </Button>
           </div>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

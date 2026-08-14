@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../lib/supabase/client';
 import {
@@ -17,7 +17,6 @@ import { ReviewsPageHeader } from './ReviewsPageHeader';
 import { ReviewAdminSummary } from './ReviewAdminSummary';
 import { ReviewsToolbar, type ReviewsToolbarFilters } from './ReviewsToolbar';
 import { AdminReviewList } from './AdminReviewList';
-import { ReviewDetailsDialog } from './ReviewDetailsDialog';
 import { AdminReplyDialog } from './AdminReplyDialog';
 import {
   AlertDialog,
@@ -38,13 +37,16 @@ import type { DiscussionReview } from '../../../lib/supabase/queries/discussion'
 
 export function DiscussionModerator() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Read URL filter state with defaults
+  // Read URL filter state with clean defaults
   const search = searchParams.get('q') || '';
   const statusParam = searchParams.get('status');
   const status: 'all' | 'pending' | 'approved' =
-    statusParam === 'approved' || statusParam === 'pending' ? statusParam : 'pending'; // Default to pending for moderation
+    statusParam === 'approved' || statusParam === 'pending' || statusParam === 'all'
+      ? statusParam
+      : 'all';
 
   const ratingParam = searchParams.get('rating');
   const rating: number | 'all' =
@@ -78,12 +80,12 @@ export function DiscussionModerator() {
     [search, status, rating, reply, sort]
   );
 
-  // Update URL Search Params
+  // Update URL Search Params safely
   const setFilters = useCallback(
     (newFilters: ReviewsToolbarFilters, newPage = 1) => {
       const params = new URLSearchParams();
       if (newFilters.search.trim()) params.set('q', newFilters.search.trim());
-      if (newFilters.status !== 'all') params.set('status', newFilters.status);
+      params.set('status', newFilters.status);
       if (newFilters.rating !== 'all') params.set('rating', String(newFilters.rating));
       if (newFilters.reply !== 'all') params.set('reply', newFilters.reply);
       if (newFilters.sort !== 'newest') params.set('sort', newFilters.sort);
@@ -126,7 +128,6 @@ export function DiscussionModerator() {
   const deleteMutation = useDeleteDiscussion();
 
   // Modal / Dialog States
-  const [detailsReviewId, setDetailsReviewId] = useState<string | null>(null);
   const [replyingReview, setReplyingReview] = useState<DiscussionReview | null>(null);
   const [deletingReview, setDeletingReview] = useState<DiscussionReview | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
@@ -136,17 +137,6 @@ export function DiscussionModerator() {
   const items = listData?.items || [];
   const totalCount = listData?.totalCount || 0;
   const totalPages = listData?.totalPages || 1;
-
-  // Selected review for details modal
-  const selectedDetailsReview = useMemo(() => {
-    if (!detailsReviewId) return null;
-    return items.find((r) => r.id === detailsReviewId) || null;
-  }, [items, detailsReviewId]);
-
-  const selectedDetailsIndex = useMemo(() => {
-    if (!detailsReviewId) return -1;
-    return items.findIndex((r) => r.id === detailsReviewId);
-  }, [items, detailsReviewId]);
 
   // Realtime subscription to refresh moderation queue
   useEffect(() => {
@@ -181,6 +171,13 @@ export function DiscussionModerator() {
     } finally {
       setIsRefreshing(false);
     }
+  };
+
+  const handleOpenDetails = (review: DiscussionReview) => {
+    navigate({
+      pathname: `/admin/discussion/${review.id}`,
+      search: searchParams.toString(),
+    });
   };
 
   const handleApprove = async (review: DiscussionReview) => {
@@ -257,34 +254,18 @@ export function DiscussionModerator() {
     if (!deletingReview) return;
     try {
       await deleteMutation.mutateAsync(deletingReview.id);
+      setDeletingReview(null);
       toast.add({
         title: 'Review Deleted',
-        description: 'The review submission has been permanently removed.',
+        description: 'Review has been permanently removed.',
         type: 'success',
       });
-      if (detailsReviewId === deletingReview.id) {
-        setDetailsReviewId(null);
-      }
-      setDeletingReview(null);
     } catch (err: any) {
       toast.add({
         title: 'Delete Failed',
         description: err?.message || 'Unable to delete review.',
         type: 'error',
       });
-    }
-  };
-
-  // Details Dialog sequence navigation
-  const handleDetailsPrev = () => {
-    if (selectedDetailsIndex > 0) {
-      setDetailsReviewId(items[selectedDetailsIndex - 1].id);
-    }
-  };
-
-  const handleDetailsNext = () => {
-    if (selectedDetailsIndex >= 0 && selectedDetailsIndex < items.length - 1) {
-      setDetailsReviewId(items[selectedDetailsIndex + 1].id);
     }
   };
 
@@ -353,7 +334,7 @@ export function DiscussionModerator() {
           onApproveAndReply={handleApproveAndReply}
           onUnpublish={handleUnpublish}
           onOpenReply={(review) => setReplyingReview(review)}
-          onOpenDetails={(review) => setDetailsReviewId(review.id)}
+          onOpenDetails={handleOpenDetails}
           onDelete={(review) => setDeletingReview(review)}
           onRemoveReply={handleRemoveReply}
           onResetFilters={handleResetFilters}
@@ -363,27 +344,14 @@ export function DiscussionModerator() {
         />
       )}
 
-      {/* Review Details Modal */}
-      <ReviewDetailsDialog
-        review={selectedDetailsReview}
-        open={Boolean(selectedDetailsReview)}
-        onOpenChange={(open) => {
-          if (!open) setDetailsReviewId(null);
-        }}
-        onDeleteRequest={(review) => setDeletingReview(review)}
-        onNavigatePrev={handleDetailsPrev}
-        onNavigateNext={handleDetailsNext}
-        hasPrev={selectedDetailsIndex > 0}
-        hasNext={selectedDetailsIndex >= 0 && selectedDetailsIndex < items.length - 1}
-      />
-
-      {/* Quick Reply Dialog */}
+      {/* Quick Reply Dialog (for list page quick actions) */}
       <AdminReplyDialog
         review={replyingReview}
         open={Boolean(replyingReview)}
         onOpenChange={(open) => {
           if (!open) setReplyingReview(null);
         }}
+        onSuccess={() => setReplyingReview(null)}
       />
 
       {/* Delete Confirmation Alert Dialog */}
@@ -393,29 +361,35 @@ export function DiscussionModerator() {
           if (!open) setDeletingReview(null);
         }}
       >
-        <AlertDialogContent className="bg-card border-border/80 rounded-2xl p-6 space-y-3 max-w-md shadow-2xl">
-          <AlertDialogHeader className="space-y-1 text-left p-0">
-            <AlertDialogTitle className="text-base sm:text-lg font-bold font-heading text-foreground">
-              Delete review from "{deletingReview?.customer_name}"?
+        <AlertDialogContent className="bg-card border-border rounded-2xl shadow-xl max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-heading font-bold text-base text-destructive">
+              Permanently delete this review?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs text-muted-foreground">
-              This action will permanently remove this customer review and its RadhaCafe response from the system. This cannot be undone.
+            <AlertDialogDescription className="text-xs text-muted-foreground space-y-2">
+              <span>
+                Are you sure you want to delete the review from{' '}
+                <strong>{deletingReview?.customer_name}</strong>?
+              </span>
+              {deletingReview && (
+                <span className="block italic text-foreground/80 bg-secondary/40 p-2.5 rounded-lg border border-border/60 line-clamp-2">
+                  &ldquo;{deletingReview.message}&rdquo;
+                </span>
+              )}
+              <span className="block text-destructive font-semibold">
+                This action cannot be undone and will remove it permanently from the database.
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
-
-          {deletingReview && (
-            <div className="p-3 rounded-xl bg-destructive/5 border border-destructive/20 text-xs text-foreground/80 italic line-clamp-3">
-              "{deletingReview.message}"
-            </div>
-          )}
-
-          <AlertDialogFooter className="flex items-center gap-2 pt-2 border-t border-border/60">
-            <AlertDialogCancel className="text-xs rounded-lg h-9">Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="gap-2 pt-2">
+            <AlertDialogCancel className="text-xs rounded-lg h-9">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
-              className="bg-destructive hover:bg-destructive/90 text-white font-bold text-xs rounded-lg h-9 px-4"
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-bold rounded-lg h-9"
             >
-              Delete Review
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete Review'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

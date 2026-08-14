@@ -17,10 +17,10 @@ export function ReviewsPageHeader({
   isRefreshing = false,
 }: ReviewsPageHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-4">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-border/80 pb-4">
       <div>
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shrink-0">
+          <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shrink-0 shadow-2xs">
             <HugeiconsIcon icon={Comment01Icon} size={20} />
           </div>
           <h1 className="text-xl sm:text-2xl font-extrabold font-heading text-foreground tracking-tight">
@@ -32,22 +32,22 @@ export function ReviewsPageHeader({
         </p>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto flex-wrap">
         {onRefresh && (
           <Button
             size="sm"
             variant="outline"
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="h-9 px-3 text-xs border-border/80 bg-background text-foreground gap-1.5 rounded-lg"
+            className="h-9 px-3 text-xs border-border/80 bg-card text-foreground gap-1.5 rounded-lg shadow-2xs hover:bg-secondary/60 transition-all"
             title="Refresh reviews data"
           >
             <HugeiconsIcon
               icon={RefreshIcon}
               size={14}
-              className={isRefreshing ? 'animate-spin' : ''}
+              className={isRefreshing ? 'animate-spin text-cinnamon' : 'text-muted-foreground'}
             />
-            <span className="hidden sm:inline">Refresh</span>
+            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
           </Button>
         )}
 
