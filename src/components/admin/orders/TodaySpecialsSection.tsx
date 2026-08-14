@@ -3,7 +3,6 @@ import { useCart } from '../../../hooks/useCart';
 import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import { LazyImage } from '../../ui/lazy-image';
 import { Badge } from '../../ui/badge';
-import { Button } from '../../ui/button';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { StarIcon, PlusSignIcon, MinusSignIcon, Coffee02Icon } from '@hugeicons/core-free-icons';
 
@@ -83,51 +82,57 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
                 </div>
 
                 {/* Category & Name */}
-                <div>
-                  <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+                <div className="space-y-0.5">
+                  <span className="text-[9px] sm:text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
                     {item.category?.name || 'Special'}
                   </span>
-                  <h4 className="font-bold text-xs text-foreground line-clamp-2 leading-tight">{item.name}</h4>
+                  <h4 className="font-bold text-xs sm:text-sm text-foreground line-clamp-2 leading-tight min-h-[1.75rem] sm:min-h-[2rem]">
+                    {item.name}
+                  </h4>
+                  <div className="pt-0.5">
+                    <span className="font-extrabold text-xs sm:text-sm text-cinnamon font-heading">
+                      {formatCurrency(item.price)}
+                    </span>
+                  </div>
                   {item.description && (
                     <p className="text-[10px] text-muted-foreground line-clamp-1 hidden sm:block">{item.description}</p>
                   )}
                 </div>
               </div>
 
-              {/* Price & Action */}
-              <div className="flex items-center justify-between pt-1.5 mt-1 border-t border-border/50 gap-1 min-w-0">
-                <span className="font-extrabold text-xs text-cinnamon font-heading shrink-0">{formatCurrency(item.price)}</span>
-
+              {/* Dedicated Full-Width Action Row */}
+              <div className="pt-2 mt-1.5 border-t border-border/50">
                 {qtyInCart > 0 ? (
-                  <div className="flex items-center gap-0.5 bg-secondary/80 rounded-md p-0.5 border border-border/60 shrink-0">
+                  <div className="w-full h-7 bg-cinnamon text-white rounded-lg flex items-center justify-between px-1 shadow-2xs">
                     <button
                       type="button"
                       onClick={() => updateQuantity(item.id, qtyInCart - 1)}
-                      className="h-5.5 w-5.5 rounded flex items-center justify-center bg-card text-foreground hover:bg-secondary transition-colors text-xs font-bold active:scale-95"
+                      className="h-6 w-7 rounded flex items-center justify-center text-white hover:bg-black/15 active:scale-90 transition-all"
                       aria-label={`Decrease ${item.name}`}
                     >
-                      <HugeiconsIcon icon={MinusSignIcon} size={10} />
+                      <HugeiconsIcon icon={MinusSignIcon} size={12} />
                     </button>
-                    <span className="text-[10px] font-bold font-mono px-0.5 min-w-[14px] text-center">{qtyInCart}</span>
+                    <span className="text-xs font-bold font-mono text-white select-none leading-none">
+                      {qtyInCart}
+                    </span>
                     <button
                       type="button"
                       onClick={() => updateQuantity(item.id, qtyInCart + 1)}
-                      className="h-5.5 w-5.5 rounded flex items-center justify-center bg-cinnamon text-white hover:bg-cinnamon/90 transition-colors text-xs font-bold active:scale-95"
+                      className="h-6 w-7 rounded flex items-center justify-center text-white hover:bg-black/15 active:scale-90 transition-all"
                       aria-label={`Increase ${item.name}`}
                     >
-                      <HugeiconsIcon icon={PlusSignIcon} size={10} />
+                      <HugeiconsIcon icon={PlusSignIcon} size={12} />
                     </button>
                   </div>
                 ) : (
-                  <Button
+                  <button
                     type="button"
-                    size="xs"
                     onClick={() => addItem(item)}
-                    className="h-6 px-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] rounded-md shadow-2xs gap-0.5 shrink-0 active:scale-95 transition-all"
+                    className="w-full h-7 bg-amber-600/15 hover:bg-amber-600 text-amber-700 dark:text-amber-300 hover:text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1 active:scale-[0.98] border border-amber-600/30 hover:border-amber-600"
                   >
-                    <HugeiconsIcon icon={PlusSignIcon} size={11} />
+                    <HugeiconsIcon icon={PlusSignIcon} size={13} />
                     <span>Add</span>
-                  </Button>
+                  </button>
                 )}
               </div>
             </div>

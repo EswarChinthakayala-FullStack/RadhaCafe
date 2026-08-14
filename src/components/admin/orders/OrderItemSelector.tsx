@@ -5,7 +5,6 @@ import { useTodaysSpecials, useBestSellingItems } from '../../../hooks/useMenuRe
 import { useCart } from '../../../hooks/useCart';
 import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import { Input } from '../../ui/input';
-import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import { Loader } from '../../shared/Loader';
 import { LazyImage } from '../../ui/lazy-image';
@@ -435,9 +434,16 @@ export function OrderItemSelector() {
                       )}
                     </div>
 
-                    <h4 className="font-bold text-xs sm:text-sm text-foreground line-clamp-2 leading-tight">
+                    <h4 className="font-bold text-xs sm:text-sm text-foreground line-clamp-2 leading-tight min-h-[1.75rem] sm:min-h-[2rem]">
                       {item.name}
                     </h4>
+
+                    {/* Price Tag */}
+                    <div className="pt-0.5">
+                      <span className="font-extrabold text-xs sm:text-sm text-cinnamon font-heading">
+                        {formatCurrency(item.price)}
+                      </span>
+                    </div>
 
                     {item.description && (
                       <p className="text-[10px] text-muted-foreground line-clamp-1 hidden sm:block">
@@ -447,44 +453,39 @@ export function OrderItemSelector() {
                   </div>
                 </div>
 
-                {/* Price & Add / Stepper Controls — Compact & overflow-safe for 5-column layouts */}
-                <div className="flex items-center justify-between pt-1.5 mt-1 border-t border-border/50 gap-1 min-w-0">
-                  <span className="font-extrabold text-xs text-foreground font-heading shrink-0">
-                    {formatCurrency(item.price)}
-                  </span>
-
+                {/* Dedicated Full-Width Action Row — 100% overflow-proof and touch-friendly */}
+                <div className="pt-2 mt-1.5 border-t border-border/50">
                   {qty > 0 ? (
-                    <div className="flex items-center gap-0.5 bg-secondary/80 rounded-md p-0.5 border border-border/60 shrink-0">
+                    <div className="w-full h-7 bg-cinnamon text-white rounded-lg flex items-center justify-between px-1 shadow-2xs">
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, qty - 1)}
-                        className="h-5.5 w-5.5 rounded flex items-center justify-center bg-card text-foreground hover:bg-secondary active:scale-95 transition-all text-xs font-bold shadow-2xs"
+                        className="h-6 w-7 rounded flex items-center justify-center text-white hover:bg-black/15 active:scale-90 transition-all"
                         aria-label={`Decrease ${item.name}`}
                       >
-                        <HugeiconsIcon icon={MinusSignIcon} size={10} />
+                        <HugeiconsIcon icon={MinusSignIcon} size={12} />
                       </button>
-                      <span className="text-[10px] font-bold font-mono px-0.5 min-w-[14px] text-center">
+                      <span className="text-xs font-bold font-mono text-white select-none leading-none">
                         {qty}
                       </span>
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, qty + 1)}
-                        className="h-5.5 w-5.5 rounded flex items-center justify-center bg-cinnamon text-white hover:bg-cinnamon/90 active:scale-95 transition-all text-xs font-bold shadow-2xs"
+                        className="h-6 w-7 rounded flex items-center justify-center text-white hover:bg-black/15 active:scale-90 transition-all"
                         aria-label={`Increase ${item.name}`}
                       >
-                        <HugeiconsIcon icon={PlusSignIcon} size={10} />
+                        <HugeiconsIcon icon={PlusSignIcon} size={12} />
                       </button>
                     </div>
                   ) : (
-                    <Button
+                    <button
                       type="button"
-                      size="sm"
                       onClick={() => addItem(item)}
-                      className="h-6 px-2 bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-[11px] rounded-md shadow-2xs gap-0.5 shrink-0 active:scale-95 transition-all"
+                      className="w-full h-7 bg-cinnamon/10 hover:bg-cinnamon text-cinnamon hover:text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1 active:scale-[0.98] border border-cinnamon/20 hover:border-cinnamon"
                     >
-                      <HugeiconsIcon icon={PlusSignIcon} size={11} />
+                      <HugeiconsIcon icon={PlusSignIcon} size={13} />
                       <span>Add</span>
-                    </Button>
+                    </button>
                   )}
                 </div>
               </div>
