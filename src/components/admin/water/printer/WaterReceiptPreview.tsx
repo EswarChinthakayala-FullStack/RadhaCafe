@@ -10,7 +10,7 @@ export function WaterReceiptPreview({ order }: WaterReceiptPreviewProps) {
   const receipt = formatWaterOrderReceipt(order);
 
   return (
-    <div className="receipt-preview w-full max-w-[340px] mx-auto bg-card text-foreground p-5 pb-8 my-2 rounded-md border border-border/80 shadow-md font-mono text-xs leading-relaxed select-none space-y-2.5">
+    <div className="receipt-preview w-full max-w-[340px] mx-auto bg-white dark:bg-[#1e1e1e] text-[#111111] dark:text-[#f5f5f5] p-5 pb-8 my-2 rounded-lg border border-neutral-300/90 dark:border-neutral-700/90 shadow-xl font-mono text-xs leading-relaxed select-none space-y-2.5">
       {/* Header Info */}
       <div className="text-center space-y-0.5">
         <h3 className="font-bold text-sm text-cinnamon tracking-tight uppercase font-heading">

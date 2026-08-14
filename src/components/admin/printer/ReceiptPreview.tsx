@@ -49,12 +49,12 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
   const sections = config.sectionOrder || ['header', 'orderInfo', 'customerInfo', 'items', 'summary', 'payment', 'footer'];
 
   return (
-    <div className="receipt-preview-container flex justify-center py-2">
+    <div className="receipt-preview-container flex justify-center w-full">
       <div
         style={{
           width: isWide ? '380px' : '300px',
         }}
-        className={`receipt-preview bg-white dark:bg-card text-foreground p-5 pb-8 rounded-lg border border-border/80 shadow-2xl ${fontClass} text-xs leading-relaxed select-none space-y-2 relative transition-all duration-300`}
+        className={`receipt-preview bg-white dark:bg-[#1e1e1e] text-[#111111] dark:text-[#f5f5f5] p-5 pb-8 rounded-lg border border-neutral-300/90 dark:border-neutral-700/90 shadow-xl ${fontClass} text-xs leading-relaxed select-none space-y-2 relative transition-all duration-300`}
       >
         {/* Paper Header Cut Indicator */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500/20 via-cinnamon/30 to-amber-500/20 rounded-t-lg" />

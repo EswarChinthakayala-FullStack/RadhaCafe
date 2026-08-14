@@ -678,7 +678,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
           {/* 2-Column Responsive Layout: Thermal Paper Slip (Left) & Actions (Right) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start pt-1">
             {/* Left Column: Authentic Template-Based Thermal Receipt Paper Slip */}
-            <div className="max-h-[360px] overflow-y-auto rounded-lg border border-border/80 shadow-2xs">
+            <div className="p-3 pb-6 rounded-xl bg-secondary/30 border border-border/60 flex justify-center max-h-[420px] overflow-y-auto no-scrollbar">
               <ReceiptPreview
                 order={createdOrder}
                 templateConfig={activeTemplate?.template_config}
