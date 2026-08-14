@@ -8,6 +8,7 @@ import {
   incrementGalleryItemView,
   type CreateGalleryItemInput,
   type UpdateGalleryItemInput,
+  type GalleryItem,
 } from '../lib/supabase/queries/gallery';
 
 export const GALLERY_QUERY_KEY = ['gallery', 'images'] as const;
@@ -24,9 +25,16 @@ export function useIncrementGalleryView() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => incrementGalleryItemView(id),
-    onSuccess: () => {
-      // Background non-blocking invalidate or optimistic update
-      queryClient.invalidateQueries({ queryKey: GALLERY_QUERY_KEY });
+    onSuccess: (_, id) => {
+      // Optimistically update view count in cache without re-ordering array live
+      queryClient.setQueryData<GalleryItem[]>(GALLERY_QUERY_KEY, (old) => {
+        if (!old) return old;
+        return old.map((item) =>
+          item.id === id
+            ? { ...item, views_count: (item.views_count || 0) + 1 }
+            : item
+        );
+      });
     },
   });
 }

@@ -40,20 +40,17 @@ export function GalleryViewer({
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const [panStart, setPanStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [slideOffset, setSlideOffset] = useState<number>(0);
-  const [isSwiping, setIsSwiping] = useState<boolean>(false);
-  const [isAnimating, setIsAnimating] = useState<boolean>(false);
+
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchDeltaX, setTouchDeltaX] = useState<number>(0);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [copiedToast, setCopiedToast] = useState<boolean>(false);
   const [imageError, setImageError] = useState<boolean>(false);
 
-  // Local optimistic views tracker
-  const [localViews, setLocalViews] = useState<Record<string, number>>({});
+  // View counter tracking
   const viewedInSession = useRef<Set<string>>(new Set());
-
+  const isClosingRef = useRef<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const touchStartXRef = useRef<number>(0);
-  const touchStartYRef = useRef<number>(0);
 
   const isOpen = selectedIndex !== null && selectedIndex >= 0 && selectedIndex < items.length;
   const currentItem = isOpen ? items[selectedIndex] : null;
@@ -65,24 +62,14 @@ export function GalleryViewer({
     const id = currentItem.id;
     if (!viewedInSession.current.has(id)) {
       viewedInSession.current.add(id);
-
-      // Optimistic local increment
-      setLocalViews((prev) => ({
-        ...prev,
-        [id]: (prev[id] ?? currentItem.views_count ?? 0) + 1,
-      }));
-
-      // Fire Supabase view increment
       incrementViewMutation.mutate(id);
     }
   }, [isOpen, currentItem]);
 
-  const currentViewsCount = currentItem
-    ? (localViews[currentItem.id] ?? currentItem.views_count ?? 0)
-    : 0;
-
   // Deep-linking: sync URL ?photo=<id> when viewer opens or changes photo
   useEffect(() => {
+    if (isClosingRef.current) return;
+
     if (isOpen && currentItem) {
       const currentPhotoParam = searchParams.get('photo');
       if (currentPhotoParam !== currentItem.id) {
@@ -95,37 +82,47 @@ export function GalleryViewer({
 
   // Deep-linking: open viewer if ?photo=<id> is in URL on page load
   useEffect(() => {
+    if (isClosingRef.current) return;
+
     const photoId = searchParams.get('photo');
-    if (photoId && items.length > 0) {
+    if (photoId && items.length > 0 && selectedIndex === null) {
       const matchIdx = items.findIndex((it) => it.id === photoId);
-      if (matchIdx !== -1 && matchIdx !== selectedIndex) {
+      if (matchIdx !== -1) {
         onSelectIndex(matchIdx);
       }
     }
   }, [searchParams, items, onSelectIndex, selectedIndex]);
 
-  // Handle Closing and cleaning URL param
+  // Handle Closing cleanly
   const handleClose = useCallback(() => {
+    isClosingRef.current = true;
+
     if (searchParams.has('photo')) {
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('photo');
       setSearchParams(newParams, { replace: true });
     }
+
     setZoom(1);
     setPan({ x: 0, y: 0 });
-    setSlideOffset(0);
+    setTouchDeltaX(0);
     onClose();
+
+    // Reset closing flag after state settles
+    setTimeout(() => {
+      isClosingRef.current = false;
+    }, 200);
   }, [searchParams, setSearchParams, onClose]);
 
-  // Reset zoom & slide whenever image changes
+  // Reset zoom whenever image changes
   useEffect(() => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
-    setSlideOffset(0);
+    setTouchDeltaX(0);
     setImageError(false);
   }, [selectedIndex]);
 
-  // Preload adjacent images (N - 1 and N + 1)
+  // Preload adjacent images
   useEffect(() => {
     if (!isOpen || items.length <= 1 || selectedIndex === null) return;
 
@@ -144,28 +141,16 @@ export function GalleryViewer({
   }, [isOpen, selectedIndex, items]);
 
   const handlePrev = useCallback(() => {
-    if (selectedIndex === null || items.length === 0 || isAnimating) return;
-    setIsAnimating(true);
-    setSlideOffset(120); // Slide right animation
-    setTimeout(() => {
-      const newIdx = (selectedIndex - 1 + items.length) % items.length;
-      onSelectIndex(newIdx);
-      setSlideOffset(0);
-      setIsAnimating(false);
-    }, 180);
-  }, [selectedIndex, items.length, onSelectIndex, isAnimating]);
+    if (selectedIndex === null || items.length === 0) return;
+    const newIdx = (selectedIndex - 1 + items.length) % items.length;
+    onSelectIndex(newIdx);
+  }, [selectedIndex, items.length, onSelectIndex]);
 
   const handleNext = useCallback(() => {
-    if (selectedIndex === null || items.length === 0 || isAnimating) return;
-    setIsAnimating(true);
-    setSlideOffset(-120); // Slide left animation
-    setTimeout(() => {
-      const newIdx = (selectedIndex + 1) % items.length;
-      onSelectIndex(newIdx);
-      setSlideOffset(0);
-      setIsAnimating(false);
-    }, 180);
-  }, [selectedIndex, items.length, onSelectIndex, isAnimating]);
+    if (selectedIndex === null || items.length === 0) return;
+    const newIdx = (selectedIndex + 1) % items.length;
+    onSelectIndex(newIdx);
+  }, [selectedIndex, items.length, onSelectIndex]);
 
   // Zoom controls (1x to 4x)
   const handleZoomIn = () => {
@@ -288,10 +273,6 @@ export function GalleryViewer({
     if (zoom > 1) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-    } else if (items.length > 1) {
-      // Initiate mouse sliding drag
-      setIsSwiping(true);
-      touchStartXRef.current = e.clientX;
     }
   };
 
@@ -301,60 +282,37 @@ export function GalleryViewer({
       const newX = Math.min(Math.max(e.clientX - panStart.x, -maxBound), maxBound);
       const newY = Math.min(Math.max(e.clientY - panStart.y, -maxBound), maxBound);
       setPan({ x: newX, y: newY });
-    } else if (zoom === 1 && isSwiping) {
-      const diff = e.clientX - touchStartXRef.current;
-      setSlideOffset(diff * 0.7); // damped tactile resistance
     }
   };
 
   const handleMouseUp = () => {
-    if (isPanning) {
-      setIsPanning(false);
-    }
-    if (isSwiping) {
-      setIsSwiping(false);
-      if (slideOffset > 70) {
-        handlePrev();
-      } else if (slideOffset < -70) {
-        handleNext();
-      } else {
-        setSlideOffset(0);
-      }
-    }
+    if (isPanning) setIsPanning(false);
   };
 
   // Touch Swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     if (zoom > 1) return;
-    const touch = e.touches[0];
-    touchStartXRef.current = touch.clientX;
-    touchStartYRef.current = touch.clientY;
-    setIsSwiping(true);
+    setTouchStartX(e.touches[0].clientX);
+    setTouchDeltaX(0);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (zoom > 1 || !isSwiping) return;
-    const touch = e.touches[0];
-    const diffX = touch.clientX - touchStartXRef.current;
-    const diffY = touch.clientY - touchStartYRef.current;
-
-    // Only swipe horizontally if not vertical scroll
-    if (Math.abs(diffX) > Math.abs(diffY)) {
-      setSlideOffset(diffX * 0.8);
-    }
+    if (zoom > 1 || touchStartX === null) return;
+    const currentX = e.touches[0].clientX;
+    setTouchDeltaX(currentX - touchStartX);
   };
 
   const handleTouchEnd = () => {
-    if (zoom > 1) return;
-    setIsSwiping(false);
+    if (zoom > 1 || touchStartX === null) return;
 
-    if (slideOffset > 50) {
+    if (touchDeltaX > 50) {
       handlePrev();
-    } else if (slideOffset < -50) {
+    } else if (touchDeltaX < -50) {
       handleNext();
-    } else {
-      setSlideOffset(0);
     }
+
+    setTouchStartX(null);
+    setTouchDeltaX(0);
   };
 
   if (!isOpen || !currentItem) return null;
@@ -367,11 +325,10 @@ export function GalleryViewer({
       aria-modal="true"
       aria-label={`Viewing photo ${selectedIndex + 1} of ${items.length}`}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
     >
       {/* ── Top Toolbar ── */}
-      <header className="relative z-20 flex items-center justify-between px-4 sm:px-6 py-3 border-b border-[#2C1810]/70 bg-[#140A06]/85 backdrop-blur-md">
-        {/* Left: Counter, Title, Views count */}
+      <header className="relative z-30 flex items-center justify-between px-4 sm:px-6 py-3 border-b border-[#2C1810]/70 bg-[#140A06]/90 backdrop-blur-md">
+        {/* Left: Counter, Title, Views */}
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-cream/90 shrink-0">
             <span>{selectedIndex + 1}</span>
@@ -383,11 +340,13 @@ export function GalleryViewer({
             {currentItem.title || 'RadhaCafe Moments'}
           </h3>
 
-          {/* Real-Time Views Badge */}
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E5A88B]/10 border border-[#E5A88B]/25 text-[11px] font-semibold text-[#E5A88B] shrink-0">
-            <HugeiconsIcon icon={ViewIcon} size={13} />
-            <span>{currentViewsCount} views</span>
-          </div>
+          {/* Views Badge */}
+          {currentItem.views_count !== undefined && currentItem.views_count !== null && (
+            <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E5A88B]/10 border border-[#E5A88B]/25 text-[11px] font-semibold text-[#E5A88B] shrink-0">
+              <HugeiconsIcon icon={ViewIcon} size={13} />
+              <span>{currentItem.views_count} views</span>
+            </div>
+          )}
         </div>
 
         {/* Right: Controls (Share, Zoom, Fullscreen, Close) */}
@@ -396,6 +355,7 @@ export function GalleryViewer({
           <button
             type="button"
             onClick={handleShare}
+            onMouseDown={(e) => e.stopPropagation()}
             className="p-2 rounded-lg bg-white/5 hover:bg-white/15 text-cream hover:text-white transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E5A88B]"
             aria-label="Share photo link and text"
             title="Share photo"
@@ -408,6 +368,7 @@ export function GalleryViewer({
             <button
               type="button"
               onClick={handleZoomOut}
+              onMouseDown={(e) => e.stopPropagation()}
               disabled={zoom <= 1}
               className="p-1.5 rounded text-cream hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all cursor-pointer disabled:cursor-not-allowed"
               aria-label="Zoom out"
@@ -423,6 +384,7 @@ export function GalleryViewer({
             <button
               type="button"
               onClick={handleZoomIn}
+              onMouseDown={(e) => e.stopPropagation()}
               disabled={zoom >= 4}
               className="p-1.5 rounded text-cream hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all cursor-pointer disabled:cursor-not-allowed"
               aria-label="Zoom in"
@@ -435,6 +397,7 @@ export function GalleryViewer({
               <button
                 type="button"
                 onClick={handleResetZoom}
+                onMouseDown={(e) => e.stopPropagation()}
                 className="p-1.5 rounded text-[#E5A88B] hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                 aria-label="Reset zoom"
                 title="Reset zoom (0)"
@@ -448,6 +411,7 @@ export function GalleryViewer({
           <button
             type="button"
             onClick={handleToggleFullscreen}
+            onMouseDown={(e) => e.stopPropagation()}
             className="hidden md:flex p-2 rounded-lg bg-white/5 hover:bg-white/15 text-cream hover:text-white transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E5A88B]"
             aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
             title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
@@ -459,7 +423,8 @@ export function GalleryViewer({
           <button
             type="button"
             onClick={handleClose}
-            className="p-2 rounded-lg bg-white/10 hover:bg-[#B85C1E] text-white transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E5A88B]"
+            onMouseDown={(e) => e.stopPropagation()}
+            className="p-2 rounded-lg bg-white/10 hover:bg-[#B85C1E] text-white transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E5A88B] z-30"
             aria-label="Close photo viewer"
             title="Close (Escape)"
           >
@@ -471,13 +436,7 @@ export function GalleryViewer({
       {/* ── Center Stage & Sliding Track ── */}
       <main
         className={`relative flex-1 w-full overflow-hidden flex items-center justify-center p-2 sm:p-6 ${
-          zoom > 1
-            ? isPanning
-              ? 'cursor-grabbing'
-              : 'cursor-grab'
-            : isSwiping
-            ? 'cursor-grabbing'
-            : 'cursor-grab'
+          zoom > 1 ? (isPanning ? 'cursor-grabbing' : 'cursor-grab') : ''
         }`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -502,11 +461,10 @@ export function GalleryViewer({
           </div>
         ) : (
           <div
-            className={`relative flex items-center justify-center will-change-transform ${
-              isSwiping ? 'transition-none' : 'transition-transform duration-200 ease-out'
-            }`}
+            key={currentItem.id}
+            className="relative flex items-center justify-center will-change-transform transition-transform duration-200 ease-out"
             style={{
-              transform: `translate3d(${slideOffset + pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
+              transform: `translate3d(${touchDeltaX + pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
               transformOrigin: 'center center',
             }}
             onDoubleClick={handleToggleZoom}
@@ -525,8 +483,12 @@ export function GalleryViewer({
         {items.length > 1 && (
           <button
             type="button"
-            onClick={handlePrev}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-3 sm:p-3.5 rounded-full bg-[#140A06]/75 hover:bg-[#B85C1E] text-cream hover:text-white border border-white/15 transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E5A88B] z-10"
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePrev();
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-3 sm:p-3.5 rounded-full bg-[#140A06]/80 hover:bg-[#B85C1E] text-cream hover:text-white border border-white/15 transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E5A88B] z-20"
             aria-label="Previous photo"
             title="Previous (ArrowLeft)"
           >
@@ -538,8 +500,12 @@ export function GalleryViewer({
         {items.length > 1 && (
           <button
             type="button"
-            onClick={handleNext}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-3 sm:p-3.5 rounded-full bg-[#140A06]/75 hover:bg-[#B85C1E] text-cream hover:text-white border border-white/15 transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E5A88B] z-10"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNext();
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-3 sm:p-3.5 rounded-full bg-[#140A06]/80 hover:bg-[#B85C1E] text-cream hover:text-white border border-white/15 transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E5A88B] z-20"
             aria-label="Next photo"
             title="Next (ArrowRight)"
           >
@@ -549,7 +515,7 @@ export function GalleryViewer({
       </main>
 
       {/* ── Bottom Caption & Metadata Bar ── */}
-      <footer className="relative z-20 px-4 sm:px-6 py-3.5 sm:py-4 border-t border-[#2C1810]/70 bg-[#140A06]/92 backdrop-blur-md">
+      <footer className="relative z-30 px-4 sm:px-6 py-3.5 sm:py-4 border-t border-[#2C1810]/70 bg-[#140A06]/92 backdrop-blur-md">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
           <div className="space-y-1 min-w-0 flex-1">
             {currentItem.title && (
@@ -570,10 +536,12 @@ export function GalleryViewer({
 
           <div className="flex items-center gap-3 shrink-0">
             {/* Mobile views badge */}
-            <div className="sm:hidden inline-flex items-center gap-1 text-[11px] text-[#E5A88B] font-semibold">
-              <HugeiconsIcon icon={ViewIcon} size={12} />
-              <span>{currentViewsCount} views</span>
-            </div>
+            {currentItem.views_count !== undefined && currentItem.views_count !== null && (
+              <div className="sm:hidden inline-flex items-center gap-1 text-[11px] text-[#E5A88B] font-semibold">
+                <HugeiconsIcon icon={ViewIcon} size={12} />
+                <span>{currentItem.views_count} views</span>
+              </div>
+            )}
 
             {currentItem.created_at && (
               <span className="text-[10px] text-cream/50 hidden md:inline font-mono">
@@ -584,6 +552,7 @@ export function GalleryViewer({
             <button
               type="button"
               onClick={handleShare}
+              onMouseDown={(e) => e.stopPropagation()}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-[#B85C1E] text-cream hover:text-white border border-white/10 text-xs font-semibold transition-all cursor-pointer"
             >
               <HugeiconsIcon icon={Copy01Icon} size={13} />
