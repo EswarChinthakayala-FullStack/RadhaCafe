@@ -398,14 +398,12 @@ export function OrderDetailsModal({ order, open, onClose, onOpenChange }: OrderD
                 <HugeiconsIcon icon={PrinterIcon} size={14} className="text-cinnamon" />
                 <span>Thermal Slip Preview</span>
               </h4>
-              <div className="p-3 pb-8 rounded-xl bg-secondary/20 border border-border/60 flex justify-center max-h-[460px] overflow-y-auto no-scrollbar">
-                <div className="py-2 pb-8 w-full flex justify-center">
-                  <ReceiptPreview
-                    order={order}
-                    templateConfig={activeTemplate?.template_config}
-                    cafeSettings={cafeSettings}
-                  />
-                </div>
+              <div className="p-3 sm:p-4 rounded-xl bg-secondary/30 border border-border/60 flex justify-center max-h-[480px] overflow-y-auto no-scrollbar">
+                <ReceiptPreview
+                  order={order}
+                  templateConfig={activeTemplate?.template_config}
+                  cafeSettings={cafeSettings}
+                />
               </div>
             </div>
           </div>
