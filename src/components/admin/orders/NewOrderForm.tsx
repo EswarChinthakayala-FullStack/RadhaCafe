@@ -33,7 +33,7 @@ export function NewOrderForm() {
         </div>
 
         {/* Right Column: Desktop Sticky Live Cart (approx 33% on desktop) */}
-        <div className="hidden lg:block lg:col-span-4 sticky top-4 self-start min-w-0 z-10">
+        <div className="hidden lg:block lg:col-span-4 sticky top-0 self-start min-w-0 z-10 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-thin">
           <OrderCart />
         </div>
       </div>

@@ -246,38 +246,35 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
   ];
 
   return (
-    <div className="border border-border/80 rounded-xl p-3.5 sm:p-4 bg-card flex flex-col space-y-3.5 shadow-2xs">
+    <div className="border border-border/80 rounded-xl p-3 sm:p-4 bg-card flex flex-col space-y-3 shadow-2xs">
       {/* ── Cart Header ── */}
-      <div className="flex justify-between items-center border-b border-border/70 pb-2.5">
-        <div className="flex items-center gap-2">
+      <div className="flex justify-between items-center border-b border-border/70 pb-2">
+        <div className="flex items-center gap-2 min-w-0">
           <div className="p-1.5 rounded-lg bg-cinnamon/10 text-cinnamon shrink-0">
-            <HugeiconsIcon icon={ShoppingCart01Icon} size={17} />
+            <HugeiconsIcon icon={ShoppingCart01Icon} size={16} />
           </div>
-          <div>
-            <h3 className="font-bold text-sm font-heading text-foreground">Current Order</h3>
+          <div className="min-w-0">
+            <h3 className="font-bold text-sm font-heading text-foreground leading-tight">Current Order</h3>
             <span className="text-[10px] text-muted-foreground font-mono">
               {totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 shrink-0">
+          {/* Auto-Print Toggle — compact icon button */}
           <button
             type="button"
             onClick={toggleAutoPrint}
-            title={
+            title={autoPrint ? 'Auto-Print ON' : 'Auto-Print OFF'}
+            aria-label={autoPrint ? 'Disable auto-print' : 'Enable auto-print'}
+            className={`h-7 w-7 rounded-md flex items-center justify-center border transition-all ${
               autoPrint
-                ? 'Auto-Print is ON: Thermal slip generates automatically upon order creation'
-                : 'Click to enable Auto-Print receipt'
-            }
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold border transition-all ${
-              autoPrint
-                ? 'bg-cinnamon/15 text-cinnamon border-cinnamon/30 shadow-2xs'
+                ? 'bg-cinnamon/15 text-cinnamon border-cinnamon/30'
                 : 'bg-secondary/40 text-muted-foreground border-border/50 hover:bg-secondary'
             }`}
           >
-            <HugeiconsIcon icon={PrinterIcon} size={11} />
-            <span>Auto-Print: {autoPrint ? 'ON' : 'OFF'}</span>
+            <HugeiconsIcon icon={PrinterIcon} size={13} />
           </button>
 
           {items.length > 0 && (
@@ -309,7 +306,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
       )}
 
       {/* ── Cart Line Items List (Scrollable) ── */}
-      <div className="overflow-y-auto space-y-2 max-h-[220px] sm:max-h-[260px] pr-0.5">
+      <div className="overflow-y-auto space-y-1.5 max-h-[260px] sm:max-h-[300px] pr-0.5 scrollbar-thin">
         {items.length === 0 ? (
           <div className="text-center py-8 space-y-2 border border-dashed border-border/70 rounded-lg bg-secondary/20">
             <div className="w-9 h-9 mx-auto rounded-full bg-secondary flex items-center justify-center text-muted-foreground/40">
@@ -432,7 +429,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           Payment Method
         </Label>
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+        <div className="grid grid-cols-5 gap-1">
           {paymentOptions.map((opt) => {
             const isSelected = paymentMethod === opt.id;
             const isPayLater = opt.id === 'pay_later';
@@ -443,7 +440,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                 key={opt.id}
                 type="button"
                 onClick={() => handlePaymentMethodClick(opt.id)}
-                className={`flex flex-col items-center justify-center p-2 rounded-lg border text-center transition-all ${
+                className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-lg border text-center transition-all active:scale-95 ${
                   isSelected
                     ? isPayLater
                       ? 'bg-amber-600 text-white border-amber-600 shadow-2xs font-bold'
@@ -452,8 +449,8 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                 }`}
               >
                 <HugeiconsIcon icon={Icon} size={14} className="mb-0.5 shrink-0" />
-                <span className="text-[10px] uppercase font-bold tracking-tight whitespace-nowrap">
-                  {opt.label}
+                <span className="text-[9px] uppercase font-bold leading-tight">
+                  {opt.label === 'Pay Later' ? 'Credit' : opt.label}
                 </span>
               </button>
             );
