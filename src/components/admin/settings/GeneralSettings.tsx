@@ -7,7 +7,6 @@ import { SettingsSection } from './SettingsSection';
 import { SettingsRow } from './SettingsRow';
 import { SettingsSaveFooter } from './SettingsSaveFooter';
 import { Input } from '../../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Badge } from '../../ui/badge';
 import { Skeleton } from '../../ui/skeleton';
 import { toast } from '../../ui/toast';
@@ -107,7 +106,7 @@ export function GeneralSettings({ onDirtyChange }: GeneralSettingsProps) {
       </div>
 
       {/* Section 1: Business Defaults */}
-      <SettingsSection title="Business Defaults">
+      <SettingsSection title="Business Defaults" showSeparator={false}>
         <SettingsRow
           id="cafe_name"
           title="Cafe Name"
@@ -150,40 +149,6 @@ export function GeneralSettings({ onDirtyChange }: GeneralSettingsProps) {
           <div className="text-xs font-mono font-medium text-foreground bg-secondary/30 px-3 py-2 rounded-xl border border-border/60">
             Asia/Kolkata (IST — UTC+5:30)
           </div>
-        </SettingsRow>
-      </SettingsSection>
-
-      {/* Section 2: Regional Formatting */}
-      <SettingsSection title="Display Preferences" showSeparator={false}>
-        <SettingsRow
-          title="Date Format"
-          description="Default date representation format used across orders, receipts, and analytics tables."
-        >
-          <Select defaultValue="DD/MM/YYYY">
-            <SelectTrigger className="h-9 w-full sm:w-48 text-xs rounded-xl border-border/80 bg-background">
-              <SelectValue placeholder="Select format" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl text-xs">
-              <SelectItem value="DD/MM/YYYY">DD/MM/YYYY (14/08/2026)</SelectItem>
-              <SelectItem value="MM/DD/YYYY">MM/DD/YYYY (08/14/2026)</SelectItem>
-              <SelectItem value="YYYY-MM-DD">YYYY-MM-DD (2026-08-14)</SelectItem>
-            </SelectContent>
-          </Select>
-        </SettingsRow>
-
-        <SettingsRow
-          title="Time Format"
-          description="Standard clock format for order creation times and kitchen ticket printouts."
-        >
-          <Select defaultValue="12h">
-            <SelectTrigger className="h-9 w-full sm:w-48 text-xs rounded-xl border-border/80 bg-background">
-              <SelectValue placeholder="Select clock" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl text-xs">
-              <SelectItem value="12h">12-Hour (06:30 PM)</SelectItem>
-              <SelectItem value="24h">24-Hour (18:30)</SelectItem>
-            </SelectContent>
-          </Select>
         </SettingsRow>
       </SettingsSection>
 
