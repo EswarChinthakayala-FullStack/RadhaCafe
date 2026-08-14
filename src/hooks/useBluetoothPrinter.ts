@@ -27,12 +27,6 @@ export function useBluetoothPrinter() {
   const device = usePrinterStore((state) => state.device);
   const knownPrinters = usePrinterStore((state) => state.knownPrinters);
   const lastError = usePrinterStore((state) => state.lastError);
-  const setStatus = usePrinterStore((state) => state.setStatus);
-  const setConnectionStage = usePrinterStore((state) => state.setConnectionStage);
-  const setDevice = usePrinterStore((state) => state.setDevice);
-  const setKnownPrinters = usePrinterStore((state) => state.setKnownPrinters);
-  const setError = usePrinterStore((state) => state.setError);
-  const resetStore = usePrinterStore((state) => state.reset);
 
   /**
    * Refreshes list of previously authorized Bluetooth devices
@@ -40,11 +34,11 @@ export function useBluetoothPrinter() {
   const refreshKnownPrinters = useCallback(async () => {
     try {
       const granted = await getPreviouslyGrantedPrinters();
-      setKnownPrinters(granted);
+      usePrinterStore.getState().setKnownPrinters(granted);
     } catch {
       // Ignore
     }
-  }, [setKnownPrinters]);
+  }, []);
 
   // Load known devices on mount
   useEffect(() => {
@@ -56,19 +50,20 @@ export function useBluetoothPrinter() {
    * MUST originate from explicit user click.
    */
   const scanAndConnect = async () => {
+    const store = usePrinterStore.getState();
     try {
-      setError(null);
-      setStatus('connecting');
-      setConnectionStage('requesting');
+      store.setError(null);
+      store.setStatus('connecting');
+      store.setConnectionStage('requesting');
 
       const btDevice = await requestBluetoothPrinter(
         () => {
-          setDevice(null);
-          setStatus('disconnected');
-          setConnectionStage('idle');
+          usePrinterStore.getState().setDevice(null);
+          usePrinterStore.getState().setStatus('disconnected');
+          usePrinterStore.getState().setConnectionStage('idle');
         },
         (stage: ConnectionStage) => {
-          setConnectionStage(stage);
+          usePrinterStore.getState().setConnectionStage(stage);
         }
       );
 
@@ -78,9 +73,9 @@ export function useBluetoothPrinter() {
         connected: true,
       };
 
-      setDevice(printerDevice);
-      setStatus('connected');
-      setConnectionStage('ready');
+      store.setDevice(printerDevice);
+      store.setStatus('connected');
+      store.setConnectionStage('ready');
 
       // Persist preferred printer metadata to Supabase
       await updatePrinterSettings({
@@ -94,13 +89,13 @@ export function useBluetoothPrinter() {
     } catch (err: any) {
       const normalized = normalizePrinterError(err);
       if (normalized.code === 'PERMISSION_DENIED') {
-        setStatus('disconnected');
-        setConnectionStage('idle');
-        setError(null); // Clean cancel without aggressive red error
+        store.setStatus('disconnected');
+        store.setConnectionStage('idle');
+        store.setError(null); // Clean cancel without aggressive red error
       } else {
-        setError(normalized.message);
-        setStatus('error');
-        setConnectionStage('idle');
+        store.setError(normalized.message);
+        store.setStatus('error');
+        store.setConnectionStage('idle');
       }
       return false;
     }
@@ -110,19 +105,20 @@ export function useBluetoothPrinter() {
    * Reconnects to a previously authorized Bluetooth device by ID (without opening chooser)
    */
   const reconnectKnownDevice = async (deviceId: string) => {
+    const store = usePrinterStore.getState();
     try {
-      setError(null);
-      setStatus('connecting');
+      store.setError(null);
+      store.setStatus('connecting');
 
       const btDevice = await reconnectKnownPrinter(
         deviceId,
         () => {
-          setDevice(null);
-          setStatus('disconnected');
-          setConnectionStage('idle');
+          usePrinterStore.getState().setDevice(null);
+          usePrinterStore.getState().setStatus('disconnected');
+          usePrinterStore.getState().setConnectionStage('idle');
         },
         (stage: ConnectionStage) => {
-          setConnectionStage(stage);
+          usePrinterStore.getState().setConnectionStage(stage);
         }
       );
 
@@ -132,17 +128,17 @@ export function useBluetoothPrinter() {
         connected: true,
       };
 
-      setDevice(printerDevice);
-      setStatus('connected');
-      setConnectionStage('ready');
+      store.setDevice(printerDevice);
+      store.setStatus('connected');
+      store.setConnectionStage('ready');
 
       queryClient.invalidateQueries({ queryKey: ['printerSettings'] });
       return true;
     } catch (err: any) {
       const normalized = normalizePrinterError(err);
-      setError(normalized.message);
-      setStatus('error');
-      setConnectionStage('idle');
+      store.setError(normalized.message);
+      store.setStatus('error');
+      store.setConnectionStage('idle');
       return false;
     }
   };
@@ -152,9 +148,10 @@ export function useBluetoothPrinter() {
    */
   const disconnect = () => {
     disconnectBluetoothPrinter();
-    setDevice(null);
-    setStatus('disconnected');
-    setConnectionStage('idle');
+    const store = usePrinterStore.getState();
+    store.setDevice(null);
+    store.setStatus('disconnected');
+    store.setConnectionStage('idle');
   };
 
   /**
@@ -162,7 +159,7 @@ export function useBluetoothPrinter() {
    */
   const forgetPrinter = async () => {
     disconnectBluetoothPrinter();
-    resetStore();
+    usePrinterStore.getState().reset();
     try {
       await updatePrinterSettings({
         printer_name: null,
@@ -179,14 +176,15 @@ export function useBluetoothPrinter() {
    * Encodes order data to ESC/POS bytes and prints via BLE connection
    */
   const printOrder = async (order: Order, cafeSettings?: any): Promise<boolean> => {
+    const store = usePrinterStore.getState();
     try {
-      if (status !== 'connected') {
+      if (store.status !== 'connected') {
         const connected = await scanAndConnect();
         if (!connected) return false;
       }
 
-      setStatus('printing');
-      setError(null);
+      store.setStatus('printing');
+      store.setError(null);
 
       const activeTemplate = await fetchActiveReceiptTemplate().catch(() => null);
       const escposBytes = encodeTemplateReceiptToEscPos(order, activeTemplate?.template_config, cafeSettings);
@@ -199,12 +197,12 @@ export function useBluetoothPrinter() {
         queryClient.invalidateQueries({ queryKey: ['orders'] });
       }
 
-      setStatus('connected');
+      usePrinterStore.getState().setStatus('connected');
       return true;
     } catch (err: any) {
       const normalized = normalizePrinterError(err);
-      setError(normalized.message);
-      setStatus('error');
+      usePrinterStore.getState().setError(normalized.message);
+      usePrinterStore.getState().setStatus('error');
       return false;
     }
   };
@@ -213,14 +211,15 @@ export function useBluetoothPrinter() {
    * Prints test receipt byte stream to verify ESC/POS formatting & paper cut
    */
   const printTestReceipt = async (cafeName = 'RadhaCafe'): Promise<boolean> => {
+    const store = usePrinterStore.getState();
     try {
-      if (status !== 'connected') {
+      if (store.status !== 'connected') {
         const connected = await scanAndConnect();
         if (!connected) return false;
       }
 
-      setStatus('printing');
-      setError(null);
+      store.setStatus('printing');
+      store.setError(null);
 
       const printerSettings = await fetchPrinterSettings().catch(() => null);
       const paperWidth = printerSettings?.paper_width || 32;
@@ -228,12 +227,12 @@ export function useBluetoothPrinter() {
       const testBytes = encodeTestReceiptToEscPos(paperWidth, cafeName);
       await sendEscPosData(testBytes);
 
-      setStatus('connected');
+      usePrinterStore.getState().setStatus('connected');
       return true;
     } catch (err: any) {
       const normalized = normalizePrinterError(err);
-      setError(normalized.message);
-      setStatus('error');
+      usePrinterStore.getState().setError(normalized.message);
+      usePrinterStore.getState().setStatus('error');
       return false;
     }
   };
@@ -242,14 +241,15 @@ export function useBluetoothPrinter() {
    * Prints sample receipt using active receipt template
    */
   const printTemplateTest = async (cafeName = 'RadhaCafe'): Promise<boolean> => {
+    const store = usePrinterStore.getState();
     try {
-      if (status !== 'connected') {
+      if (store.status !== 'connected') {
         const connected = await scanAndConnect();
         if (!connected) return false;
       }
 
-      setStatus('printing');
-      setError(null);
+      store.setStatus('printing');
+      store.setError(null);
 
       const activeTemplate = await fetchActiveReceiptTemplate().catch(() => null);
 
@@ -278,12 +278,12 @@ export function useBluetoothPrinter() {
       );
 
       await sendEscPosData(escposBytes);
-      setStatus('connected');
+      usePrinterStore.getState().setStatus('connected');
       return true;
     } catch (err: any) {
       const normalized = normalizePrinterError(err);
-      setError(normalized.message);
-      setStatus('error');
+      usePrinterStore.getState().setError(normalized.message);
+      usePrinterStore.getState().setStatus('error');
       return false;
     }
   };
