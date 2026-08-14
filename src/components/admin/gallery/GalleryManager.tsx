@@ -303,29 +303,25 @@ export function GalleryManager() {
                     {/* Reorder Arrows */}
                     <div className="flex items-center gap-1">
                       <Tooltip>
-                        <TooltipTrigger>
-                          <button
-                            disabled={idx === 0 || reorderMutation.isPending}
-                            onClick={() => handleMove(idx, 'up')}
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-30 transition-colors"
-                            aria-label="Move photo up"
-                          >
-                            <HugeiconsIcon icon={ArrowUp01Icon} size={14} />
-                          </button>
+                        <TooltipTrigger
+                          disabled={idx === 0 || reorderMutation.isPending}
+                          onClick={() => handleMove(idx, 'up')}
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-30 transition-colors"
+                          aria-label="Move photo up"
+                        >
+                          <HugeiconsIcon icon={ArrowUp01Icon} size={14} />
                         </TooltipTrigger>
                         <TooltipContent className="text-[10px]">Move Up</TooltipContent>
                       </Tooltip>
 
                       <Tooltip>
-                        <TooltipTrigger>
-                          <button
-                            disabled={idx === items.length - 1 || reorderMutation.isPending}
-                            onClick={() => handleMove(idx, 'down')}
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-30 transition-colors"
-                            aria-label="Move photo down"
-                          >
-                            <HugeiconsIcon icon={ArrowDown01Icon} size={14} />
-                          </button>
+                        <TooltipTrigger
+                          disabled={idx === items.length - 1 || reorderMutation.isPending}
+                          onClick={() => handleMove(idx, 'down')}
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-30 transition-colors"
+                          aria-label="Move photo down"
+                        >
+                          <HugeiconsIcon icon={ArrowDown01Icon} size={14} />
                         </TooltipTrigger>
                         <TooltipContent className="text-[10px]">Move Down</TooltipContent>
                       </Tooltip>
@@ -334,49 +330,43 @@ export function GalleryManager() {
                     {/* Actions: Edit Metadata, Replace, Delete */}
                     <div className="flex items-center gap-1">
                       <Tooltip>
-                        <TooltipTrigger>
-                          <button
-                            onClick={() => handleOpenEdit(item)}
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                            aria-label="Edit photo metadata"
-                          >
-                            <HugeiconsIcon icon={Edit01Icon} size={14} />
-                          </button>
+                        <TooltipTrigger
+                          onClick={() => handleOpenEdit(item)}
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                          aria-label="Edit photo metadata"
+                        >
+                          <HugeiconsIcon icon={Edit01Icon} size={14} />
                         </TooltipTrigger>
                         <TooltipContent className="text-[10px]">Edit Metadata</TooltipContent>
                       </Tooltip>
 
                       <Tooltip>
-                        <TooltipTrigger>
-                          <button
-                            onClick={() => {
-                              setReplacingItem(item);
-                              setSelectedFile(null);
-                              setPreviewUrl(null);
-                              setFileDimensions(null);
-                              setTitle(item.title || '');
-                              setCaption(item.caption || '');
-                              setAltText(item.alt_text || '');
-                              setIsUploadOpen(true);
-                            }}
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                            aria-label="Replace photo image"
-                          >
-                            <HugeiconsIcon icon={RefreshIcon} size={14} />
-                          </button>
+                        <TooltipTrigger
+                          onClick={() => {
+                            setReplacingItem(item);
+                            setSelectedFile(null);
+                            setPreviewUrl(null);
+                            setFileDimensions(null);
+                            setTitle(item.title || '');
+                            setCaption(item.caption || '');
+                            setAltText(item.alt_text || '');
+                            setIsUploadOpen(true);
+                          }}
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                          aria-label="Replace photo image"
+                        >
+                          <HugeiconsIcon icon={RefreshIcon} size={14} />
                         </TooltipTrigger>
                         <TooltipContent className="text-[10px]">Replace Photo</TooltipContent>
                       </Tooltip>
 
                       <Tooltip>
-                        <TooltipTrigger>
-                          <button
-                            onClick={() => setDeletingItem(item)}
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                            aria-label="Delete photo from gallery"
-                          >
-                            <HugeiconsIcon icon={Delete02Icon} size={14} />
-                          </button>
+                        <TooltipTrigger
+                          onClick={() => setDeletingItem(item)}
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          aria-label="Delete photo from gallery"
+                        >
+                          <HugeiconsIcon icon={Delete02Icon} size={14} />
                         </TooltipTrigger>
                         <TooltipContent className="text-[10px]">Delete Photo</TooltipContent>
                       </Tooltip>
