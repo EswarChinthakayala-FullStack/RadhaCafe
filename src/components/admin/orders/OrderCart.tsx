@@ -10,6 +10,7 @@ import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import type { Customer, PaymentMethod } from '../../../types';
 import { CustomerFormModal } from '../customers/CustomerFormModal';
 import { ReceiptPreview } from '../printer/ReceiptPreview';
+import { toast } from '../../ui/toast';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
@@ -166,7 +167,23 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
   };
 
   const handlePaymentMethodClick = (method: PaymentMethod) => {
-    setPaymentMethod(method);
+    if (method === 'cash' || method === 'pay_later') {
+      setPaymentMethod(method);
+      return;
+    }
+
+    const labelMap: Record<string, string> = {
+      upi: 'UPI',
+      card: 'Card',
+      other: 'Other',
+    };
+    const methodName = labelMap[method] || method.toUpperCase();
+
+    toast.add({
+      title: `${methodName} Payment Coming Soon`,
+      description: `${methodName} payment integration is coming soon. Please use Cash or Credit (Pay Later) for now.`,
+      type: 'info',
+    });
   };
 
   const handleCloseSuccessModal = () => {
@@ -420,6 +437,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
           {paymentOptions.map((opt) => {
             const isSelected = paymentMethod === opt.id;
             const isPayLater = opt.id === 'pay_later';
+            const isAvailable = opt.id === 'cash' || opt.id === 'pay_later';
             const Icon = opt.icon;
 
             return (
@@ -427,18 +445,25 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                 key={opt.id}
                 type="button"
                 onClick={() => handlePaymentMethodClick(opt.id)}
-                className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-lg border text-center transition-all active:scale-95 ${
+                className={`relative flex flex-col items-center justify-center py-1.5 px-1 rounded-lg border text-center transition-all active:scale-95 ${
                   isSelected
                     ? isPayLater
                       ? 'bg-amber-600 text-white border-amber-600 shadow-2xs font-bold'
                       : 'bg-cinnamon text-white border-cinnamon shadow-2xs font-bold'
-                    : 'bg-card hover:bg-secondary/60 text-foreground border-border/80'
+                    : isAvailable
+                    ? 'bg-card hover:bg-secondary/60 text-foreground border-border/80'
+                    : 'bg-card/60 hover:bg-secondary/40 text-muted-foreground border-border/60'
                 }`}
               >
                 <HugeiconsIcon icon={Icon} size={14} className="mb-0.5 shrink-0" />
                 <span className="text-[9px] uppercase font-bold leading-tight">
                   {opt.label === 'Pay Later' ? 'Credit' : opt.label}
                 </span>
+                {!isAvailable && (
+                  <span className="text-[7px] font-bold text-muted-foreground/80 uppercase tracking-tight -mt-0.5">
+                    Soon
+                  </span>
+                )}
               </button>
             );
           })}
