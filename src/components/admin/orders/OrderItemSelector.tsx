@@ -201,7 +201,7 @@ export function OrderItemSelector() {
   return (
     <div className="space-y-0 min-w-0 max-w-full">
       {/* ── Sticky Search + Category Area ── */}
-      <div className="sticky top-0 z-20 bg-background pb-3 space-y-3 -mx-1 px-1">
+      <div className="sticky top-0 z-20 bg-background pb-2.5 pt-0.5 space-y-2.5">
         {/* Search Input with [/] Shortcut */}
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
@@ -212,7 +212,7 @@ export function OrderItemSelector() {
             placeholder="Search menu items..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-card pl-9 pr-14 text-sm h-11 rounded-xl shadow-2xs border-border/80 focus-visible:ring-cinnamon/30"
+            className="w-full bg-card pl-9 pr-12 sm:pr-14 text-xs sm:text-sm h-10 sm:h-11 rounded-xl shadow-2xs border-border/80 focus-visible:ring-cinnamon/30"
           />
           <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center gap-1">
             {search ? (
@@ -255,11 +255,11 @@ export function OrderItemSelector() {
             onWheel={handleWheel}
             className="w-full min-w-0 max-w-full overflow-x-auto touch-pan-x overscroll-x-contain py-0.5 scrollbar-none snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none"
           >
-            <div className="flex items-center gap-1.5 min-w-max px-1">
+            <div className="flex items-center gap-1.5 min-w-max px-0.5">
               <button
                 type="button"
                 onClick={() => setSelectedCategoryId(null)}
-                className={`snap-start shrink-0 min-w-max px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${
+                className={`snap-start shrink-0 min-w-max px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${
                   selectedCategoryId === null
                     ? 'bg-cinnamon text-white shadow-xs'
                     : 'bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/50'
@@ -285,7 +285,7 @@ export function OrderItemSelector() {
                     key={cat.id}
                     type="button"
                     onClick={() => setSelectedCategoryId(cat.id)}
-                    className={`snap-start shrink-0 min-w-max px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${
+                    className={`snap-start shrink-0 min-w-max px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${
                       selectedCategoryId === cat.id
                         ? 'bg-cinnamon text-white shadow-xs'
                         : 'bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/50'
@@ -351,9 +351,9 @@ export function OrderItemSelector() {
         </div>
       )}
 
-      {/* ── Main Menu Item Grid ── */}
+      {/* ── Main Menu Item Grid — Responsive across all device breakpoints ── */}
       {!filteredItems || filteredItems.length === 0 ? (
-        <div className="p-10 text-center bg-card rounded-xl border border-dashed border-border/80 space-y-2">
+        <div className="p-8 sm:p-10 text-center bg-card rounded-xl border border-dashed border-border/80 space-y-2">
           <div className="w-10 h-10 mx-auto rounded-full bg-secondary flex items-center justify-center text-muted-foreground/50">
             <HugeiconsIcon icon={Coffee02Icon} size={20} />
           </div>
@@ -361,7 +361,7 @@ export function OrderItemSelector() {
           <p className="text-[11px] text-muted-foreground">Try adjusting your search query or category filter.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2 sm:gap-3">
           {filteredItems.map((item) => {
             const qty = getCartQuantity(item.id);
             const hasImage = item.image_url && !failedImages[item.id];
@@ -379,7 +379,7 @@ export function OrderItemSelector() {
                   qty > 0 ? 'border-cinnamon/60 ring-1 ring-cinnamon/20 bg-cinnamon/[0.02]' : 'border-border/80 hover:border-border'
                 }`}
               >
-                <div className="space-y-1.5">
+                <div className="space-y-1 sm:space-y-1.5">
                   {/* Item Image Container */}
                   <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-secondary/40">
                     {hasImage ? (
@@ -391,7 +391,7 @@ export function OrderItemSelector() {
                       />
                     ) : (
                       <div className="h-full w-full flex flex-col items-center justify-center bg-secondary/50 text-muted-foreground/40 gap-1">
-                        <HugeiconsIcon icon={Coffee02Icon} size={24} />
+                        <HugeiconsIcon icon={Coffee02Icon} size={22} />
                         <span className="text-[9px] font-bold uppercase tracking-wider">RadhaCafe</span>
                       </div>
                     )}
@@ -399,13 +399,13 @@ export function OrderItemSelector() {
                     {/* System Priority Badges */}
                     <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 z-10">
                       {isTodaySpec && (
-                        <Badge className="bg-amber-600/90 backdrop-blur-xs text-white text-[9px] px-1.5 py-0 font-bold shadow-xs flex items-center gap-0.5">
+                        <Badge className="bg-amber-600/90 backdrop-blur-xs text-white text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0 font-bold shadow-xs flex items-center gap-0.5">
                           <HugeiconsIcon icon={StarIcon} size={9} />
                           <span>Special</span>
                         </Badge>
                       )}
                       {isBestSell && !isTodaySpec && (
-                        <Badge className="bg-cinnamon/90 backdrop-blur-xs text-white text-[9px] px-1.5 py-0 font-bold shadow-xs flex items-center gap-0.5">
+                        <Badge className="bg-cinnamon/90 backdrop-blur-xs text-white text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0 font-bold shadow-xs flex items-center gap-0.5">
                           <HugeiconsIcon icon={FireIcon} size={9} />
                           <span>Popular</span>
                         </Badge>
@@ -423,13 +423,13 @@ export function OrderItemSelector() {
                   {/* Item Details */}
                   <div className="space-y-0.5">
                     <div className="flex items-center justify-between gap-1">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate">
+                      <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate">
                         {categoryName || 'Menu Item'}
                       </span>
 
                       {/* Manual Tags */}
                       {tags.length > 0 && (
-                        <span className="text-[9px] font-semibold text-cinnamon/80 truncate">
+                        <span className="text-[8px] sm:text-[9px] font-semibold text-cinnamon/80 truncate">
                           {tags[0]}
                         </span>
                       )}
@@ -448,7 +448,7 @@ export function OrderItemSelector() {
                 </div>
 
                 {/* Price & Add / Stepper Controls */}
-                <div className="flex items-center justify-between pt-2 mt-1.5 border-t border-border/50 gap-2">
+                <div className="flex items-center justify-between pt-1.5 sm:pt-2 mt-1 border-t border-border/50 gap-1.5 sm:gap-2">
                   <span className="font-extrabold text-xs sm:text-sm text-foreground font-heading">
                     {formatCurrency(item.price)}
                   </span>
@@ -458,21 +458,21 @@ export function OrderItemSelector() {
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, qty - 1)}
-                        className="h-7 w-7 rounded-md flex items-center justify-center bg-card text-foreground hover:bg-secondary active:scale-95 transition-all text-xs font-bold shadow-2xs"
+                        className="h-6 w-6 sm:h-7 sm:w-7 rounded-md flex items-center justify-center bg-card text-foreground hover:bg-secondary active:scale-95 transition-all text-xs font-bold shadow-2xs"
                         aria-label={`Decrease ${item.name}`}
                       >
-                        <HugeiconsIcon icon={MinusSignIcon} size={12} />
+                        <HugeiconsIcon icon={MinusSignIcon} size={11} />
                       </button>
-                      <span className="text-xs font-bold font-mono px-1.5 min-w-[20px] text-center">
+                      <span className="text-[11px] sm:text-xs font-bold font-mono px-1 sm:px-1.5 min-w-[18px] text-center">
                         {qty}
                       </span>
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, qty + 1)}
-                        className="h-7 w-7 rounded-md flex items-center justify-center bg-cinnamon text-white hover:bg-cinnamon/90 active:scale-95 transition-all text-xs font-bold shadow-2xs"
+                        className="h-6 w-6 sm:h-7 sm:w-7 rounded-md flex items-center justify-center bg-cinnamon text-white hover:bg-cinnamon/90 active:scale-95 transition-all text-xs font-bold shadow-2xs"
                         aria-label={`Increase ${item.name}`}
                       >
-                        <HugeiconsIcon icon={PlusSignIcon} size={12} />
+                        <HugeiconsIcon icon={PlusSignIcon} size={11} />
                       </button>
                     </div>
                   ) : (
@@ -480,9 +480,9 @@ export function OrderItemSelector() {
                       type="button"
                       size="sm"
                       onClick={() => addItem(item)}
-                      className="h-7 px-3 bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs rounded-lg shadow-2xs gap-1 active:scale-95 transition-all"
+                      className="h-6 sm:h-7 px-2.5 sm:px-3 bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs rounded-lg shadow-2xs gap-1 active:scale-95 transition-all"
                     >
-                      <HugeiconsIcon icon={PlusSignIcon} size={13} />
+                      <HugeiconsIcon icon={PlusSignIcon} size={12} />
                       <span>Add</span>
                     </Button>
                   )}
