@@ -5,7 +5,6 @@ import { AppLogo } from '../../components/brand/AppLogo';
 import { LiveCafeTime } from '../../components/contact/LiveCafeTime';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  LockedIcon,
   ArrowLeft01Icon,
 } from '@hugeicons/core-free-icons';
 
@@ -85,24 +84,11 @@ export function LoginPage() {
               <HugeiconsIcon icon={ArrowLeft01Icon} size={14} className="group-hover:-translate-x-0.5 transition-transform" />
               <span>Back to RadhaCafe</span>
             </Link>
-
-            <span className="text-[11px] font-mono text-cream/40 hidden sm:inline">
-              v2.4 &middot; Admin Portal
-            </span>
           </div>
 
           {/* Center: Authentication Form Container */}
           <div className="w-full max-w-[420px] mx-auto my-auto py-6 relative z-10">
             <LoginForm />
-          </div>
-
-          {/* Bottom Security Note & Copyright Footer */}
-          <div className="relative z-10 pt-6 border-t border-[#2C1810]/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-cream/45 text-center sm:text-left">
-            <div className="inline-flex items-center gap-1.5 text-[#E5A88B]/80 font-medium">
-              <HugeiconsIcon icon={LockedIcon} size={13} />
-              <span>Single-Admin Secure Access</span>
-            </div>
-            <span>&copy; {new Date().getFullYear()} RadhaCafe</span>
           </div>
         </div>
       </div>
