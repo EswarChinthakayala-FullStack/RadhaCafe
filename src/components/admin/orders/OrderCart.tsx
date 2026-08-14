@@ -644,7 +644,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
       {/* ── Order Placement Success Modal ── */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-        <DialogContent className="max-w-md sm:max-w-2xl md:max-w-3xl max-h-[90vh] overflow-y-auto bg-card rounded-xl border border-border/80 p-4 sm:p-6 shadow-2xl space-y-4 no-scrollbar">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-md sm:max-w-2xl md:max-w-3xl max-h-[90vh] overflow-y-auto bg-card rounded-xl border border-border/80 p-4 sm:p-6 shadow-2xl space-y-4 no-scrollbar">
           <DialogHeader className="text-center pb-2 border-b border-border/60 space-y-1">
             <div className="w-11 h-11 mx-auto rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 shadow-2xs">
               <HugeiconsIcon icon={CheckmarkCircle02Icon} size={22} />
