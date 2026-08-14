@@ -34,6 +34,7 @@ import {
   SparklesIcon,
 } from "@hugeicons/core-free-icons"
 import { useAuth } from "../hooks/useAuth"
+import { useAdminReviewSummary } from "../hooks/useDiscussions"
 
 interface NavItem {
   title: string
@@ -101,6 +102,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { logout } = useAuth()
   const { isMobile, setOpenMobile } = useSidebar()
 
+  const { data: reviewSummary } = useAdminReviewSummary()
+  const pendingReviewsCount = reviewSummary?.pending_count || 0
+
   const handleNavClick = () => {
     if (isMobile) {
       setOpenMobile(false)
@@ -149,6 +153,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   }
                   return false
                 })()
+                const isReviewsItem = item.url === ROUTES.ADMIN.DISCUSSIONS
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
@@ -160,14 +165,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           onClick={handleNavClick}
                           className={
                             isActive
-                              ? "bg-cinnamon text-white font-bold hover:bg-cinnamon/90 transition-all rounded-md shadow-2xs flex items-center gap-3 px-3 py-2 text-xs"
-                              : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all rounded-md flex items-center gap-3 px-3 py-2 text-xs"
+                              ? "bg-cinnamon text-white font-bold hover:bg-cinnamon/90 transition-all rounded-md shadow-2xs flex items-center justify-between px-3 py-2 text-xs"
+                              : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all rounded-md flex items-center justify-between px-3 py-2 text-xs"
                           }
                         />
                       }
                     >
-                      <HugeiconsIcon icon={item.icon} size={16} className="shrink-0" />
-                      <span className="truncate group-data-[collapsible=icon]:hidden">{item.title}</span>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <HugeiconsIcon icon={item.icon} size={16} className="shrink-0" />
+                        <span className="truncate group-data-[collapsible=icon]:hidden">{item.title}</span>
+                      </div>
+                      {isReviewsItem && pendingReviewsCount > 0 && (
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white group-data-[collapsible=icon]:hidden shrink-0">
+                          {pendingReviewsCount}
+                        </span>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )

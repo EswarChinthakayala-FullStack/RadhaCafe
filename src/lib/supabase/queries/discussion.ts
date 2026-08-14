@@ -22,7 +22,16 @@ export interface PublicReviewSummary {
   rating_1_count: number;
 }
 
-export type ReviewSortOption = 'relevant' | 'newest' | 'highest' | 'lowest' | 'helpful';
+export interface AdminReviewSummary {
+  total_reviews: number;
+  pending_count: number;
+  approved_count: number;
+  average_approved_rating: number;
+  needs_reply_count: number;
+  replied_count: number;
+}
+
+export type ReviewSortOption = 'relevant' | 'newest' | 'oldest' | 'highest' | 'lowest' | 'helpful';
 
 export interface PublicReviewQueryParams {
   search?: string;
@@ -34,12 +43,29 @@ export interface PublicReviewQueryParams {
   sessionId?: string;
 }
 
+export interface AdminReviewQueryParams {
+  search?: string;
+  status?: 'all' | 'pending' | 'approved';
+  rating?: number | 'all';
+  reply?: 'all' | 'needed' | 'replied';
+  sort?: 'newest' | 'oldest' | 'highest' | 'lowest' | 'helpful';
+  page?: number;
+  pageSize?: number;
+}
+
 export interface PublicReviewsResponse {
   items: DiscussionReview[];
   totalCount: number;
   hasMore: boolean;
   page: number;
   userVotedIds: string[];
+}
+
+export interface AdminReviewsResponse {
+  items: DiscussionReview[];
+  totalCount: number;
+  totalPages: number;
+  page: number;
 }
 
 /**
@@ -447,7 +473,143 @@ export async function approveReview(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+export async function unpublishReview(id: string): Promise<void> {
+  const { error } = await (supabase as any)
+    .from('discussions')
+    .update({ is_approved: false })
+    .eq('id', id);
+
+  if (error) throw new Error(error.message);
+}
+
 export async function deleteReview(id: string): Promise<void> {
   const { error } = await (supabase as any).from('discussions').delete().eq('id', id);
   if (error) throw new Error(error.message);
+}
+
+/**
+ * Fetch admin review metrics summary (Pending, Approved, Avg Approved Rating, Needs Reply, Replied)
+ */
+export async function fetchAdminReviewSummary(): Promise<AdminReviewSummary> {
+  const { data, error } = await (supabase as any)
+    .from('discussions')
+    .select('rating, is_approved, admin_reply');
+
+  if (error) throw new Error(error.message);
+
+  const reviews = data || [];
+  const total_reviews = reviews.length;
+  let pending_count = 0;
+  let approved_count = 0;
+  let approved_sum = 0;
+  let needs_reply_count = 0;
+  let replied_count = 0;
+
+  for (const r of reviews) {
+    if (r.is_approved) {
+      approved_count++;
+      approved_sum += Number(r.rating) || 5;
+      if (!r.admin_reply || !String(r.admin_reply).trim()) {
+        needs_reply_count++;
+      } else {
+        replied_count++;
+      }
+    } else {
+      pending_count++;
+      if (r.admin_reply && String(r.admin_reply).trim()) {
+        replied_count++;
+      }
+    }
+  }
+
+  const average_approved_rating =
+    approved_count > 0
+      ? Number((approved_sum / approved_count).toFixed(1))
+      : 5.0;
+
+  return {
+    total_reviews,
+    pending_count,
+    approved_count,
+    average_approved_rating,
+    needs_reply_count,
+    replied_count,
+  };
+}
+
+/**
+ * Fetch admin review list with comprehensive server-side filtering, sorting, and pagination
+ */
+export async function fetchAdminReviewsList({
+  search = '',
+  status = 'all',
+  rating = 'all',
+  reply = 'all',
+  sort = 'newest',
+  page = 1,
+  pageSize = 15,
+}: AdminReviewQueryParams): Promise<AdminReviewsResponse> {
+  let query = (supabase as any)
+    .from('discussions')
+    .select('*', { count: 'exact' });
+
+  // Status Filter
+  if (status === 'pending') {
+    query = query.eq('is_approved', false);
+  } else if (status === 'approved') {
+    query = query.eq('is_approved', true);
+  }
+
+  // Rating Filter
+  if (typeof rating === 'number' && rating >= 1 && rating <= 5) {
+    query = query.eq('rating', rating);
+  }
+
+  // Reply Filter
+  if (reply === 'needed') {
+    query = query.is('admin_reply', null);
+  } else if (reply === 'replied') {
+    query = query.not('admin_reply', 'is', null);
+  }
+
+  // Search Filter
+  const trimmedSearch = search.trim();
+  if (trimmedSearch) {
+    query = query.or(
+      `customer_name.ilike.%${trimmedSearch}%,message.ilike.%${trimmedSearch}%,admin_reply.ilike.%${trimmedSearch}%`
+    );
+  }
+
+  // Sort Order (with deterministic secondary created_at/id tie-break)
+  if (sort === 'oldest') {
+    query = query.order('created_at', { ascending: true }).order('id', { ascending: true });
+  } else if (sort === 'highest') {
+    query = query.order('rating', { ascending: false }).order('created_at', { ascending: false }).order('id', { ascending: false });
+  } else if (sort === 'lowest') {
+    query = query.order('rating', { ascending: true }).order('created_at', { ascending: false }).order('id', { ascending: false });
+  } else if (sort === 'helpful') {
+    query = query.order('helpful_count', { ascending: false }).order('created_at', { ascending: false }).order('id', { ascending: false });
+  } else {
+    // Default 'newest'
+    query = query.order('created_at', { ascending: false }).order('id', { ascending: false });
+  }
+
+  // Server-side range pagination
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize - 1;
+  query = query.range(start, end);
+
+  const { data, error, count } = await query;
+  if (error) throw new Error(error.message);
+
+  const items: DiscussionReview[] = data || [];
+  const totalCount = count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
+
+  return {
+    items,
+    totalCount,
+    totalPages,
+    page,
+  };
 }

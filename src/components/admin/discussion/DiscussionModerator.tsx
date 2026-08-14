@@ -1,15 +1,24 @@
-import { useState, useEffect } from 'react';
-import { useDiscussions, useApproveDiscussion, useDeleteDiscussion } from '../../../hooks/useDiscussions';
-import { formatDate } from '../../../lib/utils/formatDate';
-import { Loader } from '../../shared/Loader';
-import { Button } from '../../ui/button';
-import { Badge } from '../../ui/badge';
-import { Input } from '../../ui/input';
-import { Card, CardContent } from '../../ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-import { supabase } from '../../../lib/supabase/client';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { AdminReplyModal } from './AdminReplyModal';
+import { supabase } from '../../../lib/supabase/client';
+import {
+  useAdminReviewSummary,
+  useAdminReviews,
+  useApproveDiscussion,
+  useUnpublishDiscussion,
+  useAdminDeleteReply,
+  useDeleteDiscussion,
+  DISCUSSIONS_QUERY_KEY,
+  ADMIN_REVIEW_SUMMARY_QUERY_KEY,
+  ADMIN_REVIEWS_QUERY_KEY,
+} from '../../../hooks/useDiscussions';
+import { ReviewsPageHeader } from './ReviewsPageHeader';
+import { ReviewAdminSummary } from './ReviewAdminSummary';
+import { ReviewsToolbar, type ReviewsToolbarFilters } from './ReviewsToolbar';
+import { AdminReviewList } from './AdminReviewList';
+import { ReviewDetailsDialog } from './ReviewDetailsDialog';
+import { AdminReplyDialog } from './AdminReplyDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,41 +29,136 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../../ui/alert-dialog';
+import { Card } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { toast } from '../../ui/toast';
 import { HugeiconsIcon } from '@hugeicons/react';
-import {
-  StarIcon,
-  CheckmarkCircle02Icon,
-  Delete02Icon,
-  Search01Icon,
-  Comment01Icon,
-  Cancel01Icon,
-  UserIcon,
-  Message01Icon,
-} from '@hugeicons/core-free-icons';
+import { AlertCircleIcon, RefreshIcon } from '@hugeicons/core-free-icons';
 import type { DiscussionReview } from '../../../lib/supabase/queries/discussion';
 
 export function DiscussionModerator() {
   const queryClient = useQueryClient();
-  const { data: reviews, isLoading, isError } = useDiscussions(true);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read URL filter state with defaults
+  const search = searchParams.get('q') || '';
+  const statusParam = searchParams.get('status');
+  const status: 'all' | 'pending' | 'approved' =
+    statusParam === 'approved' || statusParam === 'pending' ? statusParam : 'pending'; // Default to pending for moderation
+
+  const ratingParam = searchParams.get('rating');
+  const rating: number | 'all' =
+    ratingParam && ['1', '2', '3', '4', '5'].includes(ratingParam)
+      ? (Number(ratingParam) as 1 | 2 | 3 | 4 | 5)
+      : 'all';
+
+  const replyParam = searchParams.get('reply');
+  const reply: 'all' | 'needed' | 'replied' =
+    replyParam === 'needed' || replyParam === 'replied' ? replyParam : 'all';
+
+  const sortParam = searchParams.get('sort');
+  const sort: 'newest' | 'oldest' | 'highest' | 'lowest' | 'helpful' =
+    sortParam === 'oldest' ||
+    sortParam === 'highest' ||
+    sortParam === 'lowest' ||
+    sortParam === 'helpful'
+      ? sortParam
+      : 'newest';
+
+  const page = Math.max(1, Number(searchParams.get('page')) || 1);
+
+  const filters: ReviewsToolbarFilters = useMemo(
+    () => ({
+      search,
+      status,
+      rating,
+      reply,
+      sort,
+    }),
+    [search, status, rating, reply, sort]
+  );
+
+  // Update URL Search Params
+  const setFilters = useCallback(
+    (newFilters: ReviewsToolbarFilters, newPage = 1) => {
+      const params = new URLSearchParams();
+      if (newFilters.search.trim()) params.set('q', newFilters.search.trim());
+      if (newFilters.status !== 'all') params.set('status', newFilters.status);
+      if (newFilters.rating !== 'all') params.set('rating', String(newFilters.rating));
+      if (newFilters.reply !== 'all') params.set('reply', newFilters.reply);
+      if (newFilters.sort !== 'newest') params.set('sort', newFilters.sort);
+      if (newPage > 1) params.set('page', String(newPage));
+      setSearchParams(params, { replace: true });
+    },
+    [setSearchParams]
+  );
+
+  const handleResetFilters = useCallback(() => {
+    setSearchParams(new URLSearchParams({ status: 'all' }), { replace: true });
+  }, [setSearchParams]);
+
+  // Server Queries
+  const {
+    data: summary,
+    isLoading: isSummaryLoading,
+    refetch: refetchSummary,
+  } = useAdminReviewSummary();
+
+  const {
+    data: listData,
+    isLoading: isListLoading,
+    isError: isListError,
+    refetch: refetchList,
+  } = useAdminReviews({
+    search: filters.search,
+    status: filters.status,
+    rating: filters.rating,
+    reply: filters.reply,
+    sort: filters.sort,
+    page,
+    pageSize: 15,
+  });
+
+  // Mutations
   const approveMutation = useApproveDiscussion();
+  const unpublishMutation = useUnpublishDiscussion();
+  const deleteReplyMutation = useAdminDeleteReply();
   const deleteMutation = useDeleteDiscussion();
 
-  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'all'>('pending');
-  const [ratingFilter, setRatingFilter] = useState<string>('all');
-  const [replyFilter, setReplyFilter] = useState<'all' | 'replied' | 'unreplied'>('all');
-  const [search, setSearch] = useState('');
-  const [deletingReview, setDeletingReview] = useState<DiscussionReview | null>(null);
+  // Modal / Dialog States
+  const [detailsReviewId, setDetailsReviewId] = useState<string | null>(null);
   const [replyingReview, setReplyingReview] = useState<DiscussionReview | null>(null);
+  const [deletingReview, setDeletingReview] = useState<DiscussionReview | null>(null);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Single lifecycle-controlled Realtime subscription to refresh discussions queue upon public user submission
+  // Current reviews on active page
+  const items = listData?.items || [];
+  const totalCount = listData?.totalCount || 0;
+  const totalPages = listData?.totalPages || 1;
+
+  // Selected review for details modal
+  const selectedDetailsReview = useMemo(() => {
+    if (!detailsReviewId) return null;
+    return items.find((r) => r.id === detailsReviewId) || null;
+  }, [items, detailsReviewId]);
+
+  const selectedDetailsIndex = useMemo(() => {
+    if (!detailsReviewId) return -1;
+    return items.findIndex((r) => r.id === detailsReviewId);
+  }, [items, detailsReviewId]);
+
+  // Realtime subscription to refresh moderation queue
   useEffect(() => {
     const channel = supabase
-      .channel('discussions-realtime-admin')
+      .channel('admin-reviews-realtime-feed')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'discussions' },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['discussions'] });
+          queryClient.invalidateQueries({ queryKey: DISCUSSIONS_QUERY_KEY });
+          queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_SUMMARY_QUERY_KEY });
+          queryClient.invalidateQueries({ queryKey: ADMIN_REVIEWS_QUERY_KEY });
         }
       )
       .subscribe();
@@ -64,429 +168,253 @@ export function DiscussionModerator() {
     };
   }, [queryClient]);
 
-  if (isLoading) return <Loader label="Loading customer reviews moderation queue..." />;
+  // Action handlers
+  const handleRefreshAll = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refetchSummary(), refetchList()]);
+      toast.add({
+        title: 'Reviews Refreshed',
+        description: 'Latest customer reviews loaded.',
+        type: 'success',
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
-  if (isError) {
-    return (
-      <Card className="border-border/80 bg-card p-6 text-center text-xs text-destructive">
-        Unable to load customer reviews moderation queue. Please try refreshing.
-      </Card>
-    );
-  }
+  const handleApprove = async (review: DiscussionReview) => {
+    setApprovingId(review.id);
+    try {
+      await approveMutation.mutateAsync(review.id);
+      toast.add({
+        title: 'Review Approved',
+        description: `Review from ${review.customer_name} is now published.`,
+        type: 'success',
+      });
+    } catch (err: any) {
+      toast.add({
+        title: 'Approval Failed',
+        description: err?.message || 'Unable to approve review.',
+        type: 'error',
+      });
+    } finally {
+      setApprovingId(null);
+    }
+  };
 
-  const allReviews = reviews || [];
-  const pendingCount = allReviews.filter((r) => !r.is_approved).length;
-  const approvedCount = allReviews.filter((r) => r.is_approved).length;
-  const repliedCount = allReviews.filter((r) => !!r.admin_reply).length;
+  const handleApproveAndReply = async (review: DiscussionReview) => {
+    setApprovingId(review.id);
+    try {
+      await approveMutation.mutateAsync(review.id);
+      setReplyingReview(review);
+    } catch (err: any) {
+      toast.add({
+        title: 'Approval Failed',
+        description: err?.message || 'Unable to approve review.',
+        type: 'error',
+      });
+    } finally {
+      setApprovingId(null);
+    }
+  };
 
-  const avgRating =
-    allReviews.length > 0
-      ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length).toFixed(1)
-      : '0.0';
+  const handleUnpublish = async (review: DiscussionReview) => {
+    try {
+      await unpublishMutation.mutateAsync(review.id);
+      toast.add({
+        title: 'Review Unpublished',
+        description: `Review moved back to pending moderation.`,
+        type: 'success',
+      });
+    } catch (err: any) {
+      toast.add({
+        title: 'Unpublish Failed',
+        description: err?.message || 'Unable to unpublish review.',
+        type: 'error',
+      });
+    }
+  };
 
-  const filteredReviews = allReviews.filter((r) => {
-    const matchesStatus =
-      statusFilter === 'all' ||
-      (statusFilter === 'pending' && !r.is_approved) ||
-      (statusFilter === 'approved' && r.is_approved);
+  const handleRemoveReply = async (review: DiscussionReview) => {
+    try {
+      await deleteReplyMutation.mutateAsync(review.id);
+      toast.add({
+        title: 'Response Removed',
+        description: 'Official response removed from this review.',
+        type: 'success',
+      });
+    } catch (err: any) {
+      toast.add({
+        title: 'Failed to Remove Response',
+        description: err?.message || 'Unable to remove reply.',
+        type: 'error',
+      });
+    }
+  };
 
-    const matchesRating =
-      ratingFilter === 'all' || r.rating === parseInt(ratingFilter, 10);
-
-    const matchesReply =
-      replyFilter === 'all' ||
-      (replyFilter === 'replied' && !!r.admin_reply) ||
-      (replyFilter === 'unreplied' && !r.admin_reply);
-
-    const matchesSearch =
-      !search.trim() ||
-      r.customer_name.toLowerCase().includes(search.toLowerCase()) ||
-      r.message.toLowerCase().includes(search.toLowerCase());
-
-    return matchesStatus && matchesRating && matchesReply && matchesSearch;
-  });
-
-  const handleDeleteConfirm = async () => {
+  const handleConfirmDelete = async () => {
     if (!deletingReview) return;
-    await deleteMutation.mutateAsync(deletingReview.id);
-    setDeletingReview(null);
+    try {
+      await deleteMutation.mutateAsync(deletingReview.id);
+      toast.add({
+        title: 'Review Deleted',
+        description: 'The review submission has been permanently removed.',
+        type: 'success',
+      });
+      if (detailsReviewId === deletingReview.id) {
+        setDetailsReviewId(null);
+      }
+      setDeletingReview(null);
+    } catch (err: any) {
+      toast.add({
+        title: 'Delete Failed',
+        description: err?.message || 'Unable to delete review.',
+        type: 'error',
+      });
+    }
+  };
+
+  // Details Dialog sequence navigation
+  const handleDetailsPrev = () => {
+    if (selectedDetailsIndex > 0) {
+      setDetailsReviewId(items[selectedDetailsIndex - 1].id);
+    }
+  };
+
+  const handleDetailsNext = () => {
+    if (selectedDetailsIndex >= 0 && selectedDetailsIndex < items.length - 1) {
+      setDetailsReviewId(items[selectedDetailsIndex + 1].id);
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Moderation Metrics Header */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <Card className="border-border/80 bg-card shadow-xs rounded-md">
-          <CardContent className="p-3.5 sm:p-4 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Pending</p>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-amber-600 font-heading mt-0.5">{pendingCount}</h3>
-            </div>
-            <Badge variant="outline" className="text-amber-700 border-amber-500/30 bg-amber-500/10 text-[10px] hidden sm:inline-flex">
-              Needs Review
-            </Badge>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/80 bg-card shadow-xs rounded-md">
-          <CardContent className="p-3.5 sm:p-4 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Approved</p>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-emerald-600 font-heading mt-0.5">{approvedCount}</h3>
-            </div>
-            <Badge variant="outline" className="text-emerald-700 border-emerald-500/30 bg-emerald-500/10 text-[10px] hidden sm:inline-flex">
-              Live on Site
-            </Badge>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/80 bg-card shadow-xs rounded-md">
-          <CardContent className="p-3.5 sm:p-4 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Avg Rating</p>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-cinnamon font-heading mt-0.5 flex items-center gap-1">
-                <span>{avgRating}</span>
-                <HugeiconsIcon icon={StarIcon} size={16} className="fill-amber-500 text-amber-500 inline" />
-              </h3>
-            </div>
-            <Badge variant="outline" className="text-muted-foreground border-border text-[10px] hidden sm:inline-flex">
-              Out of 5.0
-            </Badge>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/80 bg-card shadow-xs rounded-md">
-          <CardContent className="p-3.5 sm:p-4 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Owner Replies</p>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-foreground font-heading mt-0.5">{repliedCount}</h3>
-            </div>
-            <Badge variant="outline" className="text-cinnamon border-cinnamon/30 bg-cinnamon/10 text-[10px] hidden sm:inline-flex">
-              Responded
-            </Badge>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filter & Search Controls Bar */}
-      <div className="p-4 rounded-md border border-border/80 bg-card space-y-3 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-          {/* Status Filter Pills */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <Button
-              size="sm"
-              variant={statusFilter === 'pending' ? 'default' : 'outline'}
-              onClick={() => setStatusFilter('pending')}
-              className={`h-9 px-3.5 rounded-md text-xs font-semibold shadow-xs ${statusFilter === 'pending' ? 'bg-cinnamon text-white border-cinnamon' : 'border-border/80 bg-background'
-                }`}
-            >
-              Pending ({pendingCount})
-            </Button>
-            <Button
-              size="sm"
-              variant={statusFilter === 'approved' ? 'default' : 'outline'}
-              onClick={() => setStatusFilter('approved')}
-              className={`h-9 px-3.5 rounded-md text-xs font-semibold shadow-xs ${statusFilter === 'approved' ? 'bg-cinnamon text-white border-cinnamon' : 'border-border/80 bg-background'
-                }`}
-            >
-              Approved ({approvedCount})
-            </Button>
-            <Button
-              size="sm"
-              variant={statusFilter === 'all' ? 'default' : 'outline'}
-              onClick={() => setStatusFilter('all')}
-              className={`h-9 px-3.5 rounded-md text-xs font-semibold shadow-xs ${statusFilter === 'all' ? 'bg-cinnamon text-white border-cinnamon' : 'border-border/80 bg-background'
-                }`}
-            >
-              All Reviews ({allReviews.length})
-            </Button>
-          </div>
-
-          {/* Rating Filter & Search */}
-          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            <Select value={ratingFilter} onValueChange={(val) => setRatingFilter(val || 'all')}>
-              <SelectTrigger size="default" className="!h-9 w-32 text-xs rounded-md border-border/80 bg-background font-medium px-3 shadow-xs">
-                <SelectValue placeholder="All Ratings" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                <SelectItem value="all">All Ratings</SelectItem>
-                <SelectItem value="5">5 Stars</SelectItem>
-                <SelectItem value="4">4 Stars</SelectItem>
-                <SelectItem value="3">3 Stars</SelectItem>
-                <SelectItem value="2">2 Stars</SelectItem>
-                <SelectItem value="1">1 Star</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={replyFilter} onValueChange={(val) => setReplyFilter(val as any)}>
-              <SelectTrigger size="default" className="!h-9 w-36 text-xs rounded-md border-border/80 bg-background font-medium px-3 shadow-xs">
-                <SelectValue placeholder="All Replies" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                <SelectItem value="all">All Replies</SelectItem>
-                <SelectItem value="replied">With Reply</SelectItem>
-                <SelectItem value="unreplied">No Reply</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="relative flex-1 sm:w-60">
-              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-muted-foreground">
-                <HugeiconsIcon icon={Search01Icon} size={14} />
-              </div>
-              <Input
-                placeholder="Search reviewer or text..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="!h-9 pl-8 text-xs bg-background rounded-md border-border/80 shadow-xs"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch('')}
-                  className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-muted-foreground hover:text-foreground"
-                >
-                  <HugeiconsIcon icon={Cancel01Icon} size={12} />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop Moderation Table (md:block) */}
-      <div className="hidden md:block border border-border/80 rounded-md overflow-hidden bg-card shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-secondary/60 text-muted-foreground font-semibold uppercase border-b border-border">
-              <tr>
-                <th className="p-3.5">Customer</th>
-                <th className="p-3.5">Rating</th>
-                <th className="p-3.5">Review Message</th>
-                <th className="p-3.5">Owner Response</th>
-                <th className="p-3.5">Status</th>
-                <th className="p-3.5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filteredReviews.length > 0 ? (
-                filteredReviews.map((review) => (
-                  <tr key={review.id} className="hover:bg-secondary/20 transition-colors">
-                    <td className="p-3.5 font-bold text-foreground flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-cinnamon/10 text-cinnamon flex items-center justify-center font-bold text-xs shrink-0">
-                        {review.customer_name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p>{review.customer_name}</p>
-                        <p className="text-[10px] text-muted-foreground font-normal">{formatDate(review.created_at)}</p>
-                      </div>
-                    </td>
-                    <td className="p-3.5">
-                      <div className="flex items-center gap-0.5 text-amber-500">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <HugeiconsIcon
-                            key={i}
-                            icon={StarIcon}
-                            size={13}
-                            className={i < review.rating ? 'fill-amber-500 text-amber-500' : 'text-muted/40'}
-                          />
-                        ))}
-                      </div>
-                    </td>
-                    <td className="p-3.5 max-w-xs">
-                      <p className="text-foreground leading-relaxed font-normal line-clamp-2">{review.message}</p>
-                    </td>
-                    <td className="p-3.5 max-w-xs">
-                      {review.admin_reply ? (
-                        <div className="space-y-0.5">
-                          <Badge variant="outline" className="text-cinnamon border-cinnamon/30 bg-cinnamon/10 text-[10px]">
-                            Replied
-                          </Badge>
-                          <p className="text-[11px] text-muted-foreground line-clamp-1 italic">
-                            "{review.admin_reply}"
-                          </p>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground/60 italic text-[11px]">No response</span>
-                      )}
-                    </td>
-                    <td className="p-3.5">
-                      <Badge
-                        variant={review.is_approved ? 'default' : 'outline'}
-                        className={`text-[10px] font-bold rounded-lg ${review.is_approved
-                          ? 'bg-emerald-600 text-white border-emerald-600'
-                          : 'text-amber-700 border-amber-500/40 bg-amber-500/10'
-                          }`}
-                      >
-                        {review.is_approved ? 'Approved' : 'Pending'}
-                      </Badge>
-                    </td>
-                    <td className="p-3.5 text-right space-x-1.5 whitespace-nowrap">
-                      {/* Owner Reply Button */}
-                      <Button
-                        size="xs"
-                        variant="outline"
-                        onClick={() => setReplyingReview(review)}
-                        className="gap-1 text-xs rounded-md border-border text-foreground hover:bg-secondary"
-                      >
-                        <HugeiconsIcon icon={Message01Icon} size={13} className="text-cinnamon" />
-                        <span>{review.admin_reply ? 'Edit Reply' : 'Reply'}</span>
-                      </Button>
-
-                      {!review.is_approved && (
-                        <Button
-                          size="xs"
-                          disabled={approveMutation.isPending}
-                          onClick={() => approveMutation.mutate(review.id)}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1 text-xs rounded-md shadow-xs"
-                        >
-                          <HugeiconsIcon icon={CheckmarkCircle02Icon} size={13} />
-                          <span>Approve</span>
-                        </Button>
-                      )}
-                      <Button
-                        size="xs"
-                        variant="ghost"
-                        className="text-destructive hover:bg-destructive/10 gap-1 text-xs rounded-md"
-                        onClick={() => setDeletingReview(review)}
-                      >
-                        <HugeiconsIcon icon={Delete02Icon} size={13} />
-                        <span>Delete</span>
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="p-10 text-center text-muted-foreground italic">
-                    <HugeiconsIcon icon={Comment01Icon} size={32} className="mx-auto mb-2 text-muted-foreground/40" />
-                    No customer reviews found matching the selected filter.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Mobile Moderation Stack Cards (md:hidden) */}
-      <div className="md:hidden space-y-3">
-        {filteredReviews.length > 0 ? (
-          filteredReviews.map((review) => (
-            <Card key={review.id} className="border-border/80 bg-card rounded-md shadow-xs p-4 space-y-3">
-              <div className="flex items-start justify-between gap-2 border-b border-border/60 pb-2.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-cinnamon/10 text-cinnamon flex items-center justify-center font-bold text-xs shrink-0">
-                    <HugeiconsIcon icon={UserIcon} size={14} />
-                  </div>
-                  <div>
-                    <p className="font-bold text-foreground text-xs">{review.customer_name}</p>
-                    <p className="text-[10px] text-muted-foreground">{formatDate(review.created_at)}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  {review.admin_reply && (
-                    <Badge variant="outline" className="text-cinnamon border-cinnamon/30 bg-cinnamon/10 text-[9px]">
-                      Replied
-                    </Badge>
-                  )}
-                  <Badge
-                    variant={review.is_approved ? 'default' : 'outline'}
-                    className={`text-[10px] font-bold rounded-lg ${review.is_approved
-                      ? 'bg-emerald-600 text-white border-emerald-600'
-                      : 'text-amber-700 border-amber-500/40 bg-amber-500/10'
-                      }`}
-                  >
-                    {review.is_approved ? 'Approved' : 'Pending'}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-0.5 text-amber-500">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <HugeiconsIcon
-                    key={i}
-                    icon={StarIcon}
-                    size={13}
-                    className={i < review.rating ? 'fill-amber-500 text-amber-500' : 'text-muted/40'}
-                  />
-                ))}
-                <span className="text-[11px] font-bold text-foreground ml-1.5">{review.rating}.0</span>
-              </div>
-
-              <p className="text-xs text-foreground leading-relaxed bg-secondary/20 p-2.5 rounded-md border border-border/40">
-                "{review.message}"
-              </p>
-
-              {review.admin_reply && (
-                <div className="p-2 rounded-md bg-cinnamon/5 border border-cinnamon/20 text-xs space-y-1">
-                  <span className="font-bold text-[10px] text-cinnamon uppercase">Response from RadhaCafe:</span>
-                  <p className="text-muted-foreground italic text-[11px]">"{review.admin_reply}"</p>
-                </div>
-              )}
-
-              <div className="flex items-center justify-end gap-2 pt-1 border-t border-border/60">
-                <Button
-                  size="xs"
-                  variant="outline"
-                  onClick={() => setReplyingReview(review)}
-                  className="gap-1 text-xs rounded-md border-border text-foreground flex-1 justify-center"
-                >
-                  <HugeiconsIcon icon={Message01Icon} size={13} className="text-cinnamon" />
-                  <span>{review.admin_reply ? 'Edit Reply' : 'Reply'}</span>
-                </Button>
-
-                {!review.is_approved && (
-                  <Button
-                    size="xs"
-                    disabled={approveMutation.isPending}
-                    onClick={() => approveMutation.mutate(review.id)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1 text-xs rounded-md shadow-xs flex-1 justify-center"
-                  >
-                    <HugeiconsIcon icon={CheckmarkCircle02Icon} size={13} />
-                    <span>Approve</span>
-                  </Button>
-                )}
-                <Button
-                  size="xs"
-                  variant="outline"
-                  className="text-destructive border-destructive/30 hover:bg-destructive/10 gap-1 text-xs rounded-md"
-                  onClick={() => setDeletingReview(review)}
-                >
-                  <HugeiconsIcon icon={Delete02Icon} size={13} />
-                  <span>Delete</span>
-                </Button>
-              </div>
-            </Card>
-          ))
-        ) : (
-          <div className="p-8 text-center border border-dashed border-border/80 rounded-md bg-card text-muted-foreground italic text-xs">
-            <HugeiconsIcon icon={Comment01Icon} size={28} className="mx-auto mb-2 text-muted-foreground/40" />
-            No customer reviews found matching the selected filter.
-          </div>
-        )}
-      </div>
-
-      {/* Admin Reply Modal */}
-      <AdminReplyModal
-        review={replyingReview}
-        open={!!replyingReview}
-        onOpenChange={(open) => !open && setReplyingReview(null)}
+      {/* Top Header */}
+      <ReviewsPageHeader
+        onRefresh={handleRefreshAll}
+        isRefreshing={isRefreshing}
       />
 
-      {/* Delete Review Confirmation Alert Dialog */}
-      <AlertDialog open={!!deletingReview} onOpenChange={(open) => !open && setDeletingReview(null)}>
-        <AlertDialogContent className="bg-card rounded-md p-6">
-          <AlertDialogHeader className="p-0 border-b border-border/60 pb-3">
-            <AlertDialogTitle className="text-base font-bold font-heading">
-              Delete Review from "{deletingReview?.customer_name}"?
+      {/* KPI Summary Cards */}
+      <ReviewAdminSummary
+        summary={summary}
+        isLoading={isSummaryLoading}
+        activeStatusFilter={filters.status}
+        activeReplyFilter={filters.reply}
+        onSelectQuickFilter={(quickFilters) => {
+          setFilters(
+            {
+              ...filters,
+              status: quickFilters.status ?? filters.status,
+              reply: quickFilters.reply ?? filters.reply,
+            },
+            1
+          );
+        }}
+      />
+
+      {/* Toolbar & Filters */}
+      <ReviewsToolbar
+        filters={filters}
+        onChange={(newFilters) => setFilters(newFilters, 1)}
+        onReset={handleResetFilters}
+        pendingCount={summary?.pending_count}
+        approvedCount={summary?.approved_count}
+        totalCount={summary?.total_reviews}
+      />
+
+      {/* Main Review List */}
+      {isListError ? (
+        <Card className="p-8 text-center border border-destructive/30 bg-destructive/5 space-y-3 rounded-2xl">
+          <div className="w-10 h-10 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
+            <HugeiconsIcon icon={AlertCircleIcon} size={20} />
+          </div>
+          <h3 className="font-heading font-bold text-sm text-foreground">
+            Unable to load reviews
+          </h3>
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+            Please check your database connection or try refreshing the page.
+          </p>
+          <Button size="sm" variant="outline" onClick={handleRefreshAll} className="gap-1.5 text-xs">
+            <HugeiconsIcon icon={RefreshIcon} size={13} />
+            <span>Retry Loading</span>
+          </Button>
+        </Card>
+      ) : (
+        <AdminReviewList
+          items={items}
+          isLoading={isListLoading}
+          totalCount={totalCount}
+          totalPages={totalPages}
+          currentPage={page}
+          onPageChange={(newPage) => setFilters(filters, newPage)}
+          onApprove={handleApprove}
+          onApproveAndReply={handleApproveAndReply}
+          onUnpublish={handleUnpublish}
+          onOpenReply={(review) => setReplyingReview(review)}
+          onOpenDetails={(review) => setDetailsReviewId(review.id)}
+          onDelete={(review) => setDeletingReview(review)}
+          onRemoveReply={handleRemoveReply}
+          onResetFilters={handleResetFilters}
+          activeStatus={filters.status}
+          activeReply={filters.reply}
+          approvingId={approvingId}
+        />
+      )}
+
+      {/* Review Details Modal */}
+      <ReviewDetailsDialog
+        review={selectedDetailsReview}
+        open={Boolean(selectedDetailsReview)}
+        onOpenChange={(open) => {
+          if (!open) setDetailsReviewId(null);
+        }}
+        onDeleteRequest={(review) => setDeletingReview(review)}
+        onNavigatePrev={handleDetailsPrev}
+        onNavigateNext={handleDetailsNext}
+        hasPrev={selectedDetailsIndex > 0}
+        hasNext={selectedDetailsIndex >= 0 && selectedDetailsIndex < items.length - 1}
+      />
+
+      {/* Quick Reply Dialog */}
+      <AdminReplyDialog
+        review={replyingReview}
+        open={Boolean(replyingReview)}
+        onOpenChange={(open) => {
+          if (!open) setReplyingReview(null);
+        }}
+      />
+
+      {/* Delete Confirmation Alert Dialog */}
+      <AlertDialog
+        open={Boolean(deletingReview)}
+        onOpenChange={(open) => {
+          if (!open) setDeletingReview(null);
+        }}
+      >
+        <AlertDialogContent className="bg-card border-border/80 rounded-2xl p-6 space-y-3 max-w-md shadow-2xl">
+          <AlertDialogHeader className="space-y-1 text-left p-0">
+            <AlertDialogTitle className="text-base sm:text-lg font-bold font-heading text-foreground">
+              Delete review from "{deletingReview?.customer_name}"?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs">
-              This action will permanently remove the customer review submission from RadhaCafe.
+            <AlertDialogDescription className="text-xs text-muted-foreground">
+              This action will permanently remove this customer review and its RadhaCafe response from the system. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="pt-2">
-            <AlertDialogCancel className="text-xs rounded-md">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90 text-white text-xs font-bold rounded-md">
+
+          {deletingReview && (
+            <div className="p-3 rounded-xl bg-destructive/5 border border-destructive/20 text-xs text-foreground/80 italic line-clamp-3">
+              "{deletingReview.message}"
+            </div>
+          )}
+
+          <AlertDialogFooter className="flex items-center gap-2 pt-2 border-t border-border/60">
+            <AlertDialogCancel className="text-xs rounded-lg h-9">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive hover:bg-destructive/90 text-white font-bold text-xs rounded-lg h-9 px-4"
+            >
               Delete Review
             </AlertDialogAction>
           </AlertDialogFooter>
