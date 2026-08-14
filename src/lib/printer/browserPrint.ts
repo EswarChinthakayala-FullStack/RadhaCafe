@@ -104,16 +104,22 @@ export function printOrderViaBrowser(order: Order, cafeSettings?: any, templateC
         </div>
         <script>
           window.onload = function() {
-            window.print();
-            setTimeout(function() { window.close(); }, 500);
+            setTimeout(function() {
+              window.print();
+            }, 150);
           };
         </script>
       </body>
     </html>
   `;
 
-  printWindow.document.open();
-  printWindow.document.write(htmlContent);
-  printWindow.document.close();
-  return true;
+  try {
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    return true;
+  } catch (err) {
+    console.error('Error writing to print window:', err);
+    return false;
+  }
 }

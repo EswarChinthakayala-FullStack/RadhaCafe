@@ -11,6 +11,10 @@ interface ReceiptPreviewProps {
 }
 
 export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptPreviewProps) {
+  if (!order) {
+    return null;
+  }
+
   const { data, config } = formatReceiptFromTemplate(order, templateConfig, cafeSettings);
 
   const paperCols = config.paperWidth || 32;

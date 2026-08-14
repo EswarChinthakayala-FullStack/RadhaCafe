@@ -156,8 +156,8 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         queryClient.invalidateQueries({ queryKey: ['customers'] });
       }
 
-      // Auto-Print Receipt if Auto-Print setting is enabled
-      if (autoPrint) {
+      // If Bluetooth thermal printer is connected, auto-print via BLE
+      if (printerStatus === 'connected') {
         await triggerSmartReceiptPrint(fullOrder);
       }
     } catch (err: any) {
@@ -167,16 +167,12 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
   const handlePaymentMethodClick = (method: PaymentMethod) => {
     setPaymentMethod(method);
-    // If Auto-Print is ON and cart has items, 1-click checkout on CASH/UPI/CARD!
-    if (autoPrint && items.length > 0 && method !== 'pay_later') {
-      handlePlaceOrder(method);
-    }
   };
 
   const handleCloseSuccessModal = () => {
     setShowSuccessModal(false);
-    setCreatedOrder(null);
     setPrintMessage(null);
+    setIsPrinting(false);
   };
 
   const triggerSmartReceiptPrint = async (targetOrder: any) => {
@@ -184,35 +180,26 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
     setIsPrinting(true);
     setPrintMessage(null);
 
-    // 1. First check if Bluetooth thermal printer is connected
+    // If Bluetooth thermal printer is connected, send ESC/POS directly
     if (printerStatus === 'connected') {
       try {
         const success = await printOrder(targetOrder);
         setIsPrinting(false);
         if (success) {
-          setPrintMessage('Receipt printed successfully via Bluetooth ESC/POS printer!');
+          setPrintMessage('Receipt printed successfully via Bluetooth!');
           setTimeout(() => {
             handleCloseSuccessModal();
-          }, 800);
+          }, 1200);
           return;
         }
-      } catch {
+      } catch (err: any) {
         setIsPrinting(false);
+        setPrintMessage(err.message || 'Bluetooth printing failed.');
+        return;
       }
     }
 
-    // 2. Fallback to browser thermal slip print if Bluetooth printer is NOT connected
     setIsPrinting(false);
-    setPrintMessage('No Bluetooth printer connected. Opening browser print slip...');
-    setTimeout(() => {
-      const opened = printBrowserFallback(targetOrder, settings);
-      if (!opened) {
-        setShowPopupBlockedAlert(true);
-      }
-      setTimeout(() => {
-        handleCloseSuccessModal();
-      }, 1000);
-    }, 150);
   };
 
   const handleBluetoothPrint = async () => {
@@ -688,42 +675,39 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
               <div className="space-y-2 pt-1">
                 <Button
-                  onClick={handleBluetoothPrint}
-                  disabled={isPrinting}
-                  className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 text-xs rounded-lg shadow-md gap-2 transition-all active:scale-[0.98]"
+                  onClick={handleCloseSuccessModal}
+                  className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 text-xs sm:text-sm rounded-lg shadow-md gap-1.5 transition-all active:scale-[0.98]"
                 >
-                  <HugeiconsIcon icon={PrinterIcon} size={15} />
-                  <span>
-                    {isPrinting
-                      ? 'Printing Thermal Receipt...'
-                      : printerStatus === 'connected'
-                        ? 'Print Thermal Receipt (Bluetooth)'
-                        : 'Connect & Print Thermal Receipt'}
-                  </span>
+                  <span>Done & Start Next Order</span>
                 </Button>
 
                 <Button
                   onClick={() => {
                     if (createdOrder) {
                       printBrowserFallback(createdOrder, settings);
-                      setTimeout(() => {
-                        handleCloseSuccessModal();
-                      }, 1000);
                     }
                   }}
                   variant="outline"
                   className="w-full h-9 text-xs font-bold gap-2 rounded-lg border-border/80 hover:bg-secondary"
                 >
-                  <HugeiconsIcon icon={PrinterIcon} size={15} />
+                  <HugeiconsIcon icon={PrinterIcon} size={14} />
                   <span>Print via Browser / PDF</span>
                 </Button>
 
                 <Button
-                  onClick={() => setShowSuccessModal(false)}
+                  onClick={handleBluetoothPrint}
+                  disabled={isPrinting}
                   variant="ghost"
-                  className="w-full h-8.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                  className="w-full h-8 text-[11px] font-semibold text-muted-foreground hover:text-foreground gap-1.5"
                 >
-                  Done & Start Next Order
+                  <HugeiconsIcon icon={PrinterIcon} size={13} />
+                  <span>
+                    {isPrinting
+                      ? 'Printing Thermal Receipt...'
+                      : printerStatus === 'connected'
+                        ? 'Print via Bluetooth Thermal Printer'
+                        : 'Connect Bluetooth Thermal Printer'}
+                  </span>
                 </Button>
               </div>
             </div>
