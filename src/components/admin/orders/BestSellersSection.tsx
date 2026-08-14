@@ -61,7 +61,7 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
       </div>
 
       {/* Responsive Product Grid — matches main grid proportions */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-2.5">
         {bestSellers.slice(0, 6).map((item) => {
           const qtyInCart = getItemQuantityInCart(item.id);
           const hasImage = Boolean(item.image_url);

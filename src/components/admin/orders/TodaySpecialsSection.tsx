@@ -42,7 +42,7 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
       </div>
 
       {/* Responsive Grid -- scrollable on mobile if many specials, grid on desktop */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-2.5">
         {specials.map((item) => {
           const qtyInCart = getItemQuantityInCart(item.id);
           const hasImage = Boolean(item.image_url);

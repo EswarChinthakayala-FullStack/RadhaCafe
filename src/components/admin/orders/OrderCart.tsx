@@ -81,11 +81,11 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Calculate tax if configured in settings
-  const taxRate = Number(settings?.tax_percentage || 0);
+  // Tax set to 0 as configured
+  const taxRate = 0;
   const taxableAmount = Math.max(0, subtotal - discount);
-  const calculatedTax = taxRate > 0 ? (taxableAmount * taxRate) / 100 : 0;
-  const grandTotal = Math.max(0, taxableAmount + calculatedTax);
+  const calculatedTax = 0;
+  const grandTotal = taxableAmount;
 
   const toggleAutoPrint = () => {
     const nextState = !autoPrint;
