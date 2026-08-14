@@ -10,6 +10,7 @@ import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import type { Customer, PaymentMethod } from '../../../types';
 import { CustomerFormModal } from '../customers/CustomerFormModal';
 import { ReceiptPreview } from '../printer/ReceiptPreview';
+import { printOrderViaBrowser } from '../../../lib/printer/browserPrint';
 import { toast } from '../../ui/toast';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
@@ -57,7 +58,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
   const { data: settings } = useCafeSettings();
   const { data: activeTemplate } = useActiveReceiptTemplate();
   const createOrderMutation = useCreateOrder();
-  const { status: printerStatus, connect, printOrder, printBrowserFallback } = useBluetoothPrinter();
+  const { status: printerStatus, connect, printOrder } = useBluetoothPrinter();
 
   const [customerName, setCustomerName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
@@ -157,8 +158,8 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         queryClient.invalidateQueries({ queryKey: ['customers'] });
       }
 
-      // If Bluetooth thermal printer is connected, auto-print via BLE
-      if (printerStatus === 'connected') {
+      // Auto-Print Receipt if Auto-Print setting is enabled or Bluetooth printer is connected
+      if (autoPrint || printerStatus === 'connected') {
         await triggerSmartReceiptPrint(fullOrder);
       }
     } catch (err: any) {
@@ -197,13 +198,18 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
     setIsPrinting(true);
     setPrintMessage(null);
 
-    // If Bluetooth thermal printer is connected, send ESC/POS directly
+    // 1. First check if Bluetooth thermal printer is connected -> print directly via BLE ESC/POS
     if (printerStatus === 'connected') {
       try {
         const success = await printOrder(targetOrder);
         setIsPrinting(false);
         if (success) {
           setPrintMessage('Receipt printed successfully via Bluetooth!');
+          toast.add({
+            title: 'Thermal Receipt Printed',
+            description: `Order #${targetOrder.order_number} sent to Bluetooth printer.`,
+            type: 'success',
+          });
           setTimeout(() => {
             handleCloseSuccessModal();
           }, 1200);
@@ -211,12 +217,21 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         }
       } catch (err: any) {
         setIsPrinting(false);
-        setPrintMessage(err.message || 'Bluetooth printing failed.');
-        return;
+        setPrintMessage(err.message || 'Bluetooth printing failed. Falling back to browser print...');
       }
     }
 
+    // 2. Fallback to Browser / PDF print (when Bluetooth printer is not connected or failed)
     setIsPrinting(false);
+    setPrintMessage('Opening browser print slip...');
+    setTimeout(() => {
+      const opened = printOrderViaBrowser(targetOrder, settings, activeTemplate?.template_config);
+      if (opened) {
+        setPrintMessage('Receipt generated for browser / PDF printing.');
+      } else {
+        setShowPopupBlockedAlert(true);
+      }
+    }, 150);
   };
 
   const handleBluetoothPrint = async () => {
@@ -709,7 +724,10 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                 <Button
                   onClick={() => {
                     if (createdOrder) {
-                      printBrowserFallback(createdOrder, settings);
+                      const opened = printOrderViaBrowser(createdOrder, settings, activeTemplate?.template_config);
+                      if (!opened) {
+                        setShowPopupBlockedAlert(true);
+                      }
                     }
                   }}
                   variant="outline"
