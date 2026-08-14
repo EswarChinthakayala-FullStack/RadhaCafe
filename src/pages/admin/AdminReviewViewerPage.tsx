@@ -460,47 +460,51 @@ export function AdminReviewViewerPage() {
   }
 
   return (
-    <div className="space-y-4 pb-12 max-w-6xl mx-auto">
-      {/* 1. Integrated Top Viewer Toolbar */}
-      <ReviewViewerToolbar
-        review={review}
-        navInfo={navInfo}
-        onNavigatePrev={() => {
-          if (navInfo?.prevReviewId) handleNavigateToReview(navInfo.prevReviewId);
-        }}
-        onNavigateNext={() => {
-          if (navInfo?.nextReviewId) handleNavigateToReview(navInfo.nextReviewId);
-        }}
-        onBackToList={handleBackToList}
-        onDeleteRequest={() => setIsDeleteAlertOpen(true)}
-        onUnpublishRequest={handleUnpublish}
-        queueLabel={getQueueLabel()}
-      />
+    <div className="space-y-6 pb-12">
+      {/* 1. Full-Width Top Sticky Viewer Toolbar (Fixed when scrolling) */}
+      <header className="sticky top-0 z-30 -mt-4 md:-mt-6 -mx-4 md:-mx-6 px-4 md:px-6 py-3 bg-background/95 backdrop-blur-md border-b border-border/80 shadow-2xs">
+        <ReviewViewerToolbar
+          review={review}
+          navInfo={navInfo}
+          onNavigatePrev={() => {
+            if (navInfo?.prevReviewId) handleNavigateToReview(navInfo.prevReviewId);
+          }}
+          onNavigateNext={() => {
+            if (navInfo?.nextReviewId) handleNavigateToReview(navInfo.nextReviewId);
+          }}
+          onBackToList={handleBackToList}
+          onDeleteRequest={() => setIsDeleteAlertOpen(true)}
+          onUnpublishRequest={handleUnpublish}
+          queueLabel={getQueueLabel()}
+        />
+      </header>
 
       {/* 2. Responsive 2-Column Desktop / Stacked Tablet & Mobile Layout */}
-      <div className="grid lg:grid-cols-12 gap-5 items-start">
-        {/* Left Column: Customer Review Content (~65%) */}
-        <div className="lg:col-span-8 space-y-4">
-          <ReviewViewerContent review={review} />
-        </div>
+      <div className="max-w-7xl mx-auto">
+        <div className="grid lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column: Customer Review Content (~65%) */}
+          <div className="lg:col-span-8 space-y-4">
+            <ReviewViewerContent review={review} />
+          </div>
 
-        {/* Right Column: Moderation & RadhaCafe Response Management (~35%, Sticky on Desktop) */}
-        <div className="lg:col-span-4 lg:sticky lg:top-4 space-y-4">
-          <ReviewModerationPanel
-            review={review}
-            onApprove={handleApprove}
-            onApproveAndReply={handleApproveAndReply}
-            onUnpublish={handleUnpublish}
-            onDeleteRequest={() => setIsDeleteAlertOpen(true)}
-            onSaveReply={handleSaveReply}
-            onRemoveReply={handleRemoveReply}
-            isApprovePending={approveMutation.isPending}
-            isUnpublishPending={unpublishMutation.isPending}
-            isReplySaving={replyMutation.isPending}
-            isReplyRemoving={deleteReplyMutation.isPending}
-            isInitialReplying={isInitialReplying}
-            onDirtyChange={setIsReplyDirty}
-          />
+          {/* Right Column: Moderation & RadhaCafe Response Management (~35%, Sticky on Desktop) */}
+          <div className="lg:col-span-4 lg:sticky lg:top-20 space-y-4">
+            <ReviewModerationPanel
+              review={review}
+              onApprove={handleApprove}
+              onApproveAndReply={handleApproveAndReply}
+              onUnpublish={handleUnpublish}
+              onDeleteRequest={() => setIsDeleteAlertOpen(true)}
+              onSaveReply={handleSaveReply}
+              onRemoveReply={handleRemoveReply}
+              isApprovePending={approveMutation.isPending}
+              isUnpublishPending={unpublishMutation.isPending}
+              isReplySaving={replyMutation.isPending}
+              isReplyRemoving={deleteReplyMutation.isPending}
+              isInitialReplying={isInitialReplying}
+              onDirtyChange={setIsReplyDirty}
+            />
+          </div>
         </div>
       </div>
 

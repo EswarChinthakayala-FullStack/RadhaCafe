@@ -61,7 +61,7 @@ export function ReviewViewerToolbar({
   const hasNext = navInfo?.hasNext ?? false;
 
   return (
-    <div className="flex items-center justify-between gap-3 pb-2">
+    <div className="w-full flex items-center justify-between gap-3">
       {/* Left: Back Button & Review Position */}
       <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
         <Button
@@ -69,17 +69,19 @@ export function ReviewViewerToolbar({
           variant="outline"
           size="sm"
           onClick={onBackToList}
-          className="h-9 px-3 text-xs font-bold rounded-xl gap-1.5 border-border/80 bg-card text-foreground hover:bg-secondary/70 shadow-2xs shrink-0"
+          className="h-8.5 px-3 text-xs font-bold rounded-xl gap-1.5 border-border/80 bg-card text-foreground hover:bg-secondary/80 shadow-2xs shrink-0"
         >
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={15} />
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
           <span>Back to Reviews</span>
         </Button>
+
+        <div className="h-4 w-px bg-border/80 hidden sm:block" />
 
         {/* Position Counter Pill */}
         <div className="flex items-center gap-2 truncate">
           <Badge
             variant="outline"
-            className="text-xs font-mono font-bold text-foreground border-border/80 bg-card px-2.5 py-1 rounded-lg shrink-0 shadow-2xs"
+            className="text-xs font-mono font-bold text-foreground border-border/80 bg-card/90 px-2.5 py-0.5 rounded-lg shrink-0 shadow-2xs"
           >
             {currentIndex} of {totalCount}
           </Badge>
@@ -93,7 +95,7 @@ export function ReviewViewerToolbar({
       </div>
 
       {/* Right: Prev/Next Slider Navigation & Actions Menu */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Previous Button */}
         <Button
           type="button"
@@ -101,7 +103,7 @@ export function ReviewViewerToolbar({
           size="sm"
           disabled={!hasPrev}
           onClick={onNavigatePrev}
-          className="h-9 px-3 text-xs font-semibold rounded-xl gap-1 border-border/80 bg-card text-foreground hover:bg-secondary shadow-2xs disabled:opacity-40"
+          className="h-8.5 px-2.5 sm:px-3 text-xs font-semibold rounded-xl gap-1 border-border/80 bg-card text-foreground hover:bg-secondary/80 shadow-2xs disabled:opacity-40"
           title="Previous review (←)"
         >
           <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
@@ -115,7 +117,7 @@ export function ReviewViewerToolbar({
           size="sm"
           disabled={!hasNext}
           onClick={onNavigateNext}
-          className="h-9 px-3 text-xs font-semibold rounded-xl gap-1 border-border/80 bg-card text-foreground hover:bg-secondary shadow-2xs disabled:opacity-40"
+          className="h-8.5 px-2.5 sm:px-3 text-xs font-semibold rounded-xl gap-1 border-border/80 bg-card text-foreground hover:bg-secondary/80 shadow-2xs disabled:opacity-40"
           title="Next review (→)"
         >
           <span className="hidden sm:inline">Next</span>
@@ -130,12 +132,12 @@ export function ReviewViewerToolbar({
                 type="button"
                 variant="outline"
                 size="icon"
-                className="h-9 w-9 rounded-xl border-border/80 bg-card text-muted-foreground hover:text-foreground shadow-2xs"
+                className="h-8.5 w-8.5 rounded-xl border-border/80 bg-card text-muted-foreground hover:text-foreground shadow-2xs"
                 title="More review options"
               />
             }
           >
-            <HugeiconsIcon icon={MoreVerticalIcon} size={16} />
+            <HugeiconsIcon icon={MoreVerticalIcon} size={15} />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-52 bg-card border-border/80 text-xs rounded-xl shadow-xl p-1.5">
