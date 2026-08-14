@@ -8,10 +8,16 @@ import { ROUTES } from '../../constants/routes';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Card, CardContent, CardHeader } from '../ui/card';
 import { AppLogo } from '../brand/AppLogo';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { ViewIcon, ViewOffIcon, LockedIcon, Mail01Icon } from '@hugeicons/core-free-icons';
+import {
+  ViewIcon,
+  ViewOffIcon,
+  LockedIcon,
+  Mail01Icon,
+  Loading03Icon,
+  AlertCircleIcon,
+} from '@hugeicons/core-free-icons';
 
 export function LoginForm() {
   const navigate = useNavigate();
@@ -32,110 +38,151 @@ export function LoginForm() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    watch,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
   });
+
+  // Clear server error message as soon as user modifies input
+  useEffect(() => {
+    const subscription = watch(() => {
+      if (errorMsg) setErrorMsg(null);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, errorMsg]);
 
   const onSubmit = async (data: LoginFormData) => {
     try {
       setErrorMsg(null);
-      await signIn(data);
+      await signIn({
+        email: data.email.trim(),
+        password: data.password,
+      });
       navigate(fromPath, { replace: true });
     } catch (err: any) {
       setErrorMsg(
-        err.message || 'Unable to sign in. Please check your admin credentials and try again.'
+        err.message || 'Unable to sign in. Please verify your admin credentials and try again.'
       );
     }
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto border border-[#2C1810] bg-[#1D100A] text-cream rounded-md shadow-2xl overflow-hidden p-2 sm:p-4">
-      {/* Mobile Branding Header (visible on mobile only) */}
-      <CardHeader className="text-center flex flex-col items-center pb-2 pt-4">
-        <div className="lg:hidden mb-3">
-          <AppLogo size="md" lightText />
+    <div className="w-full space-y-6">
+      {/* Mobile-Only Header Brand Emblem */}
+      <div className="lg:hidden flex flex-col items-center text-center space-y-3 pb-2">
+        <AppLogo size="md" lightText />
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E5A88B]/10 border border-[#E5A88B]/20 text-[#E5A88B] text-[10px] font-bold uppercase tracking-widest">
+          <HugeiconsIcon icon={LockedIcon} size={12} />
+          <span>ADMIN ACCESS</span>
         </div>
-        <h2 className="font-heading text-2xl sm:text-3xl font-bold text-cream">
-          Welcome Back
+      </div>
+
+      {/* Form Header */}
+      <div className="space-y-1.5 text-center lg:text-left">
+        <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-cream tracking-tight">
+          Welcome back
         </h2>
-        <p className="text-xs text-cream/70 mt-1 font-normal">
-          Sign in to access your cafe management portal.
+        <p className="text-xs sm:text-sm text-[#EAD5C3]/75 font-normal">
+          Sign in to manage orders, menu, printing, and cafe operations.
         </p>
-      </CardHeader>
+      </div>
 
-      <CardContent className="pt-2 pb-4">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-xs">
-          {/* Error Alert Message */}
-          {errorMsg && (
-            <div className="p-3 text-xs rounded-md bg-destructive/15 text-destructive-foreground border border-destructive/30 font-medium leading-relaxed">
-              {errorMsg}
-            </div>
-          )}
-
-          {/* Email Address Input */}
-          <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-xs font-semibold text-cream/90">
-              Admin Email Address
-            </Label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-cream/40">
-                <HugeiconsIcon icon={Mail01Icon} size={16} />
-              </div>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@radhacafe.com"
-                autoComplete="username"
-                className="pl-10 text-xs bg-[#140A06] border-[#2C1810] text-cream h-10 rounded-md focus-visible:ring-[#E5A88B]"
-                {...register('email')}
-              />
-            </div>
-            {errors.email && (
-              <p className="text-destructive text-[11px] font-semibold">{errors.email.message}</p>
-            )}
+      {/* Form Container */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1" noValidate>
+        {/* Inline Server Error Alert */}
+        {errorMsg && (
+          <div
+            role="alert"
+            className="p-3.5 rounded-xl bg-destructive/15 text-destructive-foreground border border-destructive/30 flex items-start gap-2.5 text-xs font-medium leading-relaxed animate-fade-in"
+          >
+            <HugeiconsIcon icon={AlertCircleIcon} size={16} className="text-destructive shrink-0 mt-0.5" />
+            <span>{errorMsg}</span>
           </div>
+        )}
 
-          {/* Password Input with Visibility Toggle */}
-          <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-xs font-semibold text-cream/90">
+        {/* Email Address Input Field */}
+        <div className="space-y-1.5">
+          <Label htmlFor="email" className="text-xs font-bold text-[#EAD5C3] uppercase tracking-wider block">
+            Admin Email Address
+          </Label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-cream/40">
+              <HugeiconsIcon icon={Mail01Icon} size={16} />
+            </div>
+            <Input
+              id="email"
+              type="email"
+              placeholder="admin@radhacafe.com"
+              autoComplete="username"
+              spellCheck={false}
+              className="pl-10 text-xs bg-[#1D100A] border-[#3E2519] text-cream h-11 rounded-xl focus-visible:ring-[#E5A88B] focus-visible:border-[#E5A88B] transition-colors"
+              {...register('email')}
+            />
+          </div>
+          {errors.email && (
+            <p className="text-destructive text-[11px] font-semibold pl-1">
+              {errors.email.message}
+            </p>
+          )}
+        </div>
+
+        {/* Password Input Field with Interactive Visibility Toggle */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-xs font-bold text-[#EAD5C3] uppercase tracking-wider block">
               Admin Password
             </Label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-cream/40">
-                <HugeiconsIcon icon={LockedIcon} size={16} />
-              </div>
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                className="pl-10 pr-10 text-xs bg-[#140A06] border-[#2C1810] text-cream h-10 rounded-md focus-visible:ring-[#E5A88B]"
-                {...register('password')}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-cream/40 hover:text-cream transition-colors focus:outline-none"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                <HugeiconsIcon icon={showPassword ? ViewOffIcon : ViewIcon} size={16} />
-              </button>
-            </div>
-            {errors.password && (
-              <p className="text-destructive text-[11px] font-semibold">{errors.password.message}</p>
-            )}
           </div>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-cream/40">
+              <HugeiconsIcon icon={LockedIcon} size={16} />
+            </div>
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="••••••••••••"
+              autoComplete="current-password"
+              className="pl-10 pr-11 text-xs bg-[#1D100A] border-[#3E2519] text-cream h-11 rounded-xl focus-visible:ring-[#E5A88B] focus-visible:border-[#E5A88B] transition-colors font-mono tracking-wider placeholder:font-sans placeholder:tracking-normal"
+              {...register('password')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-cream/40 hover:text-cream transition-colors focus:outline-none cursor-pointer"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              <HugeiconsIcon icon={showPassword ? ViewOffIcon : ViewIcon} size={16} />
+            </button>
+          </div>
+          {errors.password && (
+            <p className="text-destructive text-[11px] font-semibold pl-1">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
 
-          {/* Submit Action Button */}
+        {/* Submit Action Button */}
+        <div className="pt-2">
           <Button
             type="submit"
-            className="w-full bg-[#E5A88B] hover:bg-[#EEB89D] text-[#140A06] font-bold h-11 text-xs rounded-md shadow-md transition-all hover:scale-[1.01] active:scale-95 mt-2"
             disabled={isSubmitting}
+            className="w-full bg-gradient-to-r from-[#B85C1E] to-[#D97026] hover:from-[#C86624] hover:to-[#E87E34] text-white font-bold h-12 text-xs sm:text-sm rounded-xl shadow-xl shadow-[#B85C1E]/20 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'Signing In...' : 'Sign In to Admin Portal'}
+            {isSubmitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <HugeiconsIcon icon={Loading03Icon} size={16} className="animate-spin text-white" />
+                <span>Verifying credentials...</span>
+              </span>
+            ) : (
+              <span>Sign In to Admin Portal</span>
+            )}
           </Button>
-        </form>
-      </CardContent>
-    </Card>
+        </div>
+      </form>
+    </div>
   );
 }

@@ -1,66 +1,134 @@
+import { Link } from 'react-router-dom';
 import { LoginForm } from '../../components/auth/LoginForm';
 import { AppLogo } from '../../components/brand/AppLogo';
+import { LiveCafeTime } from '../../components/contact/LiveCafeTime';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { LockKeyIcon } from '@hugeicons/core-free-icons';
+import {
+  LockKeyIcon,
+  LockedIcon,
+  ArrowLeft01Icon,
+  Invoice01Icon,
+  ChartLineData01Icon,
+  Restaurant01Icon,
+  ShoppingBag01Icon,
+} from '@hugeicons/core-free-icons';
 
 export function LoginPage() {
   return (
-    <div className="min-h-screen w-full bg-[#140A06] text-cream grid lg:grid-cols-2 selection:bg-cinnamon selection:text-white">
-      {/* ── Left Panel: Full-Height Brand Visual & Story Showcase (Desktop) ── */}
-      <div className="hidden lg:flex flex-col justify-between min-h-screen p-12 lg:p-16 bg-[#1A0E0A] border-r border-[#2C1810] relative overflow-hidden">
+    <div className="min-h-screen min-h-svh w-full bg-[#140A06] text-cream grid lg:grid-cols-12 selection:bg-cinnamon selection:text-white">
+      {/* ── Left Panel: Cinematic Photography & Platform Showcase (7 Cols Desktop) ── */}
+      <div className="hidden lg:flex lg:col-span-7 flex-col justify-between min-h-screen p-12 xl:p-16 bg-[#1A0E08] border-r border-[#2C1810] relative overflow-hidden">
         {/* Full-Height Photography Background */}
-        <div className="absolute inset-0 z-0">
-          <img
-            src="/about.png"
-            alt="RadhaCafe Atmosphere"
-            className="w-full h-full object-cover opacity-35 filter brightness-90 contrast-105"
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <div
+            className="absolute inset-0 bg-cover bg-[center_35%] filter brightness-90 contrast-105 scale-105 transition-transform duration-1000"
+            style={{
+              backgroundImage: `url('https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=2400&q=90')`,
+            }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#140A06] via-[#140A06]/85 to-[#1C100B]/75" />
+          {/* Multi-Layered Coffee & Dark Roast Gradients */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#140A06] via-[#140A06]/85 to-[#1C100B]/70" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(20,10,6,0.85)_100%)]" />
         </div>
 
-        {/* Top Header: Logo */}
+        {/* Top Header: Official Brand Emblem */}
         <div className="relative z-10">
           <AppLogo size="lg" lightText />
         </div>
 
-        {/* Center Content: Headline & Portal Modules */}
+        {/* Center Editorial Brand Statement */}
         <div className="relative z-10 space-y-6 my-auto max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E5A88B]/10 border border-[#E5A88B]/20 text-[#E5A88B] text-xs font-bold uppercase tracking-widest">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E5A88B]/10 border border-[#E5A88B]/25 text-[#E5A88B] text-xs font-bold uppercase tracking-widest">
             <HugeiconsIcon icon={LockKeyIcon} size={14} />
-            <span>RADHACAFE ADMIN PORTAL</span>
+            <span>RADHACAFE MANAGEMENT PLATFORM</span>
           </div>
 
-          <h1 className="font-heading text-4xl lg:text-5xl font-bold text-cream leading-[1.1] tracking-tight">
-            Crafted Coffee.{' '}
-            <span className="font-serif italic font-normal text-[#E5A88B] block mt-1">
-              Thoughtful Hospitality.
-            </span>
-          </h1>
+          <div className="space-y-3">
+            <h1 className="font-heading font-extrabold text-4xl xl:text-5xl text-cream leading-[1.1] tracking-tight">
+              Everything your cafe needs,{' '}
+              <span className="font-serif italic font-normal text-[#E5A88B] block mt-1">
+                in one place.
+              </span>
+            </h1>
+            <p className="text-sm text-[#EAD5C3]/80 leading-relaxed font-normal">
+              Real-time POS order dispatch, thermal receipt printing, live menu catalog control, customer accounts, and revenue analytics.
+            </p>
+          </div>
 
-          <p className="text-sm text-cream/80 leading-relaxed font-normal">
-            Single-administrator management system for order dispatch, POS thermal receipt printing, menu catalog control, and store analytics.
-          </p>
+          {/* Operational Capability Badges */}
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="p-3 rounded-xl bg-[#140A06]/80 border border-[#3E2519]/70 backdrop-blur-md flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-[#E5A88B]/10 text-[#E5A88B]">
+                <HugeiconsIcon icon={ShoppingBag01Icon} size={16} />
+              </div>
+              <span className="text-xs font-bold text-cream">Orders & POS Dispatch</span>
+            </div>
 
+            <div className="p-3 rounded-xl bg-[#140A06]/80 border border-[#3E2519]/70 backdrop-blur-md flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-[#E5A88B]/10 text-[#E5A88B]">
+                <HugeiconsIcon icon={Invoice01Icon} size={16} />
+              </div>
+              <span className="text-xs font-bold text-cream">Thermal Receipts</span>
+            </div>
 
+            <div className="p-3 rounded-xl bg-[#140A06]/80 border border-[#3E2519]/70 backdrop-blur-md flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-[#E5A88B]/10 text-[#E5A88B]">
+                <HugeiconsIcon icon={Restaurant01Icon} size={16} />
+              </div>
+              <span className="text-xs font-bold text-cream">Menu Catalog Control</span>
+            </div>
+
+            <div className="p-3 rounded-xl bg-[#140A06]/80 border border-[#3E2519]/70 backdrop-blur-md flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-[#E5A88B]/10 text-[#E5A88B]">
+                <HugeiconsIcon icon={ChartLineData01Icon} size={16} />
+              </div>
+              <span className="text-xs font-bold text-cream">Store Analytics</span>
+            </div>
+          </div>
         </div>
 
-        {/* Bottom Footer Details */}
-        <div className="relative z-10 pt-6 border-t border-[#2C1810] flex items-center justify-between text-xs text-cream/50">
-          <span>Est. 2026 &middot; Tallur, AP</span>
-          <span>RadhaCafe POS System</span>
+        {/* Bottom Detail Strip */}
+        <div className="relative z-10 pt-6 border-t border-[#2C1810] flex items-center justify-between text-xs text-[#EAD5C3]/60">
+          <span>RadhaCafe POS &middot; Tallur, AP</span>
+          <LiveCafeTime />
         </div>
       </div>
 
-      {/* ── Right Panel: Full-Height Authentication Form Surface ── */}
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 sm:p-12 bg-[#140A06] relative">
-        {/* Soft Warm Radial Glow */}
+      {/* ── Right Panel: Dedicated Authentication Surface (5 Cols Desktop) ── */}
+      <div className="lg:col-span-5 min-h-screen min-h-svh flex flex-col justify-between p-6 sm:p-10 xl:p-14 bg-[#140A06] relative">
+        {/* Soft Ambient Radial Glow */}
         <div
-          className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(229,168,139,0.08)_0%,transparent_70%)] pointer-events-none"
+          className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(229,168,139,0.06)_0%,transparent_70%)] pointer-events-none"
           aria-hidden="true"
         />
 
-        <div className="w-full max-w-md relative z-10">
+        {/* Top Bar: Back to Public Website */}
+        <div className="flex items-center justify-between relative z-10">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-[#EAD5C3]/70 hover:text-cream transition-colors group"
+          >
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+            <span>Back to RadhaCafe</span>
+          </Link>
+
+          <span className="text-[11px] font-mono text-cream/40 hidden sm:inline">
+            v2.4 &middot; Admin Portal
+          </span>
+        </div>
+
+        {/* Center: Authentication Form Container */}
+        <div className="w-full max-w-[420px] mx-auto my-auto py-8 relative z-10">
           <LoginForm />
+        </div>
+
+        {/* Bottom Security Note & Copyright Footer */}
+        <div className="relative z-10 pt-6 border-t border-[#2C1810]/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-cream/45 text-center sm:text-left">
+          <div className="inline-flex items-center gap-1.5 text-[#E5A88B]/80 font-medium">
+            <HugeiconsIcon icon={LockedIcon} size={13} />
+            <span>Single-Admin Secure Access</span>
+          </div>
+          <span>&copy; {new Date().getFullYear()} RadhaCafe</span>
         </div>
       </div>
     </div>
