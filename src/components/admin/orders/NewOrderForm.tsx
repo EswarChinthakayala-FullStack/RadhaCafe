@@ -6,7 +6,7 @@ import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '../../ui/drawer';
 import { Button } from '../../ui/button';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { ShoppingCart01Icon } from '@hugeicons/core-free-icons';
+import { ShoppingCart01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 
 export function NewOrderForm() {
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
@@ -25,52 +25,59 @@ export function NewOrderForm() {
   }, []);
 
   return (
-    <div className="space-y-4 min-w-0 w-full">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-start min-w-0 w-full">
-        {/* Left Column: POS Item Selector */}
-        <div className="lg:col-span-2 min-w-0 w-full">
+    <div className={`space-y-4 min-w-0 w-full ${totalItemCount > 0 ? 'pb-20 lg:pb-0' : ''}`}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start min-w-0 w-full">
+        {/* Left Column: POS Item Selector (approx 67% on desktop) */}
+        <div className="lg:col-span-8 min-w-0 w-full">
           <OrderItemSelector />
         </div>
 
-        {/* Right Column: Desktop Sticky Live Cart */}
-        <div className="hidden lg:block lg:col-span-1 sticky top-4 self-start min-w-0 z-10">
+        {/* Right Column: Desktop Sticky Live Cart (approx 33% on desktop) */}
+        <div className="hidden lg:block lg:col-span-4 sticky top-4 self-start min-w-0 z-10">
           <OrderCart />
         </div>
       </div>
 
-      {/* Floating Bottom Cart Bar for Mobile & Tablet (<1024px) */}
-      <div className="lg:hidden fixed bottom-4 inset-x-4 z-40 max-w-lg mx-auto">
-        <Button
-          type="button"
-          onClick={() => setIsMobileCartOpen(true)}
-          className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-12 rounded-md shadow-2xl flex items-center justify-between px-5 transition-all"
-        >
-          <div className="flex items-center gap-2 text-xs">
-            <div className="p-1 rounded-lg bg-white/20">
-              <HugeiconsIcon icon={ShoppingCart01Icon} size={18} />
+      {/* Floating Bottom Cart Bar for Mobile & Tablet (<1024px) — Only shown when items exist */}
+      {totalItemCount > 0 && (
+        <div className="lg:hidden fixed bottom-4 inset-x-4 z-40 max-w-lg mx-auto pb-[env(safe-area-inset-bottom)]">
+          <Button
+            type="button"
+            onClick={() => setIsMobileCartOpen(true)}
+            className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-13 rounded-xl shadow-2xl flex items-center justify-between px-4 sm:px-5 transition-all active:scale-[0.99] border border-white/20"
+          >
+            <div className="flex items-center gap-2.5 text-xs sm:text-sm">
+              <div className="p-1.5 rounded-lg bg-white/20 shrink-0">
+                <HugeiconsIcon icon={ShoppingCart01Icon} size={18} />
+              </div>
+              <div className="text-left leading-tight">
+                <span className="font-bold block">View Cart</span>
+                <span className="text-[11px] font-mono text-white/80">
+                  {totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}
+                </span>
+              </div>
             </div>
-            <span>View Live Cart</span>
-            {totalItemCount > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-white/20 text-[11px] font-mono">
-                {totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}
-              </span>
-            )}
-          </div>
 
-          <span className="font-bold text-sm">{formatCurrency(total)}</span>
-        </Button>
-      </div>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-sm sm:text-base font-mono font-heading">
+                {formatCurrency(total)}
+              </span>
+              <HugeiconsIcon icon={ArrowRight01Icon} size={16} />
+            </div>
+          </Button>
+        </div>
+      )}
 
       {/* Native Mobile Bottom Cart Drawer */}
       <Drawer open={isMobileCartOpen} onOpenChange={setIsMobileCartOpen} showSwipeHandle>
-        <DrawerContent className="p-4 bg-card max-h-[90vh] overflow-hidden rounded-t-2xl flex flex-col">
+        <DrawerContent className="p-4 bg-card max-h-[92vh] overflow-hidden rounded-t-2xl flex flex-col">
           <DrawerHeader className="pb-2 border-b border-border/60 flex items-center justify-between shrink-0">
             <DrawerTitle className="text-base font-bold font-heading text-foreground flex items-center gap-2">
               <HugeiconsIcon icon={ShoppingCart01Icon} size={18} className="text-cinnamon" />
               <span>Live Order Cart</span>
             </DrawerTitle>
           </DrawerHeader>
-          <div className="pt-2 pb-6 overflow-y-auto max-h-[calc(90vh-70px)] no-scrollbar flex-1">
+          <div className="pt-2 pb-6 overflow-y-auto max-h-[calc(92vh-70px)] no-scrollbar flex-1">
             <OrderCart onCloseMobileCart={() => setIsMobileCartOpen(false)} />
           </div>
         </DrawerContent>

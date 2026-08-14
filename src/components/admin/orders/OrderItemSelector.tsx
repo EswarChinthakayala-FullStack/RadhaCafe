@@ -18,7 +18,6 @@ import {
   Coffee02Icon,
   PlusSignIcon,
   MinusSignIcon,
-  Image01Icon,
   Tag01Icon,
   CakeIcon,
   PackageIcon,
@@ -35,6 +34,8 @@ import {
   Hamburger01Icon,
   ArrowLeft01Icon,
   ArrowRight01Icon,
+  FireIcon,
+  StarIcon,
 } from '@hugeicons/core-free-icons';
 
 const ICON_MAP: Record<string, any> = {
@@ -60,6 +61,7 @@ export function OrderItemSelector() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -76,6 +78,26 @@ export function OrderItemSelector() {
   const categoryMap = new Map(categories?.map((c) => [c.id, c]));
   const bestSellerIdSet = new Set(bestSellers?.map((b) => b.id));
   const todayStr = new Date().toISOString().split('T')[0];
+
+  // Global keyboard shortcut: Press '/' to focus search input, 'Escape' to blur/clear
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === '/' &&
+        document.activeElement?.tagName !== 'INPUT' &&
+        document.activeElement?.tagName !== 'TEXTAREA'
+      ) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      } else if (e.key === 'Escape' && document.activeElement === searchInputRef.current) {
+        setSearch('');
+        searchInputRef.current?.blur();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const updateScrollButtons = () => {
     const el = scrollContainerRef.current;
@@ -139,7 +161,7 @@ export function OrderItemSelector() {
       return matchesCategory && matchesSearch;
     })
     ?.sort((a, b) => {
-      // Prioritize Today's Special -> Best Seller -> Remaining items
+      // Prioritize Today's Special -> Best Seller -> Alphabetical
       const aIsSpecial = a.daily_special_date === todayStr;
       const bIsSpecial = b.daily_special_date === todayStr;
       if (aIsSpecial && !bIsSpecial) return -1;
@@ -168,32 +190,47 @@ export function OrderItemSelector() {
     return <Loader label="Loading POS menu catalog..." />;
   }
 
+  // Calculate available item counts per category for the chips
+  const categoryCounts = new Map<string, number>();
+  (menuItems || []).forEach((item) => {
+    if (item.category_id) {
+      categoryCounts.set(item.category_id, (categoryCounts.get(item.category_id) || 0) + 1);
+    }
+  });
+
   return (
     <div className="space-y-4 min-w-0 max-w-full">
-      {/* Search Input */}
+      {/* ── Search Input with [/] Shortcut ── */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
-          <HugeiconsIcon icon={Search01Icon} size={15} />
+          <HugeiconsIcon icon={Search01Icon} size={16} />
         </div>
         <Input
-          placeholder="Search menu by name, description, category, or tag (e.g. Spicy, Cold)..."
+          ref={searchInputRef}
+          placeholder="Search items by name, category, or tag (e.g. Cold, Chai, Snacks)..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-card pl-9 pr-9 text-xs h-10 rounded-md shadow-2xs"
+          className="w-full bg-card pl-9 pr-14 text-xs h-10 rounded-lg shadow-2xs border-border/80 focus-visible:ring-cinnamon/30"
         />
-        {search && (
-          <button
-            type="button"
-            onClick={() => setSearch('')}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
-            aria-label="Clear search"
-          >
-            <HugeiconsIcon icon={Cancel01Icon} size={14} />
-          </button>
-        )}
+        <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center gap-1">
+          {search ? (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="p-1 text-muted-foreground hover:text-foreground rounded transition-colors"
+              aria-label="Clear search"
+            >
+              <HugeiconsIcon icon={Cancel01Icon} size={14} />
+            </button>
+          ) : (
+            <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground bg-secondary/80 border border-border/60 rounded">
+              /
+            </kbd>
+          )}
+        </div>
       </div>
 
-      {/* Recommendation Priorities: Today's Specials & Best Sellers (Visible when All Items selected & no active search) */}
+      {/* ── Smart Discovery: Today's Specials & Best Sellers (Visible when All Items selected & no active search) ── */}
       {!isSearching && selectedCategoryId === null && (
         <div className="space-y-4">
           {/* Today's Specials Priority Row */}
@@ -206,13 +243,13 @@ export function OrderItemSelector() {
         </div>
       )}
 
-      {/* Category Tabs Navigation — Scrollable with Drag & Arrows */}
+      {/* ── Category Chips Navigation — Scrollable with Drag & Arrows ── */}
       <div className="relative group/tabs w-full min-w-0 max-w-full overflow-hidden">
         {canScrollLeft && (
           <button
             type="button"
             onClick={() => scroll('left')}
-            className="absolute left-0 top-4 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-card border border-border/80 shadow-md flex items-center justify-center p-0 text-foreground hover:bg-secondary active:scale-95 transition-all shrink-0"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-card border border-border/80 shadow-md flex items-center justify-center p-0 text-foreground hover:bg-secondary active:scale-95 transition-all shrink-0"
             aria-label="Scroll Left"
           >
             <HugeiconsIcon icon={ArrowLeft01Icon} size={14} className="shrink-0" />
@@ -227,29 +264,39 @@ export function OrderItemSelector() {
           onMouseUp={handleMouseUpOrLeave}
           onMouseLeave={handleMouseUpOrLeave}
           onWheel={handleWheel}
-          className="w-full min-w-0 max-w-full overflow-x-auto touch-pan-x overscroll-x-contain pb-2 scrollbar-none snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none"
+          className="w-full min-w-0 max-w-full overflow-x-auto touch-pan-x overscroll-x-contain py-1 scrollbar-none snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none"
         >
           <div className="flex items-center gap-2 min-w-max px-1">
             <button
               type="button"
               onClick={() => setSelectedCategoryId(null)}
-              className={`snap-start shrink-0 min-w-max px-3.5 py-2 rounded-md text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${
+              className={`snap-start shrink-0 min-w-max px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${
                 selectedCategoryId === null
                   ? 'bg-cinnamon text-white shadow-xs'
                   : 'bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/50'
               }`}
             >
               <HugeiconsIcon icon={GridIcon} size={13} />
-              <span>All Items ({menuItems?.length || 0})</span>
+              <span>All Items</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                  selectedCategoryId === null ? 'bg-white/25 text-white' : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                {menuItems?.length || 0}
+              </span>
             </button>
+
             {categories?.map((cat) => {
               const IconComp = ICON_MAP[(cat as any).icon_name || ''] || Tag01Icon;
+              const count = categoryCounts.get(cat.id) || 0;
+
               return (
                 <button
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategoryId(cat.id)}
-                  className={`snap-start shrink-0 min-w-max px-3.5 py-2 rounded-md text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${
+                  className={`snap-start shrink-0 min-w-max px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${
                     selectedCategoryId === cat.id
                       ? 'bg-cinnamon text-white shadow-xs'
                       : 'bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/50'
@@ -257,6 +304,15 @@ export function OrderItemSelector() {
                 >
                   <HugeiconsIcon icon={IconComp} size={13} />
                   <span>{cat.name}</span>
+                  {count > 0 && (
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                        selectedCategoryId === cat.id ? 'bg-white/25 text-white' : 'bg-muted text-muted-foreground'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -267,7 +323,7 @@ export function OrderItemSelector() {
           <button
             type="button"
             onClick={() => scroll('right')}
-            className="absolute right-0 top-4 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-card border border-border/80 shadow-md flex items-center justify-center p-0 text-foreground hover:bg-secondary active:scale-95 transition-all shrink-0"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-card border border-border/80 shadow-md flex items-center justify-center p-0 text-foreground hover:bg-secondary active:scale-95 transition-all shrink-0"
             aria-label="Scroll Right"
           >
             <HugeiconsIcon icon={ArrowRight01Icon} size={14} className="shrink-0" />
@@ -275,23 +331,22 @@ export function OrderItemSelector() {
         )}
       </div>
 
-      {/* Main Menu Item Grid */}
+      {/* ── Main Menu Item Grid ── */}
       {!filteredItems || filteredItems.length === 0 ? (
-        <div className="p-10 text-center bg-card rounded-md border border-dashed border-border/80 space-y-2">
+        <div className="p-10 text-center bg-card rounded-xl border border-dashed border-border/80 space-y-2">
           <div className="w-10 h-10 mx-auto rounded-full bg-secondary flex items-center justify-center text-muted-foreground/50">
             <HugeiconsIcon icon={Coffee02Icon} size={20} />
           </div>
           <p className="text-xs font-bold text-foreground">No available menu items found</p>
-          <p className="text-[11px] text-muted-foreground">Try adjusting your search or category filter.</p>
+          <p className="text-[11px] text-muted-foreground">Try adjusting your search query or category filter.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
           {filteredItems.map((item) => {
             const qty = getCartQuantity(item.id);
             const hasImage = item.image_url && !failedImages[item.id];
             const category = categoryMap.get(item.category_id);
             const categoryName = category?.name;
-            const CategoryIconComp = ICON_MAP[(category as any)?.icon_name || ''] || Tag01Icon;
 
             const isTodaySpec = item.daily_special_date === todayStr;
             const isBestSell = bestSellerIdSet.has(item.id);
@@ -300,141 +355,114 @@ export function OrderItemSelector() {
             return (
               <div
                 key={item.id}
-                onClick={() => addItem(item)}
-                className={`group relative p-2.5 sm:p-3 rounded-md border bg-card cursor-pointer transition-all duration-200 flex flex-col justify-between select-none shadow-xs ${
-                  qty > 0
-                    ? 'border-cinnamon ring-1 ring-cinnamon/30 bg-cinnamon/5'
-                    : isTodaySpec
-                    ? 'border-amber-500/50 bg-amber-500/5 hover:border-amber-500'
-                    : 'border-border/80 hover:border-cinnamon/60 hover:shadow-md'
+                className={`group/card rounded-xl border bg-card p-2.5 sm:p-3 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden relative ${
+                  qty > 0 ? 'border-cinnamon/60 ring-1 ring-cinnamon/20 bg-cinnamon/[0.02]' : 'border-border/80 hover:border-border'
                 }`}
               >
-                {qty > 0 && (
-                  <Badge className="absolute top-2 right-2 bg-cinnamon text-white font-bold font-mono text-[11px] h-6 w-6 rounded-full p-0 flex items-center justify-center shadow-md z-20">
-                    {qty}
-                  </Badge>
-                )}
-
                 <div className="space-y-2">
-                  {/* Thumbnail Container */}
-                  <div className="w-full h-20 sm:h-24 rounded-md overflow-hidden bg-secondary/40 border border-border/60 flex items-center justify-center relative p-1.5">
+                  {/* Item Image Container */}
+                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-secondary/40">
                     {hasImage ? (
-                      <div className="w-full h-full bg-white rounded-md flex items-center justify-center p-0.5 overflow-hidden shadow-2xs">
-                        <LazyImage
-                          src={item.image_url!}
-                          alt={item.name}
-                          onError={() => handleImageError(item.id)}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
+                      <LazyImage
+                        src={item.image_url!}
+                        alt={item.name}
+                        className="h-full w-full object-cover group-hover/card:scale-105 transition-transform duration-300"
+                        onError={() => handleImageError(item.id)}
+                      />
                     ) : (
-                      <div className="flex flex-col items-center justify-center text-muted-foreground/40">
-                        <HugeiconsIcon icon={Image01Icon} size={22} />
+                      <div className="h-full w-full flex flex-col items-center justify-center bg-secondary/50 text-muted-foreground/40 gap-1">
+                        <HugeiconsIcon icon={Coffee02Icon} size={24} />
+                        <span className="text-[9px] font-bold uppercase tracking-wider">RadhaCafe</span>
                       </div>
                     )}
 
-                    {/* System Badges Overlay */}
-                    {isTodaySpec && (
-                      <div className="absolute top-1 left-1">
-                        <Badge className="bg-amber-600 text-white text-[9px] px-1 py-0.2 font-bold shadow-xs">
-                          Today's Special
+                    {/* System Priority Badges */}
+                    <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 z-10">
+                      {isTodaySpec && (
+                        <Badge className="bg-amber-600/90 backdrop-blur-xs text-white text-[9px] px-1.5 py-0 font-bold shadow-xs flex items-center gap-0.5">
+                          <HugeiconsIcon icon={StarIcon} size={9} />
+                          <span>Special</span>
                         </Badge>
-                      </div>
-                    )}
-                    {!isTodaySpec && isBestSell && (
-                      <div className="absolute top-1 left-1">
-                        <Badge className="bg-orange-600 text-white text-[9px] px-1 py-0.2 font-bold shadow-xs">
-                          Best Seller
+                      )}
+                      {isBestSell && !isTodaySpec && (
+                        <Badge className="bg-cinnamon/90 backdrop-blur-xs text-white text-[9px] px-1.5 py-0 font-bold shadow-xs flex items-center gap-0.5">
+                          <HugeiconsIcon icon={FireIcon} size={9} />
+                          <span>Popular</span>
                         </Badge>
+                      )}
+                    </div>
+
+                    {/* Cart Quantity Overlay Badge */}
+                    {qty > 0 && (
+                      <div className="absolute top-1.5 right-1.5 bg-cinnamon text-white text-[10px] font-mono font-bold h-5 min-w-[20px] px-1 rounded-full flex items-center justify-center shadow-md border border-white/20">
+                        {qty}
                       </div>
                     )}
                   </div>
 
+                  {/* Item Details */}
                   <div className="space-y-1">
-                    {categoryName && (
-                      <div className="inline-flex items-center gap-1 text-[9px] font-bold text-cinnamon bg-cinnamon/10 px-1.5 py-0.5 rounded-md border border-cinnamon/20 max-w-full">
-                        <HugeiconsIcon icon={CategoryIconComp} size={10} className="shrink-0" />
-                        <span className="truncate max-w-[90px] sm:max-w-[110px]">{categoryName}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate">
+                        {categoryName || 'Menu Item'}
+                      </span>
 
-                    <h4 className="font-bold text-xs sm:text-sm text-foreground line-clamp-1 group-hover:text-cinnamon transition-colors">
+                      {/* Manual Tags */}
+                      {tags.length > 0 && (
+                        <span className="text-[9px] font-semibold text-cinnamon/80 truncate">
+                          {tags[0]}
+                        </span>
+                      )}
+                    </div>
+
+                    <h4 className="font-bold text-xs sm:text-sm text-foreground line-clamp-2 leading-tight">
                       {item.name}
                     </h4>
 
                     {item.description && (
-                      <p className="text-[10px] sm:text-[11px] text-muted-foreground line-clamp-1 leading-tight">
+                      <p className="text-[10px] text-muted-foreground line-clamp-1 hidden sm:block">
                         {item.description}
                       </p>
-                    )}
-
-                    {/* Manual Item Tags Row */}
-                    {tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 pt-0.5">
-                        {tags.slice(0, 2).map((t) => (
-                          <span
-                            key={t}
-                            className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-secondary text-secondary-foreground border border-border/40"
-                          >
-                            {t}
-                          </span>
-                        ))}
-                        {tags.length > 2 && (
-                          <span className="text-[9px] font-semibold text-muted-foreground self-center">
-                            +{tags.length - 2}
-                          </span>
-                        )}
-                      </div>
                     )}
                   </div>
                 </div>
 
-                <div className="mt-3 pt-2 border-t border-border/40 flex justify-between items-center">
-                  <span className="font-bold text-primary text-xs sm:text-sm">
+                {/* Price & Add / Stepper Controls */}
+                <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-border/50 gap-2">
+                  <span className="font-extrabold text-xs sm:text-sm text-foreground font-heading">
                     {formatCurrency(item.price)}
                   </span>
 
                   {qty > 0 ? (
-                    <div className="flex items-center gap-1 bg-cinnamon/10 p-0.5 rounded-lg border border-cinnamon/30">
+                    <div className="flex items-center gap-1 bg-secondary/80 rounded-lg p-0.5 border border-border/60">
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateQuantity(item.id, qty - 1);
-                        }}
-                        className="w-6 h-6 rounded-md bg-cinnamon text-white flex items-center justify-center hover:bg-cinnamon/90 transition-colors"
-                        aria-label={`Decrease quantity of ${item.name}`}
+                        onClick={() => updateQuantity(item.id, qty - 1)}
+                        className="h-7 w-7 rounded-md flex items-center justify-center bg-card text-foreground hover:bg-secondary active:scale-95 transition-all text-xs font-bold shadow-2xs"
+                        aria-label={`Decrease ${item.name}`}
                       >
                         <HugeiconsIcon icon={MinusSignIcon} size={12} />
                       </button>
-
-                      <span className="w-5 text-center font-bold font-mono text-xs text-cinnamon">
+                      <span className="text-xs font-bold font-mono px-1.5 min-w-[20px] text-center">
                         {qty}
                       </span>
-
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addItem(item);
-                        }}
-                        className="w-6 h-6 rounded-md bg-cinnamon text-white flex items-center justify-center hover:bg-cinnamon/90 transition-colors"
-                        aria-label={`Increase quantity of ${item.name}`}
+                        onClick={() => updateQuantity(item.id, qty + 1)}
+                        className="h-7 w-7 rounded-md flex items-center justify-center bg-cinnamon text-white hover:bg-cinnamon/90 active:scale-95 transition-all text-xs font-bold shadow-2xs"
+                        aria-label={`Increase ${item.name}`}
                       >
                         <HugeiconsIcon icon={PlusSignIcon} size={12} />
                       </button>
                     </div>
                   ) : (
                     <Button
-                      size="xs"
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addItem(item);
-                      }}
-                      className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-[10px] h-7 px-2.5 gap-1 rounded-lg"
+                      size="sm"
+                      onClick={() => addItem(item)}
+                      className="h-7 px-3 bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs rounded-lg shadow-2xs gap-1 active:scale-95 transition-all"
                     >
-                      <HugeiconsIcon icon={PlusSignIcon} size={12} />
+                      <HugeiconsIcon icon={PlusSignIcon} size={13} />
                       <span>Add</span>
                     </Button>
                   )}

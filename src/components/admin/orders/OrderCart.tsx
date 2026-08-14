@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -36,6 +37,13 @@ import {
   Search01Icon,
   AlertCircleIcon,
   Cancel01Icon,
+  Coins01Icon,
+  QrCodeIcon,
+  CreditCardIcon,
+  Clock01Icon,
+  ShoppingBag01Icon,
+  Discount01Icon,
+  Loading03Icon,
 } from '@hugeicons/core-free-icons';
 
 interface OrderCartProps {
@@ -56,6 +64,8 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
   const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
+  const [showClearConfirmDialog, setShowClearConfirmDialog] = useState(false);
+  const [showDiscountInput, setShowDiscountInput] = useState(false);
 
   const [createdOrder, setCreatedOrder] = useState<any | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -69,7 +79,13 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
   const { data: customerSearchResults } = useCustomerSearch(customerSearchQuery);
 
-  const grandTotal = Math.max(0, subtotal - discount);
+  const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Calculate tax if configured in settings
+  const taxRate = Number(settings?.tax_percentage || 0);
+  const taxableAmount = Math.max(0, subtotal - discount);
+  const calculatedTax = taxRate > 0 ? (taxableAmount * taxRate) / 100 : 0;
+  const grandTotal = Math.max(0, taxableAmount + calculatedTax);
 
   const toggleAutoPrint = () => {
     const nextState = !autoPrint;
@@ -99,7 +115,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
       customer_phone: selectedCustomer ? selectedCustomer.phone : null,
       payment_method: activeMethod,
       discount_amount: discount,
-      tax_amount: 0,
+      tax_amount: calculatedTax,
       notes: null,
       items: items.map((i) => ({
         menu_item_id: i.menuItem.id,
@@ -123,15 +139,22 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
       setCreatedOrder(fullOrder);
       setShowSuccessModal(true);
 
+      // Clear runtime cart ONLY after atomic DB commit succeeds
       clearCart();
       setCustomerName('');
       setSelectedCustomer(null);
       setCustomerSearchQuery('');
       setPaymentMethod('cash');
+      setShowDiscountInput(false);
       if (onCloseMobileCart) onCloseMobileCart();
 
-      // Invalidate best-sellers analytics in background
+      // Invalidate relevant queries in background
       queryClient.invalidateQueries({ queryKey: ['menu', 'best-sellers'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      if (selectedCustomer) {
+        queryClient.invalidateQueries({ queryKey: ['customers'] });
+      }
 
       // Auto-Print Receipt if Auto-Print setting is enabled
       if (autoPrint) {
@@ -171,7 +194,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
           setTimeout(() => {
             handleCloseSuccessModal();
           }, 800);
-          return; // Printed via Bluetooth, skip browser fallback
+          return;
         }
       } catch {
         setIsPrinting(false);
@@ -214,24 +237,46 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
   const existingOutstanding = Number(selectedCustomer?.total_due || 0);
   const projectedOutstanding = existingOutstanding + grandTotal;
 
+  const paymentOptions: { id: PaymentMethod; label: string; icon: any }[] = [
+    { id: 'cash', label: 'Cash', icon: Coins01Icon },
+    { id: 'upi', label: 'UPI', icon: QrCodeIcon },
+    { id: 'card', label: 'Card', icon: CreditCardIcon },
+    { id: 'pay_later', label: 'Pay Later', icon: Clock01Icon },
+    { id: 'other', label: 'Other', icon: ShoppingBag01Icon },
+  ];
+
   return (
-    <div className="border border-border/80 rounded-md p-4 sm:p-5 bg-card flex flex-col space-y-4 shadow-sm max-h-[calc(100vh-6.5rem)] overflow-y-auto no-scrollbar">
-      <div className="flex justify-between items-center border-b border-border pb-3">
+    <div className="border border-border/80 rounded-xl p-3.5 sm:p-4 bg-card flex flex-col space-y-3.5 shadow-2xs">
+      {/* ── Cart Header ── */}
+      <div className="flex justify-between items-center border-b border-border/70 pb-2.5">
         <div className="flex items-center gap-2">
-          <HugeiconsIcon icon={ShoppingCart01Icon} className="text-cinnamon" size={20} />
-          <h3 className="font-bold text-base font-heading text-foreground">Live Order Cart</h3>
+          <div className="p-1.5 rounded-lg bg-cinnamon/10 text-cinnamon shrink-0">
+            <HugeiconsIcon icon={ShoppingCart01Icon} size={17} />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm font-heading text-foreground">Current Order</h3>
+            <span className="text-[10px] text-muted-foreground font-mono">
+              {totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={toggleAutoPrint}
-            title={autoPrint ? 'Auto-Print is ON: Thermal slip generates automatically upon order creation' : 'Click to enable Auto-Print receipt'}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold border transition-all ${autoPrint
-              ? 'bg-cinnamon/15 text-cinnamon border-cinnamon/30 shadow-2xs'
-              : 'bg-secondary/40 text-muted-foreground border-border/50 hover:bg-secondary'
-              }`}
+            title={
+              autoPrint
+                ? 'Auto-Print is ON: Thermal slip generates automatically upon order creation'
+                : 'Click to enable Auto-Print receipt'
+            }
+            className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold border transition-all ${
+              autoPrint
+                ? 'bg-cinnamon/15 text-cinnamon border-cinnamon/30 shadow-2xs'
+                : 'bg-secondary/40 text-muted-foreground border-border/50 hover:bg-secondary'
+            }`}
           >
-            <HugeiconsIcon icon={PrinterIcon} size={12} />
+            <HugeiconsIcon icon={PrinterIcon} size={11} />
             <span>Auto-Print: {autoPrint ? 'ON' : 'OFF'}</span>
           </button>
 
@@ -239,209 +284,271 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
             <Button
               size="xs"
               variant="ghost"
-              className="text-xs text-muted-foreground hover:text-destructive transition-colors h-7"
-              onClick={clearCart}
+              className="text-[11px] font-semibold text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors h-7 px-2"
+              onClick={() => setShowClearConfirmDialog(true)}
             >
-              Clear All
+              Clear
             </Button>
           )}
         </div>
       </div>
 
+      {/* ── Error Banner ── */}
       {errorMsg && (
-        <div className="p-3 rounded-lg bg-destructive/10 text-destructive border border-destructive/20 text-xs font-medium flex items-center gap-2">
-          <HugeiconsIcon icon={AlertCircleIcon} size={16} className="shrink-0 text-destructive" />
-          <span>{errorMsg}</span>
+        <div className="p-2.5 rounded-lg bg-destructive/10 text-destructive border border-destructive/20 text-xs font-medium flex items-center gap-2">
+          <HugeiconsIcon icon={AlertCircleIcon} size={15} className="shrink-0 text-destructive" />
+          <span className="flex-1">{errorMsg}</span>
+          <button
+            type="button"
+            onClick={() => setErrorMsg(null)}
+            className="text-destructive/80 hover:text-destructive p-0.5"
+          >
+            <HugeiconsIcon icon={Cancel01Icon} size={12} />
+          </button>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto space-y-2.5 min-h-[160px] max-h-[300px] pr-1">
+      {/* ── Cart Line Items List (Scrollable) ── */}
+      <div className="overflow-y-auto space-y-2 max-h-[220px] sm:max-h-[260px] pr-0.5">
         {items.length === 0 ? (
-          <div className="text-center py-10 space-y-2 border border-dashed border-border/60 rounded-md bg-secondary/20">
-            <HugeiconsIcon icon={ShoppingCart01Icon} className="mx-auto text-muted-foreground/40 w-8 h-8" />
-            <p className="text-xs font-semibold text-foreground">Your order is empty</p>
-            <p className="text-[11px] text-muted-foreground">Select items from the menu to start a new order.</p>
+          <div className="text-center py-8 space-y-2 border border-dashed border-border/70 rounded-lg bg-secondary/20">
+            <div className="w-9 h-9 mx-auto rounded-full bg-secondary flex items-center justify-center text-muted-foreground/40">
+              <HugeiconsIcon icon={ShoppingCart01Icon} size={18} />
+            </div>
+            <p className="text-xs font-bold text-foreground">Your order is empty</p>
+            <p className="text-[11px] text-muted-foreground max-w-[200px] mx-auto">
+              Select menu items from the catalog to build this order.
+            </p>
           </div>
         ) : (
           items.map((item) => (
             <div
               key={item.menuItem.id}
-              className="flex justify-between items-center text-xs p-3 rounded-md bg-secondary/40 border border-border/40"
+              className="flex justify-between items-center text-xs p-2.5 rounded-lg bg-secondary/35 border border-border/60 hover:bg-secondary/50 transition-colors"
             >
               <div className="flex-1 min-w-0 pr-2 space-y-0.5">
                 <p className="font-bold text-foreground truncate">{item.menuItem.name}</p>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-[10px] text-muted-foreground font-mono">
                   {formatCurrency(item.menuItem.price)} × {item.quantity} ={' '}
-                  <span className="font-semibold text-cinnamon">
+                  <span className="font-bold text-cinnamon">
                     {formatCurrency(item.menuItem.price * item.quantity)}
                   </span>
                 </p>
               </div>
 
-              <div className="flex items-center gap-1.5">
-                <Button
-                  size="xs"
-                  variant="outline"
-                  className="h-6 w-6 p-0 rounded-md"
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  className="h-6 w-6 rounded-md bg-card border border-border/70 text-foreground flex items-center justify-center hover:bg-secondary active:scale-95 transition-all text-xs"
                   onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
+                  aria-label={`Decrease ${item.menuItem.name}`}
                 >
-                  <HugeiconsIcon icon={MinusSignIcon} size={12} />
-                </Button>
-                <span className="font-bold w-5 text-center text-xs">{item.quantity}</span>
-                <Button
-                  size="xs"
-                  variant="outline"
-                  className="h-6 w-6 p-0 rounded-md"
+                  <HugeiconsIcon icon={MinusSignIcon} size={11} />
+                </button>
+                <span className="font-bold font-mono w-5 text-center text-xs text-foreground">
+                  {item.quantity}
+                </span>
+                <button
+                  type="button"
+                  className="h-6 w-6 rounded-md bg-card border border-border/70 text-foreground flex items-center justify-center hover:bg-secondary active:scale-95 transition-all text-xs"
                   onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
+                  aria-label={`Increase ${item.menuItem.name}`}
                 >
-                  <HugeiconsIcon icon={PlusSignIcon} size={12} />
-                </Button>
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10 ml-1 rounded-md"
+                  <HugeiconsIcon icon={PlusSignIcon} size={11} />
+                </button>
+                <button
+                  type="button"
+                  className="h-6 w-6 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center ml-1 transition-colors"
                   onClick={() => removeItem(item.menuItem.id)}
+                  aria-label={`Remove ${item.menuItem.name}`}
                 >
-                  <HugeiconsIcon icon={Delete02Icon} size={14} />
-                </Button>
+                  <HugeiconsIcon icon={Delete02Icon} size={13} />
+                </button>
               </div>
             </div>
           ))
         )}
       </div>
 
-      <div className="border-t border-border pt-3 space-y-2 text-xs">
+      {/* ── Totals & Financial Breakdown ── */}
+      <div className="border-t border-border/70 pt-2.5 space-y-1.5 text-xs">
         <div className="flex justify-between text-muted-foreground">
           <span>Subtotal</span>
-          <span className="font-semibold text-foreground">{formatCurrency(subtotal)}</span>
+          <span className="font-semibold text-foreground font-mono">{formatCurrency(subtotal)}</span>
         </div>
 
+        {taxRate > 0 && (
+          <div className="flex justify-between text-muted-foreground">
+            <span>Tax ({taxRate}%)</span>
+            <span className="font-semibold text-foreground font-mono">{formatCurrency(calculatedTax)}</span>
+          </div>
+        )}
+
+        {/* Discount Row */}
         <div className="flex justify-between items-center text-muted-foreground">
-          <span>Discount (₹)</span>
-          <Input
-            type="number"
-            min={0}
-            max={subtotal}
-            value={discount}
-            onChange={(e) => setDiscount(Math.max(0, Number(e.target.value)))}
-            className="w-24 h-7 text-right text-xs bg-background rounded-lg"
-          />
+          <div className="flex items-center gap-1">
+            <span>Discount</span>
+            {!showDiscountInput && discount === 0 && (
+              <button
+                type="button"
+                onClick={() => setShowDiscountInput(true)}
+                className="text-[10px] text-cinnamon font-bold hover:underline inline-flex items-center gap-0.5 ml-1"
+              >
+                <HugeiconsIcon icon={Discount01Icon} size={10} />
+                <span>+ Add</span>
+              </button>
+            )}
+          </div>
+
+          {showDiscountInput || discount > 0 ? (
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground text-xs">₹</span>
+              <Input
+                type="number"
+                min={0}
+                max={subtotal}
+                value={discount || ''}
+                onChange={(e) => setDiscount(Math.max(0, Number(e.target.value)))}
+                placeholder="0"
+                className="w-20 h-6 text-right text-xs bg-background rounded-md px-1.5 font-mono"
+              />
+            </div>
+          ) : (
+            <span className="font-semibold text-foreground font-mono">₹0.00</span>
+          )}
         </div>
 
-        <div className="flex justify-between font-bold text-base text-foreground pt-2 border-t border-border">
-          <span>Grand Total</span>
-          <span className="text-cinnamon">{formatCurrency(grandTotal)}</span>
+        {/* Grand Total */}
+        <div className="flex justify-between items-center font-bold text-sm text-foreground pt-2 border-t border-border/80">
+          <span className="font-heading">Grand Total</span>
+          <span className="text-cinnamon font-heading text-base font-extrabold">
+            {formatCurrency(grandTotal)}
+          </span>
         </div>
       </div>
 
-      <div className="space-y-1.5 pt-1">
-        <Label className="text-xs font-semibold">Payment Method</Label>
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-1">
-          {(['cash', 'upi', 'card', 'other', 'pay_later'] as const).map((method) => {
-            const isPayLater = method === 'pay_later';
-            const isSelected = paymentMethod === method;
+      {/* ── Segmented Payment Method Selector ── */}
+      <div className="space-y-1.5 pt-1 border-t border-border/60">
+        <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+          Payment Method
+        </Label>
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+          {paymentOptions.map((opt) => {
+            const isSelected = paymentMethod === opt.id;
+            const isPayLater = opt.id === 'pay_later';
+            const Icon = opt.icon;
+
             return (
-              <Button
-                key={method}
+              <button
+                key={opt.id}
                 type="button"
-                variant={isSelected ? 'default' : 'outline'}
-                size="xs"
-                className={
+                onClick={() => handlePaymentMethodClick(opt.id)}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg border text-center transition-all ${
                   isSelected
                     ? isPayLater
-                      ? 'bg-amber-600 hover:bg-amber-700 text-white uppercase font-bold text-[10px] sm:text-[11px] h-8.5 rounded-lg shadow-xs'
-                      : 'bg-cinnamon text-white uppercase font-bold text-[10px] sm:text-[11px] h-8.5 rounded-lg shadow-xs'
-                    : 'uppercase text-[10px] sm:text-[11px] h-8.5 text-foreground/80 rounded-lg'
-                }
-                onClick={() => handlePaymentMethodClick(method)}
+                      ? 'bg-amber-600 text-white border-amber-600 shadow-2xs font-bold'
+                      : 'bg-cinnamon text-white border-cinnamon shadow-2xs font-bold'
+                    : 'bg-card hover:bg-secondary/60 text-foreground border-border/80'
+                }`}
               >
-                {isPayLater ? 'Pay Later' : method}
-              </Button>
+                <HugeiconsIcon icon={Icon} size={14} className="mb-0.5 shrink-0" />
+                <span className="text-[10px] uppercase font-bold tracking-tight whitespace-nowrap">
+                  {opt.label}
+                </span>
+              </button>
             );
           })}
         </div>
       </div>
 
+      {/* ── Optional Customer Name for Standard Orders ── */}
       {paymentMethod !== 'pay_later' && (
-        <div className="space-y-1.5">
-          <Label className="text-xs font-semibold">Customer Name (Optional)</Label>
+        <div className="space-y-1">
+          <Label className="text-[11px] font-medium text-muted-foreground">
+            Customer / Table (Optional)
+          </Label>
           <Input
-            placeholder="e.g. Ananya / Table 4"
+            placeholder="e.g. Walk-in / Table 3 / Rahul"
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
-            className="h-9 text-xs bg-background rounded-md"
+            className="h-8 text-xs bg-background rounded-lg border-border/80"
           />
         </div>
       )}
 
+      {/* ── Mandatory Customer Selection for Pay Later Orders ── */}
       {paymentMethod === 'pay_later' && (
-        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
-            <span className="text-xs font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5 shrink-0">
-              <HugeiconsIcon icon={UserIcon} size={15} />
-              <span>Credit Customer Profile *</span>
+        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+              <HugeiconsIcon icon={UserIcon} size={14} />
+              <span>Credit Customer Required *</span>
             </span>
             <Button
               type="button"
               variant="outline"
               size="xs"
-              className="h-7 text-[11px] px-2.5 gap-1 rounded-md border-amber-500/40 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold shrink-0"
+              className="h-6 text-[10px] px-2 gap-1 rounded-md border-amber-500/40 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold shrink-0"
               onClick={() => setShowAddCustomerModal(true)}
             >
-              <HugeiconsIcon icon={UserAdd01Icon} size={13} />
-              <span>New Customer</span>
+              <HugeiconsIcon icon={UserAdd01Icon} size={11} />
+              <span>New</span>
             </Button>
           </div>
 
           {selectedCustomer ? (
-            <div className="p-2.5 rounded-md bg-background border border-border/80 space-y-2 text-xs">
-              <div className="flex justify-between items-center">
+            <div className="p-2.5 rounded-lg bg-background border border-border/80 space-y-2 text-xs">
+              <div className="flex justify-between items-start">
                 <div>
                   <p className="font-bold text-foreground">{selectedCustomer.name}</p>
-                  <p className="text-[11px] text-muted-foreground font-mono">{selectedCustomer.phone}</p>
+                  <p className="text-[10px] text-muted-foreground font-mono">{selectedCustomer.phone}</p>
                 </div>
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-foreground p-0.5"
                   onClick={() => setSelectedCustomer(null)}
+                  aria-label="Remove selected customer"
                 >
-                  <HugeiconsIcon icon={Cancel01Icon} size={14} />
-                </Button>
+                  <HugeiconsIcon icon={Cancel01Icon} size={13} />
+                </button>
               </div>
 
               <div className="pt-2 border-t border-border/50 space-y-1 text-[11px]">
                 <div className="flex justify-between text-muted-foreground">
                   <span>Existing Outstanding:</span>
-                  <span className="font-semibold text-foreground">{formatCurrency(existingOutstanding)}</span>
+                  <span className="font-semibold text-foreground font-mono">{formatCurrency(existingOutstanding)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
-                  <span>New Order Total:</span>
-                  <span className="font-semibold text-cinnamon">+{formatCurrency(grandTotal)}</span>
+                  <span>This Order:</span>
+                  <span className="font-semibold text-cinnamon font-mono">+{formatCurrency(grandTotal)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-xs pt-1 border-t border-border/40 text-amber-700 dark:text-amber-400">
                   <span>Projected Due Balance:</span>
-                  <span>{formatCurrency(projectedOutstanding)}</span>
+                  <span className="font-mono">{formatCurrency(projectedOutstanding)}</span>
                 </div>
               </div>
             </div>
           ) : (
             <div className="space-y-2 relative">
               <div className="relative">
-                <HugeiconsIcon icon={Search01Icon} size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" />
+                <HugeiconsIcon
+                  icon={Search01Icon}
+                  size={13}
+                  className="absolute left-2.5 top-2.5 text-muted-foreground"
+                />
                 <Input
-                  placeholder="Search customer by name or phone..."
+                  placeholder="Search customer name or phone..."
                   value={customerSearchQuery}
                   onChange={(e) => {
                     setCustomerSearchQuery(e.target.value);
                     setIsSearchingCustomer(true);
                   }}
-                  className="h-8.5 pl-8 text-xs bg-background rounded-md"
+                  className="h-8 pl-8 text-xs bg-background rounded-lg"
                 />
               </div>
 
               {isSearchingCustomer && customerSearchQuery.trim() && (
-                <div className="absolute left-0 right-0 top-full mt-1 bg-popover border border-border rounded-md shadow-lg z-50 max-h-40 overflow-y-auto p-1 space-y-1">
+                <div className="absolute left-0 right-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto p-1 space-y-1">
                   {customerSearchResults && customerSearchResults.length > 0 ? (
                     customerSearchResults.map((cust) => (
                       <button
@@ -463,8 +570,8 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                       </button>
                     ))
                   ) : (
-                    <div className="p-3 text-center text-xs text-muted-foreground">
-                      No customer found with "{customerSearchQuery}".
+                    <div className="p-2.5 text-center text-xs text-muted-foreground">
+                      No customer found with &ldquo;{customerSearchQuery}&rdquo;.
                     </div>
                   )}
                 </div>
@@ -474,28 +581,66 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         </div>
       )}
 
+      {/* ── Place Order Action Button ── */}
       <Button
         type="button"
         size="lg"
         onClick={() => handlePlaceOrder()}
-        disabled={items.length === 0 || createOrderMutation.isPending}
-        className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-sm rounded-md shadow-md transition-all active:scale-[0.99] mt-2"
+        disabled={
+          items.length === 0 ||
+          createOrderMutation.isPending ||
+          (paymentMethod === 'pay_later' && !selectedCustomer)
+        }
+        className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-xs sm:text-sm rounded-xl shadow-md transition-all active:scale-[0.99] gap-2"
       >
-        {createOrderMutation.isPending
-          ? 'Processing Order...'
-          : paymentMethod === 'pay_later'
-            ? `Place Pay Later Order (${formatCurrency(grandTotal)})`
-            : `Place Order (${formatCurrency(grandTotal)})`}
+        {createOrderMutation.isPending ? (
+          <>
+            <HugeiconsIcon icon={Loading03Icon} size={16} className="animate-spin" />
+            <span>Processing Order...</span>
+          </>
+        ) : paymentMethod === 'pay_later' ? (
+          <span>Place Pay Later Order &middot; {formatCurrency(grandTotal)}</span>
+        ) : (
+          <span>Place Order &middot; {formatCurrency(grandTotal)}</span>
+        )}
       </Button>
 
-      {/* Responsive Side-by-Side Laptop / Stacked Mobile Success Modal */}
+      {/* ── Clear Cart Confirmation Dialog ── */}
+      <AlertDialog open={showClearConfirmDialog} onOpenChange={setShowClearConfirmDialog}>
+        <AlertDialogContent className="max-w-md bg-card border border-border/80 p-5 rounded-xl shadow-2xl space-y-3">
+          <AlertDialogHeader className="space-y-1.5">
+            <AlertDialogTitle className="text-base font-bold font-heading text-foreground">
+              Clear current order?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground">
+              This will remove all {totalItemCount} items from the active cart. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex items-center justify-end gap-2 pt-2">
+            <AlertDialogCancel className="h-8 text-xs font-semibold rounded-lg">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                clearCart();
+                setShowClearConfirmDialog(false);
+              }}
+              className="h-8 text-xs font-bold bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg"
+            >
+              Clear Order
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Order Placement Success Modal ── */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-        <DialogContent className="max-w-md sm:max-w-2xl md:max-w-3xl max-h-[90vh] overflow-y-auto bg-card rounded-md border border-border/80 p-4 sm:p-6 shadow-2xl space-y-4 no-scrollbar">
+        <DialogContent className="max-w-md sm:max-w-2xl md:max-w-3xl max-h-[90vh] overflow-y-auto bg-card rounded-xl border border-border/80 p-4 sm:p-6 shadow-2xl space-y-4 no-scrollbar">
           <DialogHeader className="text-center pb-2 border-b border-border/60 space-y-1">
-            <div className="w-12 h-12 mx-auto rounded-full bg-success/15 border border-success/30 flex items-center justify-center text-success shadow-2xs">
-              <HugeiconsIcon icon={CheckmarkCircle02Icon} size={24} />
+            <div className="w-11 h-11 mx-auto rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 shadow-2xs">
+              <HugeiconsIcon icon={CheckmarkCircle02Icon} size={22} />
             </div>
-            <DialogTitle className="text-xl font-bold font-heading text-foreground text-center">
+            <DialogTitle className="text-lg sm:text-xl font-bold font-heading text-foreground text-center">
               Order Placed Successfully!
             </DialogTitle>
             <DialogDescription className="text-xs text-center flex items-center justify-center gap-1.5 pt-0.5">
@@ -509,7 +654,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
           {/* 2-Column Responsive Layout: Thermal Paper Slip (Left) & Actions (Right) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start pt-1">
             {/* Left Column: Authentic Template-Based Thermal Receipt Paper Slip */}
-            <div className="max-h-[380px] overflow-y-auto rounded-md border border-border/80 shadow-xs">
+            <div className="max-h-[360px] overflow-y-auto rounded-lg border border-border/80 shadow-2xs">
               <ReceiptPreview
                 order={createdOrder}
                 templateConfig={activeTemplate?.template_config}
@@ -519,7 +664,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
             {/* Right Column: Actions & Summary */}
             <div className="space-y-3.5 flex flex-col justify-between h-full">
-              <div className="p-3.5 rounded-md bg-secondary/50 border border-border/60 space-y-2 text-xs">
+              <div className="p-3.5 rounded-lg bg-secondary/50 border border-border/60 space-y-2 text-xs">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Customer Profile:</span>
                   <span className="font-bold text-foreground">{createdOrder?.customer_name}</span>
@@ -531,8 +676,10 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                   </span>
                 </div>
                 <div className="flex justify-between items-center pt-1 border-t border-border/40">
-                  <span className="text-muted-foreground font-semibold">Total Paid/Charged:</span>
-                  <span className="font-bold text-cinnamon text-sm">{formatCurrency(createdOrder?.total_amount || 0)}</span>
+                  <span className="text-muted-foreground font-semibold">Total Charged:</span>
+                  <span className="font-bold text-cinnamon text-sm font-mono font-heading">
+                    {formatCurrency(createdOrder?.total_amount || 0)}
+                  </span>
                 </div>
               </div>
 
@@ -542,19 +689,19 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                 </div>
               )}
 
-              <div className="space-y-2.5 pt-1">
+              <div className="space-y-2 pt-1">
                 <Button
                   onClick={handleBluetoothPrint}
                   disabled={isPrinting}
-                  className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-xs rounded-md shadow-md gap-2 transition-all active:scale-[0.98]"
+                  className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 text-xs rounded-lg shadow-md gap-2 transition-all active:scale-[0.98]"
                 >
-                  <HugeiconsIcon icon={PrinterIcon} size={16} />
+                  <HugeiconsIcon icon={PrinterIcon} size={15} />
                   <span>
                     {isPrinting
                       ? 'Printing Thermal Receipt...'
                       : printerStatus === 'connected'
-                        ? 'Print Thermal Receipt (Bluetooth Connected)'
-                        : 'Connect & Print Thermal Receipt (Bluetooth)'}
+                        ? 'Print Thermal Receipt (Bluetooth)'
+                        : 'Connect & Print Thermal Receipt'}
                   </span>
                 </Button>
 
@@ -568,16 +715,16 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
                     }
                   }}
                   variant="outline"
-                  className="w-full h-10 text-xs font-bold gap-2 rounded-md border-border/80 hover:bg-secondary"
+                  className="w-full h-9 text-xs font-bold gap-2 rounded-lg border-border/80 hover:bg-secondary"
                 >
-                  <HugeiconsIcon icon={PrinterIcon} size={16} />
-                  <span>Print Receipt via Browser / PDF</span>
+                  <HugeiconsIcon icon={PrinterIcon} size={15} />
+                  <span>Print via Browser / PDF</span>
                 </Button>
 
                 <Button
                   onClick={() => setShowSuccessModal(false)}
                   variant="ghost"
-                  className="w-full h-9 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                  className="w-full h-8.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
                 >
                   Done & Start Next Order
                 </Button>
@@ -589,22 +736,22 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
       {/* Popups Blocked Alert Dialog */}
       <AlertDialog open={showPopupBlockedAlert} onOpenChange={setShowPopupBlockedAlert}>
-        <AlertDialogContent className="max-w-md bg-card border border-border/80 p-6 rounded-md shadow-2xl space-y-4">
-          <AlertDialogHeader className="space-y-2">
-            <div className="w-12 h-12 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center mx-auto">
-              <HugeiconsIcon icon={PrinterIcon} size={24} />
+        <AlertDialogContent className="max-w-md bg-card border border-border/80 p-5 rounded-xl shadow-2xl space-y-3">
+          <AlertDialogHeader className="space-y-1.5">
+            <div className="w-11 h-11 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center mx-auto">
+              <HugeiconsIcon icon={PrinterIcon} size={22} />
             </div>
-            <AlertDialogTitle className="text-center text-lg font-bold font-heading text-foreground">
+            <AlertDialogTitle className="text-center text-base font-bold font-heading text-foreground">
               Browser Popups Blocked
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center text-xs text-muted-foreground leading-relaxed">
               Your browser blocked the print receipt window. Please allow popups for this site in your browser address bar to automatically generate and print thermal receipts.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex justify-center pt-2">
+          <AlertDialogFooter className="flex justify-center pt-1">
             <AlertDialogAction
               onClick={() => setShowPopupBlockedAlert(false)}
-              className="w-full sm:w-auto bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs h-10 px-6 rounded-md shadow-md"
+              className="w-full sm:w-auto bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-md"
             >
               Got It, I'll Enable Popups
             </AlertDialogAction>
