@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
+  fetchCafeDashboardMetrics,
+  fetchCafeOutstandingCustomers,
   fetchAnalyticsMetrics,
   fetchRevenueTrend,
   fetchTopSellingItems,
@@ -8,6 +10,30 @@ import {
   fetchExportOrdersData,
 } from '../lib/supabase/queries/analytics';
 import type { AnalyticsDateRange } from '../types';
+
+/**
+ * Hook for RadhaCafe operational dashboard summary (Today's business state)
+ */
+export function useCafeDashboardMetrics() {
+  return useQuery({
+    queryKey: ['analytics', 'cafeDashboardMetrics'],
+    queryFn: () => fetchCafeDashboardMetrics(),
+    refetchInterval: 30000,
+    staleTime: 15000,
+  });
+}
+
+/**
+ * Hook for customers with unpaid credit requiring follow-up
+ */
+export function useCafeOutstandingCustomers(limit = 5) {
+  return useQuery({
+    queryKey: ['analytics', 'cafeOutstandingCustomers', limit],
+    queryFn: () => fetchCafeOutstandingCustomers(limit),
+    refetchInterval: 60000,
+    staleTime: 30000,
+  });
+}
 
 export function useDailySummary() {
   return useQuery({

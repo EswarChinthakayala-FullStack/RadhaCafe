@@ -1,85 +1,89 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { ROUTES } from '../../constants/routes';
+import { DashboardHeader } from '../../components/admin/dashboard/DashboardHeader';
 import { StatsCards } from '../../components/admin/dashboard/StatsCards';
-import { RecentOrders } from '../../components/admin/dashboard/RecentOrders';
+import { SecondaryMetrics } from '../../components/admin/dashboard/SecondaryMetrics';
 import { RevenueChart } from '../../components/admin/dashboard/RevenueChart';
+import { OrderActivityChart } from '../../components/admin/dashboard/OrderActivityChart';
 import { TopItemsChart } from '../../components/admin/dashboard/TopItemsChart';
-import { Button } from '../../components/ui/button';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { PlusSignIcon, RefreshIcon, DashboardSquare01Icon } from '@hugeicons/core-free-icons';
+import { PaymentBreakdown } from '../../components/admin/dashboard/PaymentBreakdown';
+import { RecentOrders } from '../../components/admin/dashboard/RecentOrders';
+import { OutstandingPayments } from '../../components/admin/dashboard/OutstandingPayments';
+import { PrinterStatusCard } from '../../components/admin/dashboard/PrinterStatusCard';
+import { DashboardQuickActions } from '../../components/admin/dashboard/DashboardQuickActions';
+import type { AnalyticsDateRange } from '../../types';
 
 export function DashboardPage() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [selectedRange, setSelectedRange] = useState<AnalyticsDateRange>('today');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['analytics'] });
-    await queryClient.invalidateQueries({ queryKey: ['orders'] });
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['analytics'] }),
+        queryClient.invalidateQueries({ queryKey: ['orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['customers'] }),
+        queryClient.invalidateQueries({ queryKey: ['payments'] }),
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
-  const todayFormatted = new Date().toLocaleDateString('en-IN', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4 sm:pb-5">
-        <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
-              <div className="p-2.5 rounded-md bg-cinnamon/10 text-cinnamon shrink-0 border border-cinnamon/20 shadow-2xs">
-                <HugeiconsIcon icon={DashboardSquare01Icon} size={22} />
-              </div>
-              <span>Dashboard</span>
-            </h2>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-cinnamon/10 text-cinnamon font-bold border border-cinnamon/20">
-              {todayFormatted}
-            </span>
+    <div className="space-y-6 pb-12">
+      {/* ── Level 0: Dashboard Header & Controls ── */}
+      <DashboardHeader
+        selectedRange={selectedRange}
+        onRangeChange={setSelectedRange}
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+      />
+
+      {/* ── Level 1: Immediate Business Health (Primary KPIs) ── */}
+      <section aria-label="Today's Primary Business Health">
+        <StatsCards />
+      </section>
+
+      {/* ── Level 2: Secondary Performance Metrics ── */}
+      <section aria-label="Cafe Performance Metrics">
+        <SecondaryMetrics />
+      </section>
+
+      {/* ── Level 3: Visual Analytics & Rush Hours ── */}
+      <section aria-label="Sales and Order Trends" className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <RevenueChart range={selectedRange} />
+          <OrderActivityChart range={selectedRange} />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TopItemsChart range={selectedRange} />
+          <PaymentBreakdown range={selectedRange} />
+        </div>
+      </section>
+
+      {/* ── Level 4: Live Operations & Follow-ups ── */}
+      <section aria-label="Cafe Operations Feed" className="space-y-6">
+        {/* Recent Orders Live Feed */}
+        <RecentOrders />
+
+        {/* Outstanding Dues & Printer Connection */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <OutstandingPayments />
+          <div className="space-y-6 flex flex-col justify-between">
+            <PrinterStatusCard />
+            <div className="space-y-2">
+              <span className="text-xs font-bold font-heading uppercase tracking-wider text-muted-foreground block px-1">
+                Quick POS Navigation
+              </span>
+              <DashboardQuickActions />
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1.5">
-            Overview of today&apos;s cafe performance, live sales, revenue analytics, and recent orders.
-          </p>
         </div>
-
-        {/* Action Controls */}
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleRefresh}
-            className="text-xs font-semibold gap-1.5 h-9"
-          >
-            <HugeiconsIcon icon={RefreshIcon} size={14} />
-            <span>Refresh</span>
-          </Button>
-
-          <Button
-            size="sm"
-            onClick={() => navigate(ROUTES.ADMIN.NEW_ORDER)}
-            className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs gap-1.5 h-9 shadow-sm"
-          >
-            <HugeiconsIcon icon={PlusSignIcon} size={16} />
-            <span>New Order</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* 4 Primary Stats Cards */}
-      <StatsCards />
-
-      {/* Analytics Charts Grid */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <RevenueChart />
-        <TopItemsChart />
-      </div>
-
-      {/* Recent Orders List */}
-      <RecentOrders />
+      </section>
     </div>
   );
 }

@@ -6,6 +6,8 @@ import type {
   PaymentMethodBreakdownItem,
   RevenueTrendPoint,
   TopSellingItem,
+  CafeDashboardMetrics,
+  OutstandingCustomerSummary,
 } from '../../../types';
 
 /**
@@ -43,6 +45,263 @@ export function getDateBounds(range: AnalyticsDateRange, customStart?: string, c
     startISO: startDate.toISOString(),
     endISO: endDate.toISOString(),
   };
+}
+
+/**
+ * Calculates yesterday's date bounds for comparison calculations
+ */
+export function getYesterdayBounds() {
+  const now = new Date();
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  const start = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0, 0);
+  const end = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59, 999);
+
+  return {
+    yesterdayStartISO: start.toISOString(),
+    yesterdayEndISO: end.toISOString(),
+  };
+}
+
+/**
+ * Fetches comprehensive, accurate operational dashboard metrics for RadhaCafe
+ */
+export async function fetchCafeDashboardMetrics(): Promise<CafeDashboardMetrics> {
+  const { startISO: todayStart, endISO: todayEnd } = getDateBounds('today');
+  const { yesterdayStartISO, yesterdayEndISO } = getYesterdayBounds();
+
+  // 1. Fetch today's completed cafe orders
+  const { data: todayOrders, error: todayOrdersErr } = await (supabase as any)
+    .from('orders')
+    .select(`
+      id,
+      total_amount,
+      paid_amount,
+      due_amount,
+      payment_status,
+      payment_method,
+      status,
+      created_at,
+      order_items ( item_name, quantity, total_price )
+    `)
+    .eq('status', 'completed')
+    .gte('created_at', todayStart)
+    .lte('created_at', todayEnd);
+
+  if (todayOrdersErr) throw new Error(todayOrdersErr.message);
+
+  const completedToday = todayOrders || [];
+  const total_orders = completedToday.length;
+  const total_revenue = completedToday.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0);
+  const avg_order_value = total_orders > 0 ? total_revenue / total_orders : 0;
+
+  // Items sold & Item count mapping
+  const itemMap = new Map<string, { quantity: number; revenue: number }>();
+  let total_items_sold = 0;
+
+  // Hourly order tracking for peak sales hour calculation
+  const hourMap = new Map<number, { orders: number; revenue: number }>();
+
+  completedToday.forEach((order: any) => {
+    // Peak hour
+    const hour = new Date(order.created_at).getHours();
+    const currHour = hourMap.get(hour) || { orders: 0, revenue: 0 };
+    hourMap.set(hour, {
+      orders: currHour.orders + 1,
+      revenue: currHour.revenue + Number(order.total_amount || 0),
+    });
+
+    // Items
+    (order.order_items || []).forEach((item: any) => {
+      const q = Number(item.quantity || 0);
+      const p = Number(item.total_price || 0);
+      total_items_sold += q;
+
+      const name = item.item_name || 'Coffee';
+      const currItem = itemMap.get(name) || { quantity: 0, revenue: 0 };
+      itemMap.set(name, {
+        quantity: currItem.quantity + q,
+        revenue: currItem.revenue + p,
+      });
+    });
+  });
+
+  // Determine top-selling item today
+  let top_item: TopSellingItem | null = null;
+  if (itemMap.size > 0) {
+    const sortedItems = Array.from(itemMap.entries())
+      .map(([name, val]) => ({ name, ...val }))
+      .sort((a, b) => b.quantity - a.quantity);
+
+    if (sortedItems.length > 0) {
+      top_item = {
+        rank: 1,
+        name: sortedItems[0].name,
+        quantity: sortedItems[0].quantity,
+        revenue: sortedItems[0].revenue,
+      };
+    }
+  }
+
+  // Determine peak hour today
+  let peak_hour: { label: string; orders: number; revenue: number } | null = null;
+  if (hourMap.size > 0) {
+    let maxHour = -1;
+    let maxOrders = -1;
+    let maxRevenue = 0;
+
+    hourMap.forEach((val, hour) => {
+      if (val.orders > maxOrders) {
+        maxOrders = val.orders;
+        maxHour = hour;
+        maxRevenue = val.revenue;
+      }
+    });
+
+    if (maxHour >= 0 && maxOrders > 0) {
+      const startH = maxHour % 12 || 12;
+      const startAmPm = maxHour >= 12 ? 'PM' : 'AM';
+      const endH = (maxHour + 1) % 12 || 12;
+      const endAmPm = maxHour + 1 >= 12 && maxHour + 1 < 24 ? 'PM' : 'AM';
+
+      peak_hour = {
+        label: `${startH} ${startAmPm} – ${endH} ${endAmPm}`,
+        orders: maxOrders,
+        revenue: maxRevenue,
+      };
+    }
+  }
+
+  // 2. Fetch payments recorded today (from payment ledger receipts)
+  const { data: todayPayments } = await (supabase as any)
+    .from('payments')
+    .select('amount')
+    .gte('created_at', todayStart)
+    .lte('created_at', todayEnd);
+
+  const paymentsLedgerTotal = (todayPayments || []).reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+
+  // Direct paid orders cash collected today
+  const directPaidToday = completedToday
+    .filter((o: any) => o.payment_status === 'paid' && o.payment_method !== 'pay_later')
+    .reduce((sum: number, o: any) => sum + Number(o.paid_amount ?? o.total_amount ?? 0), 0);
+
+  const collected_today = directPaidToday + paymentsLedgerTotal;
+
+  // 3. Fetch Total Outstanding Credit across all active completed orders
+  const { data: outstandingOrders } = await (supabase as any)
+    .from('orders')
+    .select('customer_id, due_amount')
+    .eq('status', 'completed')
+    .gt('due_amount', 0);
+
+  const activeDues = outstandingOrders || [];
+  const outstanding_credit = activeDues.reduce((sum: number, o: any) => sum + Number(o.due_amount || 0), 0);
+  const uniqueDueCustomerIds = new Set(activeDues.filter((o: any) => o.customer_id).map((o: any) => o.customer_id));
+  const customers_with_dues_count = uniqueDueCustomerIds.size;
+
+  // 4. Fetch yesterday's completed orders for trend percentage calculations
+  const { data: yesterdayOrders } = await (supabase as any)
+    .from('orders')
+    .select('total_amount')
+    .eq('status', 'completed')
+    .gte('created_at', yesterdayStartISO)
+    .lte('created_at', yesterdayEndISO);
+
+  const yesterdayCompleted = yesterdayOrders || [];
+  const yesterday_orders = yesterdayCompleted.length;
+  const yesterday_revenue = yesterdayCompleted.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0);
+
+  const revenue_change_pct =
+    yesterday_revenue > 0
+      ? Math.round(((total_revenue - yesterday_revenue) / yesterday_revenue) * 100)
+      : total_revenue > 0
+      ? 100
+      : null;
+
+  const orders_change_pct =
+    yesterday_orders > 0
+      ? Math.round(((total_orders - yesterday_orders) / yesterday_orders) * 100)
+      : total_orders > 0
+      ? 100
+      : null;
+
+  return {
+    total_revenue,
+    total_orders,
+    avg_order_value,
+    total_items_sold,
+    collected_today,
+    outstanding_credit,
+    customers_with_dues_count,
+    yesterday_revenue,
+    yesterday_orders,
+    revenue_change_pct,
+    orders_change_pct,
+    peak_hour,
+    top_item,
+  };
+}
+
+/**
+ * Fetches top customers with active outstanding balances for quick operational follow-up
+ */
+export async function fetchCafeOutstandingCustomers(limit = 5): Promise<OutstandingCustomerSummary[]> {
+  const { data: ordersWithDues, error } = await (supabase as any)
+    .from('orders')
+    .select(`
+      customer_id,
+      customer_name,
+      due_amount,
+      created_at,
+      customer:customers ( id, name, phone )
+    `)
+    .eq('status', 'completed')
+    .gt('due_amount', 0)
+    .order('created_at', { ascending: true });
+
+  if (error) throw new Error(error.message);
+  if (!ordersWithDues || ordersWithDues.length === 0) return [];
+
+  const customerMap = new Map<string, { name: string; phone: string | null; totalDue: number; oldestDue: string; ordersCount: number }>();
+
+  ordersWithDues.forEach((ord: any) => {
+    const custId = ord.customer_id || ord.customer?.id;
+    if (!custId) return;
+
+    const name = ord.customer?.name || ord.customer_name || 'Customer';
+    const phone = ord.customer?.phone || null;
+    const due = Number(ord.due_amount || 0);
+
+    const existing = customerMap.get(custId) || {
+      name,
+      phone,
+      totalDue: 0,
+      oldestDue: ord.created_at,
+      ordersCount: 0,
+    };
+
+    existing.totalDue += due;
+    existing.ordersCount += 1;
+    if (new Date(ord.created_at) < new Date(existing.oldestDue)) {
+      existing.oldestDue = ord.created_at;
+    }
+
+    customerMap.set(custId, existing);
+  });
+
+  const sorted = Array.from(customerMap.entries())
+    .map(([customer_id, val]) => ({
+      customer_id,
+      customer_name: val.name,
+      phone: val.phone,
+      total_due: val.totalDue,
+      oldest_due_date: val.oldestDue,
+      orders_count: val.ordersCount,
+    }))
+    .sort((a, b) => b.total_due - a.total_due)
+    .slice(0, limit);
+
+  return sorted;
 }
 
 /**
@@ -109,6 +368,14 @@ export async function fetchRevenueTrend(
   if (error) throw new Error(error.message);
 
   const trendMap = new Map<string, { revenue: number; orders: number }>();
+
+  // If today, initialize business hours (5 AM to 10 PM) so charts have smooth time progression
+  if (range === 'today') {
+    for (let h = 5; h <= 22; h++) {
+      const hStr = `${h.toString().padStart(2, '0')}:00`;
+      trendMap.set(hStr, { revenue: 0, orders: 0 });
+    }
+  }
 
   (orders || []).forEach((o: any) => {
     const dateObj = new Date(o.created_at);
@@ -191,7 +458,7 @@ export async function fetchTopSellingItems(
 }
 
 /**
- * Fetches payment method breakdown for completed orders (Cash, Card, UPI, Other)
+ * Fetches payment method breakdown for completed orders (Cash, Card, UPI, Pay Later)
  */
 export async function fetchPaymentMethodBreakdown(
   range: AnalyticsDateRange = 'today',
@@ -229,13 +496,15 @@ export async function fetchPaymentMethodBreakdown(
     grandTotalRevenue += amt;
   });
 
-  return Object.entries(methodsMap).map(([method, val]) => ({
-    method,
-    label: val.label,
-    order_count: val.order_count,
-    revenue: val.revenue,
-    percentage: grandTotalRevenue > 0 ? (val.revenue / grandTotalRevenue) * 100 : 0,
-  }));
+  return Object.entries(methodsMap)
+    .filter(([_, val]) => val.order_count > 0 || grandTotalRevenue === 0)
+    .map(([method, val]) => ({
+      method,
+      label: val.label,
+      order_count: val.order_count,
+      revenue: val.revenue,
+      percentage: grandTotalRevenue > 0 ? Math.round((val.revenue / grandTotalRevenue) * 100) : 0,
+    }));
 }
 
 /**
