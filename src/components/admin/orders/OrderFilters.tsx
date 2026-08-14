@@ -53,14 +53,45 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
     setSearchInput(filters.search);
   }, [filters.search]);
 
+  // Safe label helpers to guard against undefined properties
+  const getStatusLabel = (status?: string) => {
+    if (!status || status === 'all') return 'All Statuses';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
+  const getPaymentStatusLabel = (status?: string) => {
+    if (!status || status === 'all') return 'All Payment Statuses';
+    if (status === 'paid') return 'Paid';
+    if (status === 'partial') return 'Partial';
+    if (status === 'outstanding') return 'Outstanding / Due';
+    return status.toUpperCase();
+  };
+
+  const getPaymentMethodLabel = (method?: string) => {
+    if (!method || method === 'all') return 'All Payment Methods';
+    if (method === 'cash') return 'Cash';
+    if (method === 'upi') return 'UPI';
+    if (method === 'card') return 'Card';
+    if (method === 'pay_later') return 'Pay Later';
+    return method.toUpperCase();
+  };
+
+  const getSortLabel = (sort?: OrderSort) => {
+    if (sort === 'oldest') return 'Oldest First';
+    if (sort === 'highest') return 'Highest Total';
+    if (sort === 'lowest') return 'Lowest Total';
+    if (sort === 'largest_due') return 'Largest Due';
+    return 'Newest First';
+  };
+
   // Count active non-default filters
   const activeFilterCount =
     (filters.search ? 1 : 0) +
-    (filters.status !== 'all' ? 1 : 0) +
-    (filters.paymentStatus !== 'all' ? 1 : 0) +
-    (filters.paymentMethod !== 'all' ? 1 : 0) +
+    (filters.status && filters.status !== 'all' ? 1 : 0) +
+    (filters.paymentStatus && filters.paymentStatus !== 'all' ? 1 : 0) +
+    (filters.paymentMethod && filters.paymentMethod !== 'all' ? 1 : 0) +
     (filters.datePreset !== 'all' || filters.customDate ? 1 : 0) +
-    (filters.sort !== 'newest' ? 1 : 0);
+    (filters.sort && filters.sort !== 'newest' ? 1 : 0);
 
   const handleDatePresetChange = (preset: OrderFiltersState['datePreset']) => {
     onFilterChange({
@@ -115,16 +146,16 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
                       {filters.datePreset === 'all'
                         ? 'All Time'
                         : filters.datePreset === 'today'
-                          ? 'Today'
-                          : filters.datePreset === 'yesterday'
-                            ? 'Yesterday'
-                            : filters.datePreset === 'week'
-                              ? 'Last 7 Days'
-                              : filters.datePreset === 'month'
-                                ? 'This Month'
-                                : filters.customDate
-                                  ? formatDate(filters.customDate, 'dd MMM yyyy')
-                                  : 'Custom Date'}
+                        ? 'Today'
+                        : filters.datePreset === 'yesterday'
+                        ? 'Yesterday'
+                        : filters.datePreset === 'week'
+                        ? 'Last 7 Days'
+                        : filters.datePreset === 'month'
+                        ? 'This Month'
+                        : filters.customDate
+                        ? formatDate(filters.customDate, 'dd MMM yyyy')
+                        : 'Custom Date'}
                     </span>
                   </span>
                 </SelectValue>
@@ -181,17 +212,7 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
                 <SelectValue placeholder="Sort">
                   <span className="flex items-center gap-1.5 truncate">
                     <HugeiconsIcon icon={Sorting01Icon} size={14} className="text-muted-foreground shrink-0" />
-                    <span className="truncate">
-                      {filters.sort === 'newest'
-                        ? 'Newest First'
-                        : filters.sort === 'oldest'
-                          ? 'Oldest First'
-                          : filters.sort === 'highest'
-                            ? 'Highest Total'
-                            : filters.sort === 'lowest'
-                              ? 'Lowest Total'
-                              : 'Largest Due'}
-                    </span>
+                    <span className="truncate">{getSortLabel(filters.sort)}</span>
                   </span>
                 </SelectValue>
               </SelectTrigger>
@@ -240,15 +261,7 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
                       >
                         <SelectTrigger className="w-full h-10 bg-background rounded-lg">
                           <SelectValue placeholder="Sort">
-                            {filters.sort === 'newest'
-                              ? 'Newest First'
-                              : filters.sort === 'oldest'
-                                ? 'Oldest First'
-                                : filters.sort === 'highest'
-                                  ? 'Highest Total'
-                                  : filters.sort === 'lowest'
-                                    ? 'Lowest Total'
-                                    : 'Largest Due'}
+                            <span>{getSortLabel(filters.sort)}</span>
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent side="bottom" alignItemWithTrigger={false}>
@@ -265,16 +278,14 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
                     <div className="space-y-1.5">
                       <label className="font-bold text-foreground block">Order Status</label>
                       <Select
-                        value={filters.status}
+                        value={filters.status || 'all'}
                         onValueChange={(val: string | null) =>
                           onFilterChange({ ...filters, status: val || 'all' })
                         }
                       >
                         <SelectTrigger className="w-full h-10 bg-background rounded-lg">
                           <SelectValue placeholder="All Statuses">
-                            {filters.status === 'all'
-                              ? 'All Statuses'
-                              : filters.status.charAt(0).toUpperCase() + filters.status.slice(1)}
+                            {getStatusLabel(filters.status)}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent side="bottom" alignItemWithTrigger={false}>
@@ -291,16 +302,14 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
                     <div className="space-y-1.5">
                       <label className="font-bold text-foreground block">Payment Status</label>
                       <Select
-                        value={filters.paymentStatus}
+                        value={filters.paymentStatus || 'all'}
                         onValueChange={(val: string | null) =>
                           onFilterChange({ ...filters, paymentStatus: val || 'all' })
                         }
                       >
                         <SelectTrigger className="w-full h-10 bg-background rounded-lg">
                           <SelectValue placeholder="All Payment Statuses">
-                            {filters.paymentStatus === 'all'
-                              ? 'All Payment Statuses'
-                              : filters.paymentStatus.toUpperCase()}
+                            {getPaymentStatusLabel(filters.paymentStatus)}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent side="bottom" alignItemWithTrigger={false}>
@@ -316,16 +325,14 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
                     <div className="space-y-1.5">
                       <label className="font-bold text-foreground block">Payment Method</label>
                       <Select
-                        value={filters.paymentMethod}
+                        value={filters.paymentMethod || 'all'}
                         onValueChange={(val: string | null) =>
                           onFilterChange({ ...filters, paymentMethod: val || 'all' })
                         }
                       >
                         <SelectTrigger className="w-full h-10 bg-background rounded-lg">
                           <SelectValue placeholder="All Payment Methods">
-                            {filters.paymentMethod === 'all'
-                              ? 'All Payment Methods'
-                              : filters.paymentMethod.toUpperCase()}
+                            {getPaymentMethodLabel(filters.paymentMethod)}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent side="bottom" alignItemWithTrigger={false}>
@@ -337,33 +344,6 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
                           <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-
-                    {/* Date Presets */}
-                    <div className="space-y-1.5">
-                      <label className="font-bold text-foreground block">Date Range</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          { label: 'All Time', value: 'all' },
-                          { label: 'Today', value: 'today' },
-                          { label: 'Yesterday', value: 'yesterday' },
-                          { label: 'Last 7 Days', value: 'week' },
-                          { label: 'This Month', value: 'month' },
-                        ].map((p) => (
-                          <button
-                            key={p.value}
-                            type="button"
-                            onClick={() => handleDatePresetChange(p.value as any)}
-                            className={`p-2.5 rounded-lg border text-xs font-semibold transition-all ${
-                              filters.datePreset === p.value
-                                ? 'bg-cinnamon text-white border-cinnamon shadow-xs'
-                                : 'bg-secondary/40 text-foreground border-border/60 hover:bg-secondary'
-                            }`}
-                          >
-                            {p.label}
-                          </button>
-                        ))}
-                      </div>
                     </div>
 
                     <div className="pt-4 flex gap-2 border-t border-border">
@@ -393,18 +373,14 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
           {/* Order Status Select */}
           <div>
             <Select
-              value={filters.status}
+              value={filters.status || 'all'}
               onValueChange={(val: string | null) => onFilterChange({ ...filters, status: val || 'all' })}
             >
               <SelectTrigger className="h-9 text-xs bg-background rounded-lg w-full">
                 <SelectValue placeholder="Order Status">
                   <span className="flex items-center gap-1.5">
                     <span className="text-muted-foreground">Order:</span>
-                    <span className="font-semibold">
-                      {filters.status === 'all'
-                        ? 'All'
-                        : filters.status.charAt(0).toUpperCase() + filters.status.slice(1)}
-                    </span>
+                    <span className="font-semibold">{getStatusLabel(filters.status)}</span>
                   </span>
                 </SelectValue>
               </SelectTrigger>
@@ -421,7 +397,7 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
           {/* Payment Status Select */}
           <div>
             <Select
-              value={filters.paymentStatus}
+              value={filters.paymentStatus || 'all'}
               onValueChange={(val: string | null) =>
                 onFilterChange({ ...filters, paymentStatus: val || 'all' })
               }
@@ -430,11 +406,7 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
                 <SelectValue placeholder="Payment Status">
                   <span className="flex items-center gap-1.5">
                     <span className="text-muted-foreground">Payment:</span>
-                    <span className="font-semibold">
-                      {filters.paymentStatus === 'all'
-                        ? 'All'
-                        : filters.paymentStatus.toUpperCase()}
-                    </span>
+                    <span className="font-semibold">{getPaymentStatusLabel(filters.paymentStatus)}</span>
                   </span>
                 </SelectValue>
               </SelectTrigger>
@@ -450,7 +422,7 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
           {/* Payment Method Select */}
           <div>
             <Select
-              value={filters.paymentMethod}
+              value={filters.paymentMethod || 'all'}
               onValueChange={(val: string | null) =>
                 onFilterChange({ ...filters, paymentMethod: val || 'all' })
               }
@@ -459,11 +431,7 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
                 <SelectValue placeholder="Method">
                   <span className="flex items-center gap-1.5">
                     <span className="text-muted-foreground">Method:</span>
-                    <span className="font-semibold">
-                      {filters.paymentMethod === 'all'
-                        ? 'All'
-                        : filters.paymentMethod.toUpperCase()}
-                    </span>
+                    <span className="font-semibold">{getPaymentMethodLabel(filters.paymentMethod)}</span>
                   </span>
                 </SelectValue>
               </SelectTrigger>
@@ -502,7 +470,7 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
             </Badge>
           )}
 
-          {filters.status !== 'all' && (
+          {filters.status && filters.status !== 'all' && (
             <Badge
               variant="outline"
               className="bg-secondary/70 text-foreground border-border/80 rounded-md px-2.5 py-1 gap-1 text-[11px]"
@@ -519,12 +487,12 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
             </Badge>
           )}
 
-          {filters.paymentStatus !== 'all' && (
+          {filters.paymentStatus && filters.paymentStatus !== 'all' && (
             <Badge
               variant="outline"
               className="bg-secondary/70 text-foreground border-border/80 rounded-md px-2.5 py-1 gap-1 text-[11px]"
             >
-              <span className="uppercase">Payment: {filters.paymentStatus}</span>
+              <span>Payment: {getPaymentStatusLabel(filters.paymentStatus)}</span>
               <button
                 type="button"
                 onClick={() => onFilterChange({ ...filters, paymentStatus: 'all' })}
@@ -536,12 +504,12 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
             </Badge>
           )}
 
-          {filters.paymentMethod !== 'all' && (
+          {filters.paymentMethod && filters.paymentMethod !== 'all' && (
             <Badge
               variant="outline"
               className="bg-secondary/70 text-foreground border-border/80 rounded-md px-2.5 py-1 gap-1 text-[11px]"
             >
-              <span className="uppercase">Method: {filters.paymentMethod}</span>
+              <span>Method: {getPaymentMethodLabel(filters.paymentMethod)}</span>
               <button
                 type="button"
                 onClick={() => onFilterChange({ ...filters, paymentMethod: 'all' })}
@@ -558,8 +526,11 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
               variant="outline"
               className="bg-secondary/70 text-foreground border-border/80 rounded-md px-2.5 py-1 gap-1 text-[11px]"
             >
-              <span className="capitalize">
-                Date: {filters.customDate || filters.datePreset}
+              <span>
+                Date:{' '}
+                {filters.datePreset === 'custom' && filters.customDate
+                  ? formatDate(filters.customDate, 'dd MMM yyyy')
+                  : filters.datePreset}
               </span>
               <button
                 type="button"
@@ -572,12 +543,12 @@ export function OrderFilters({ filters, onFilterChange, onResetFilters }: OrderF
             </Badge>
           )}
 
-          {filters.sort !== 'newest' && (
+          {filters.sort && filters.sort !== 'newest' && (
             <Badge
               variant="outline"
               className="bg-secondary/70 text-foreground border-border/80 rounded-md px-2.5 py-1 gap-1 text-[11px]"
             >
-              <span>Sort: {filters.sort}</span>
+              <span>Sort: {getSortLabel(filters.sort)}</span>
               <button
                 type="button"
                 onClick={() => onFilterChange({ ...filters, sort: 'newest' })}
