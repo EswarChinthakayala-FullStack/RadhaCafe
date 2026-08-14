@@ -9,6 +9,7 @@ export interface GalleryItem {
   alt_text?: string | null;
   width?: number | null;
   height?: number | null;
+  views_count?: number | null;
   display_order: number;
   created_at: string;
 }
@@ -29,19 +30,64 @@ export interface UpdateGalleryItemInput {
   alt_text?: string | null;
   width?: number | null;
   height?: number | null;
+  views_count?: number | null;
   display_order?: number;
 }
 
+/**
+ * Fetches all gallery items sorted with TOP VIEWED photos in the first order.
+ */
 export async function fetchGalleryItems(): Promise<GalleryItem[]> {
-  // Use select('*') for 100% backward compatibility with remote Supabase schema
   const { data, error } = await (supabase as any)
     .from('gallery_images')
-    .select('*')
-    .order('display_order', { ascending: true })
-    .order('created_at', { ascending: true });
+    .select('*');
 
   if (error) throw new Error(error.message);
-  return (data as GalleryItem[]) || [];
+
+  const items = (data as GalleryItem[]) || [];
+
+  // Sort by top viewed in first order (highest views_count first), then display_order
+  items.sort((a, b) => {
+    const viewsA = a.views_count ?? (a as any).views ?? 0;
+    const viewsB = b.views_count ?? (b as any).views ?? 0;
+    if (viewsB !== viewsA) {
+      return viewsB - viewsA;
+    }
+    return (a.display_order ?? 0) - (b.display_order ?? 0);
+  });
+
+  return items;
+}
+
+/**
+ * Increment view count atomically when a user opens/views a gallery image
+ */
+export async function incrementGalleryItemView(id: string): Promise<void> {
+  if (!id) return;
+
+  try {
+    // Try RPC first for atomic increment
+    const { error: rpcError } = await (supabase as any).rpc('increment_gallery_view', {
+      image_id: id,
+    });
+
+    if (!rpcError) return;
+
+    // Fallback: direct update if RPC is not registered yet
+    const { data: item } = await (supabase as any)
+      .from('gallery_images')
+      .select('views_count')
+      .eq('id', id)
+      .single();
+
+    const currentViews = item?.views_count || 0;
+    await (supabase as any)
+      .from('gallery_images')
+      .update({ views_count: currentViews + 1 })
+      .eq('id', id);
+  } catch {
+    // Non-blocking view increment
+  }
 }
 
 export async function createGalleryItem(input: CreateGalleryItemInput): Promise<GalleryItem> {
@@ -49,6 +95,7 @@ export async function createGalleryItem(input: CreateGalleryItemInput): Promise<
     image_url: input.image_url,
     caption: input.caption || null,
     display_order: input.display_order ?? 0,
+    views_count: 0,
   };
 
   if (input.title) fullPayload.title = input.title;

@@ -5,6 +5,7 @@ import {
   updateGalleryItem,
   deleteGalleryItem,
   reorderGalleryItems,
+  incrementGalleryItemView,
   type CreateGalleryItemInput,
   type UpdateGalleryItemInput,
 } from '../lib/supabase/queries/gallery';
@@ -16,6 +17,17 @@ export function useGalleryImages() {
     queryKey: GALLERY_QUERY_KEY,
     queryFn: fetchGalleryItems,
     staleTime: 60000,
+  });
+}
+
+export function useIncrementGalleryView() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => incrementGalleryItemView(id),
+    onSuccess: () => {
+      // Background non-blocking invalidate or optimistic update
+      queryClient.invalidateQueries({ queryKey: GALLERY_QUERY_KEY });
+    },
   });
 }
 

@@ -555,6 +555,7 @@ export interface Database {
           alt_text: string | null
           width: number | null
           height: number | null
+          views_count: number | null
           display_order: number
           created_at: string
         }
@@ -566,6 +567,7 @@ export interface Database {
           alt_text?: string | null
           width?: number | null
           height?: number | null
+          views_count?: number | null
           display_order?: number
           created_at?: string
         }
@@ -577,6 +579,7 @@ export interface Database {
           alt_text?: string | null
           width?: number | null
           height?: number | null
+          views_count?: number | null
           display_order?: number
           created_at?: string
         }

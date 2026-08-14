@@ -267,11 +267,19 @@ export function GalleryManager() {
                     #{idx + 1}
                   </Badge>
 
-                  {item.width && item.height && (
-                    <Badge variant="outline" className="absolute top-2 right-2 text-[9px] font-mono bg-background/80 backdrop-blur border-border/60">
-                      {item.width}×{item.height}
-                    </Badge>
-                  )}
+                  <div className="absolute top-2 right-2 flex items-center gap-1">
+                    {item.views_count !== undefined && item.views_count !== null && (
+                      <Badge variant="secondary" className="text-[9px] font-semibold bg-background/90 backdrop-blur shadow-xs text-cinnamon gap-1">
+                        <HugeiconsIcon icon={ViewIcon} size={10} />
+                        <span>{item.views_count}</span>
+                      </Badge>
+                    )}
+                    {item.width && item.height && (
+                      <Badge variant="outline" className="text-[9px] font-mono bg-background/80 backdrop-blur border-border/60">
+                        {item.width}×{item.height}
+                      </Badge>
+                    )}
+                  </div>
 
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1 text-xs font-semibold">
                     <HugeiconsIcon icon={ViewIcon} size={18} />

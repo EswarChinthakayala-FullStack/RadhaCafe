@@ -137,6 +137,14 @@ export function JustifiedGallery({
                       />
                     )}
 
+                    {/* Top Views Count Badge */}
+                    {item.views_count && item.views_count > 0 ? (
+                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-[#140A06]/80 backdrop-blur-md border border-white/10 text-[10px] font-semibold text-[#E5A88B] opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-1 z-10">
+                        <HugeiconsIcon icon={ViewIcon} size={11} />
+                        <span>{item.views_count}</span>
+                      </div>
+                    ) : null}
+
                     {/* Subtle Hover Reveal with Caption / Title */}
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0A0503]/90 via-[#0A0503]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3 sm:p-4 text-left pointer-events-none">
                       <div className="flex items-end justify-between gap-2">
