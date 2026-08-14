@@ -73,12 +73,8 @@ export function LoginForm() {
   return (
     <div className="w-full space-y-6">
       {/* Mobile-Only Header Brand Emblem */}
-      <div className="lg:hidden flex flex-col items-center text-center space-y-3 pb-2">
+      <div className="lg:hidden flex flex-col items-center text-center pb-2">
         <AppLogo size="md" lightText />
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E5A88B]/10 border border-[#E5A88B]/20 text-[#E5A88B] text-[10px] font-bold uppercase tracking-widest">
-          <HugeiconsIcon icon={LockedIcon} size={12} />
-          <span>ADMIN ACCESS</span>
-        </div>
       </div>
 
       {/* Form Header */}
