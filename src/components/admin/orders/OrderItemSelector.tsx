@@ -447,32 +447,32 @@ export function OrderItemSelector() {
                   </div>
                 </div>
 
-                {/* Price & Add / Stepper Controls */}
-                <div className="flex items-center justify-between pt-1.5 sm:pt-2 mt-1 border-t border-border/50 gap-1.5 sm:gap-2">
-                  <span className="font-extrabold text-xs sm:text-sm text-foreground font-heading">
+                {/* Price & Add / Stepper Controls — Compact & overflow-safe for 5-column layouts */}
+                <div className="flex items-center justify-between pt-1.5 mt-1 border-t border-border/50 gap-1 min-w-0">
+                  <span className="font-extrabold text-xs text-foreground font-heading shrink-0">
                     {formatCurrency(item.price)}
                   </span>
 
                   {qty > 0 ? (
-                    <div className="flex items-center gap-0.5 bg-secondary/80 rounded-lg p-0.5 border border-border/60">
+                    <div className="flex items-center gap-0.5 bg-secondary/80 rounded-md p-0.5 border border-border/60 shrink-0">
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, qty - 1)}
-                        className="h-6 w-6 sm:h-7 sm:w-7 rounded-md flex items-center justify-center bg-card text-foreground hover:bg-secondary active:scale-95 transition-all text-xs font-bold shadow-2xs"
+                        className="h-5.5 w-5.5 rounded flex items-center justify-center bg-card text-foreground hover:bg-secondary active:scale-95 transition-all text-xs font-bold shadow-2xs"
                         aria-label={`Decrease ${item.name}`}
                       >
-                        <HugeiconsIcon icon={MinusSignIcon} size={11} />
+                        <HugeiconsIcon icon={MinusSignIcon} size={10} />
                       </button>
-                      <span className="text-[11px] sm:text-xs font-bold font-mono px-1 sm:px-1.5 min-w-[18px] text-center">
+                      <span className="text-[10px] font-bold font-mono px-0.5 min-w-[14px] text-center">
                         {qty}
                       </span>
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, qty + 1)}
-                        className="h-6 w-6 sm:h-7 sm:w-7 rounded-md flex items-center justify-center bg-cinnamon text-white hover:bg-cinnamon/90 active:scale-95 transition-all text-xs font-bold shadow-2xs"
+                        className="h-5.5 w-5.5 rounded flex items-center justify-center bg-cinnamon text-white hover:bg-cinnamon/90 active:scale-95 transition-all text-xs font-bold shadow-2xs"
                         aria-label={`Increase ${item.name}`}
                       >
-                        <HugeiconsIcon icon={PlusSignIcon} size={11} />
+                        <HugeiconsIcon icon={PlusSignIcon} size={10} />
                       </button>
                     </div>
                   ) : (
@@ -480,9 +480,9 @@ export function OrderItemSelector() {
                       type="button"
                       size="sm"
                       onClick={() => addItem(item)}
-                      className="h-6 sm:h-7 px-2.5 sm:px-3 bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs rounded-lg shadow-2xs gap-1 active:scale-95 transition-all"
+                      className="h-6 px-2 bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-[11px] rounded-md shadow-2xs gap-0.5 shrink-0 active:scale-95 transition-all"
                     >
-                      <HugeiconsIcon icon={PlusSignIcon} size={12} />
+                      <HugeiconsIcon icon={PlusSignIcon} size={11} />
                       <span>Add</span>
                     </Button>
                   )}

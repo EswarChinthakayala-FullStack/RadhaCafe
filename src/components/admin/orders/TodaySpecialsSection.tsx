@@ -95,27 +95,27 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
               </div>
 
               {/* Price & Action */}
-              <div className="flex items-center justify-between pt-1.5 mt-1 border-t border-border/50 gap-1">
-                <span className="font-extrabold text-xs text-cinnamon font-heading">{formatCurrency(item.price)}</span>
+              <div className="flex items-center justify-between pt-1.5 mt-1 border-t border-border/50 gap-1 min-w-0">
+                <span className="font-extrabold text-xs text-cinnamon font-heading shrink-0">{formatCurrency(item.price)}</span>
 
                 {qtyInCart > 0 ? (
-                  <div className="flex items-center gap-0.5 bg-secondary/80 rounded-md p-0.5 border border-border/60">
+                  <div className="flex items-center gap-0.5 bg-secondary/80 rounded-md p-0.5 border border-border/60 shrink-0">
                     <button
                       type="button"
                       onClick={() => updateQuantity(item.id, qtyInCart - 1)}
-                      className="h-6 w-6 rounded flex items-center justify-center bg-card text-foreground hover:bg-secondary transition-colors text-xs font-bold active:scale-95"
+                      className="h-5.5 w-5.5 rounded flex items-center justify-center bg-card text-foreground hover:bg-secondary transition-colors text-xs font-bold active:scale-95"
                       aria-label={`Decrease ${item.name}`}
                     >
-                      <HugeiconsIcon icon={MinusSignIcon} size={11} />
+                      <HugeiconsIcon icon={MinusSignIcon} size={10} />
                     </button>
-                    <span className="text-[11px] font-bold font-mono px-1 min-w-[16px] text-center">{qtyInCart}</span>
+                    <span className="text-[10px] font-bold font-mono px-0.5 min-w-[14px] text-center">{qtyInCart}</span>
                     <button
                       type="button"
                       onClick={() => updateQuantity(item.id, qtyInCart + 1)}
-                      className="h-6 w-6 rounded flex items-center justify-center bg-cinnamon text-white hover:bg-cinnamon/90 transition-colors text-xs font-bold active:scale-95"
+                      className="h-5.5 w-5.5 rounded flex items-center justify-center bg-cinnamon text-white hover:bg-cinnamon/90 transition-colors text-xs font-bold active:scale-95"
                       aria-label={`Increase ${item.name}`}
                     >
-                      <HugeiconsIcon icon={PlusSignIcon} size={11} />
+                      <HugeiconsIcon icon={PlusSignIcon} size={10} />
                     </button>
                   </div>
                 ) : (
@@ -123,9 +123,9 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
                     type="button"
                     size="xs"
                     onClick={() => addItem(item)}
-                    className="h-6 px-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] rounded shadow-2xs gap-0.5 active:scale-95 transition-all"
+                    className="h-6 px-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] rounded-md shadow-2xs gap-0.5 shrink-0 active:scale-95 transition-all"
                   >
-                    <HugeiconsIcon icon={PlusSignIcon} size={12} />
+                    <HugeiconsIcon icon={PlusSignIcon} size={11} />
                     <span>Add</span>
                   </Button>
                 )}
