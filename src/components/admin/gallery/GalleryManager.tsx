@@ -9,6 +9,7 @@ import { AdminGalleryToolbar, type GallerySortOption } from './AdminGalleryToolb
 import { AdminGalleryUploadModal } from './AdminGalleryUploadModal';
 import { AdminGalleryViewer } from './AdminGalleryViewer';
 import { AdminGalleryEditCaptionModal } from './AdminGalleryEditCaptionModal';
+import { GalleryImageEditor } from './editor/GalleryImageEditor';
 import { Button } from '../../ui/button';
 import { Card } from '../../ui/card';
 import {
@@ -45,6 +46,7 @@ export function GalleryManager() {
 
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
+  const [editingPhotoItem, setEditingPhotoItem] = useState<GalleryItem | null>(null);
   const [deletingItem, setDeletingItem] = useState<GalleryItem | null>(null);
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
 
@@ -321,6 +323,7 @@ export function GalleryManager() {
           onMoveEarlier={handleMoveEarlier}
           onMoveLater={handleMoveLater}
           onViewImage={(_, index) => setViewerIndex(index)}
+          onEditPhoto={(item) => setEditingPhotoItem(item)}
           onEditCaption={(item) => setEditingItem(item)}
           onDeleteImage={(item) => setDeletingItem(item)}
         />
@@ -339,8 +342,16 @@ export function GalleryManager() {
         selectedIndex={viewerIndex}
         onClose={() => setViewerIndex(null)}
         onSelectIndex={(idx) => setViewerIndex(idx)}
+        onEditPhoto={(item) => setEditingPhotoItem(item)}
         onEditCaption={(item) => setEditingItem(item)}
         onDeleteImage={(item) => setDeletingItem(item)}
+      />
+
+      {/* Professional Built-in Photo Editor */}
+      <GalleryImageEditor
+        item={editingPhotoItem}
+        open={Boolean(editingPhotoItem)}
+        onClose={() => setEditingPhotoItem(null)}
       />
 
       {/* Edit Caption Modal */}

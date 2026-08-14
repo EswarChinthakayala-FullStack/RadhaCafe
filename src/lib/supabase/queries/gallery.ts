@@ -1,9 +1,13 @@
 import { supabase } from '../client';
 import { BUCKETS } from '../storage';
+import type { GalleryImageEditConfig } from '../../../types/galleryEditor.types';
 
 export interface GalleryItem {
   id: string;
   image_url: string;
+  original_image_url?: string | null;
+  edit_config?: GalleryImageEditConfig | null;
+  edited_at?: string | null;
   title?: string | null;
   caption: string | null;
   alt_text?: string | null;
@@ -16,6 +20,8 @@ export interface GalleryItem {
 
 export interface CreateGalleryItemInput {
   image_url: string;
+  original_image_url?: string | null;
+  edit_config?: GalleryImageEditConfig | null;
   title?: string | null;
   caption?: string | null;
   alt_text?: string | null;
@@ -25,6 +31,10 @@ export interface CreateGalleryItemInput {
 }
 
 export interface UpdateGalleryItemInput {
+  image_url?: string;
+  original_image_url?: string | null;
+  edit_config?: GalleryImageEditConfig | null;
+  edited_at?: string | null;
   title?: string | null;
   caption?: string | null;
   alt_text?: string | null;
@@ -32,6 +42,16 @@ export interface UpdateGalleryItemInput {
   height?: number | null;
   views_count?: number | null;
   display_order?: number;
+}
+
+export interface SaveGalleryImageEditInput {
+  id: string;
+  editedBlob: Blob;
+  editConfig: GalleryImageEditConfig;
+  width: number;
+  height: number;
+  caption?: string | null;
+  title?: string | null;
 }
 
 /**
@@ -93,6 +113,7 @@ export async function incrementGalleryItemView(id: string): Promise<void> {
 export async function createGalleryItem(input: CreateGalleryItemInput): Promise<GalleryItem> {
   const fullPayload: Record<string, any> = {
     image_url: input.image_url,
+    original_image_url: input.original_image_url || input.image_url,
     caption: input.caption || null,
     display_order: input.display_order ?? 0,
     views_count: 0,
@@ -102,6 +123,7 @@ export async function createGalleryItem(input: CreateGalleryItemInput): Promise<
   if (input.alt_text) fullPayload.alt_text = input.alt_text;
   if (input.width) fullPayload.width = input.width;
   if (input.height) fullPayload.height = input.height;
+  if (input.edit_config) fullPayload.edit_config = input.edit_config;
 
   // Try inserting with optional columns
   const { data, error } = await (supabase as any)
@@ -164,6 +186,131 @@ export async function updateGalleryItem(
   }
 
   throw new Error(error.message);
+}
+
+/**
+ * Save an edited image derivative, preserving the original photo.
+ */
+export async function saveGalleryImageEdit(
+  input: SaveGalleryImageEditInput
+): Promise<GalleryItem> {
+  // 1. Fetch current row to determine original image URL
+  const { data: currentItem, error: fetchError } = await (supabase as any)
+    .from('gallery_images')
+    .select('*')
+    .eq('id', input.id)
+    .single();
+
+  if (fetchError || !currentItem) {
+    throw new Error('Gallery item not found');
+  }
+
+  const originalUrl = currentItem.original_image_url || currentItem.image_url;
+
+  // 2. Upload new edited derivative to storage
+  const fileExt = 'webp';
+  const fileName = `gallery/edited/${input.id}_${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKETS.GALLERY_IMAGES)
+    .upload(fileName, input.editedBlob, {
+      contentType: 'image/webp',
+      cacheControl: '3600',
+      upsert: false,
+    });
+
+  if (uploadError) {
+    throw new Error(uploadError.message || 'Failed to upload edited photo');
+  }
+
+  const { data: publicData } = supabase.storage
+    .from(BUCKETS.GALLERY_IMAGES)
+    .getPublicUrl(fileName);
+
+  const editedUrl = publicData.publicUrl;
+
+  // 3. Update database record
+  const updatePayload: Record<string, any> = {
+    image_url: editedUrl,
+    original_image_url: originalUrl,
+    edit_config: input.editConfig,
+    width: input.width,
+    height: input.height,
+    edited_at: new Date().toISOString(),
+  };
+
+  if (input.caption !== undefined) updatePayload.caption = input.caption;
+  if (input.title !== undefined) updatePayload.title = input.title;
+
+  const { data: updatedData, error: updateError } = await (supabase as any)
+    .from('gallery_images')
+    .update(updatePayload)
+    .eq('id', input.id)
+    .select()
+    .single();
+
+  if (!updateError) {
+    return updatedData as GalleryItem;
+  }
+
+  // Fallback for base columns if columns not in DB
+  const fallbackPayload: Record<string, any> = {
+    image_url: editedUrl,
+  };
+  if (input.caption !== undefined) fallbackPayload.caption = input.caption;
+
+  const { data: fbData, error: fbError } = await (supabase as any)
+    .from('gallery_images')
+    .update(fallbackPayload)
+    .eq('id', input.id)
+    .select()
+    .single();
+
+  if (fbError) throw new Error(fbError.message);
+  return fbData as GalleryItem;
+}
+
+/**
+ * Restore original unedited photo.
+ */
+export async function restoreGalleryOriginal(id: string): Promise<GalleryItem> {
+  const { data: item, error: fetchError } = await (supabase as any)
+    .from('gallery_images')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (fetchError || !item) {
+    throw new Error('Gallery item not found');
+  }
+
+  const originalUrl = item.original_image_url || item.image_url;
+
+  const { data: updatedItem, error: updateError } = await (supabase as any)
+    .from('gallery_images')
+    .update({
+      image_url: originalUrl,
+      edit_config: null,
+      edited_at: null,
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (!updateError) {
+    return updatedItem as GalleryItem;
+  }
+
+  // Fallback update if extended columns are absent
+  const { data: fbData, error: fbError } = await (supabase as any)
+    .from('gallery_images')
+    .update({ image_url: originalUrl })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (fbError) throw new Error(fbError.message);
+  return fbData as GalleryItem;
 }
 
 export async function deleteGalleryItem(id: string, imageUrl?: string): Promise<void> {

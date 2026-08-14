@@ -23,6 +23,7 @@ interface AdminGalleryGridProps {
   onMoveEarlier?: (index: number) => void;
   onMoveLater?: (index: number) => void;
   onViewImage: (item: GalleryItem, index: number) => void;
+  onEditPhoto?: (item: GalleryItem) => void;
   onEditCaption: (item: GalleryItem) => void;
   onDeleteImage: (item: GalleryItem) => void;
 }
@@ -37,6 +38,7 @@ export function AdminGalleryGrid({
   onMoveEarlier,
   onMoveLater,
   onViewImage,
+  onEditPhoto,
   onEditCaption,
   onDeleteImage,
 }: AdminGalleryGridProps) {
@@ -169,13 +171,23 @@ export function AdminGalleryGrid({
                         >
                           <HugeiconsIcon icon={EyeIcon} size={13} />
                         </button>
+                        {onEditPhoto && (
+                          <button
+                            type="button"
+                            onClick={() => onEditPhoto(item)}
+                            className="w-6 h-6 rounded flex items-center justify-center text-amber-300 hover:text-amber-100 transition-colors"
+                            title="Edit Photo (Crop, Adjust, Rotate)"
+                          >
+                            <HugeiconsIcon icon={Edit02Icon} size={13} />
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => onEditCaption(item)}
                           className="w-6 h-6 rounded flex items-center justify-center text-white/80 hover:text-white transition-colors"
                           title="Edit Caption"
                         >
-                          <HugeiconsIcon icon={Edit02Icon} size={13} />
+                          <HugeiconsIcon icon={ViewIcon} size={13} />
                         </button>
                         <button
                           type="button"

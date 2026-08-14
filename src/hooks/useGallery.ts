@@ -3,11 +3,14 @@ import {
   fetchGalleryItems,
   createGalleryItem,
   updateGalleryItem,
+  saveGalleryImageEdit,
+  restoreGalleryOriginal,
   deleteGalleryItem,
   reorderGalleryItems,
   incrementGalleryItemView,
   type CreateGalleryItemInput,
   type UpdateGalleryItemInput,
+  type SaveGalleryImageEditInput,
   type GalleryItem,
 } from '../lib/supabase/queries/gallery';
 
@@ -67,6 +70,26 @@ export function useUpdateGalleryItem() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateGalleryItemInput }) =>
       updateGalleryItem(id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: GALLERY_QUERY_KEY });
+    },
+  });
+}
+
+export function useSaveGalleryImageEdit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SaveGalleryImageEditInput) => saveGalleryImageEdit(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: GALLERY_QUERY_KEY });
+    },
+  });
+}
+
+export function useRestoreGalleryOriginal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => restoreGalleryOriginal(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: GALLERY_QUERY_KEY });
     },

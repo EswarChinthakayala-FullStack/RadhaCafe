@@ -19,6 +19,7 @@ interface AdminGalleryViewerProps {
   selectedIndex: number | null;
   onClose: () => void;
   onSelectIndex: (index: number) => void;
+  onEditPhoto?: (item: GalleryItem) => void;
   onEditCaption: (item: GalleryItem) => void;
   onDeleteImage: (item: GalleryItem) => void;
 }
@@ -28,6 +29,7 @@ export function AdminGalleryViewer({
   selectedIndex,
   onClose,
   onSelectIndex,
+  onEditPhoto,
   onEditCaption,
   onDeleteImage,
 }: AdminGalleryViewerProps) {
@@ -106,6 +108,18 @@ export function AdminGalleryViewer({
 
         {/* Action Controls */}
         <div className="flex items-center gap-1.5">
+          {onEditPhoto && (
+            <Button
+              size="sm"
+              onClick={() => onEditPhoto(currentItem)}
+              className="h-8 text-xs font-bold bg-cinnamon hover:bg-cinnamon/90 text-white gap-1.5 rounded-lg px-3 shadow-xs"
+              title="Open Photo Editor"
+            >
+              <HugeiconsIcon icon={Edit02Icon} size={14} />
+              <span>Edit Photo</span>
+            </Button>
+          )}
+
           <Button
             size="sm"
             variant="ghost"
@@ -124,8 +138,8 @@ export function AdminGalleryViewer({
             className="h-8 text-xs font-semibold text-white/80 hover:text-white hover:bg-white/10 gap-1.5 rounded-lg px-2.5"
             title="Edit Caption"
           >
-            <HugeiconsIcon icon={Edit02Icon} size={14} />
-            <span className="hidden sm:inline">Edit Caption</span>
+            <HugeiconsIcon icon={ViewIcon} size={14} />
+            <span className="hidden sm:inline">Caption</span>
           </Button>
 
           <Button
