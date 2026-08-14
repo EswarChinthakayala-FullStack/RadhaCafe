@@ -77,7 +77,7 @@ export function PrinterPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 max-w-7xl w-full min-w-0 mx-auto pb-12 overflow-x-hidden">
       {/* 1. Operational Status Hero Panel */}
       <PrinterStatusHero
         status={status}
@@ -96,9 +96,9 @@ export function PrinterPage() {
       />
 
       {/* 2. Responsive 2-Column Desktop / Stacked Mobile Layout */}
-      <div className="grid lg:grid-cols-12 gap-6 items-start">
+      <div className="grid lg:grid-cols-12 gap-6 items-start w-full min-w-0">
         {/* Left Column (~60-65%): Testing, Diagnostics, Troubleshooting & Technical */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7 space-y-6 w-full min-w-0">
           {/* Test Printing Center */}
           <PrinterTestPanel
             onPrintTestReceipt={() => printTestReceipt(cafeSettings?.cafe_name || 'RadhaCafe')}
@@ -126,7 +126,7 @@ export function PrinterPage() {
         </div>
 
         {/* Right Column (~35-40%): Receipt Configuration & Live Sample Preview */}
-        <div className="lg:col-span-5 lg:sticky lg:top-4 space-y-6">
+        <div className="lg:col-span-5 lg:sticky lg:top-4 space-y-6 w-full min-w-0">
           <PrinterReceiptSettings
             paperWidth={paperWidth}
             autoConnect={autoConnect}

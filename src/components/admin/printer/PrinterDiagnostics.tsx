@@ -71,15 +71,15 @@ export function PrinterDiagnostics({
   ];
 
   return (
-    <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
-      <CardHeader className="p-5 sm:p-6 pb-4 border-b border-border/60">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs">
+    <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden w-full min-w-0">
+      <CardHeader className="p-4 sm:p-6 pb-4 border-b border-border/60">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs shrink-0">
               <HugeiconsIcon icon={Shield01Icon} size={18} />
             </div>
-            <div>
-              <CardTitle className="text-base font-bold font-heading text-foreground">
+            <div className="min-w-0">
+              <CardTitle className="text-base font-bold font-heading text-foreground truncate">
                 Printer Connection Diagnostics
               </CardTitle>
               <CardDescription className="text-xs">

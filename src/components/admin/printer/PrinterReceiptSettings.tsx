@@ -110,16 +110,16 @@ export function PrinterReceiptSettings({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full min-w-0">
       {/* 1. Configuration Controls Card */}
-      <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
-        <CardHeader className="p-5 sm:p-6 pb-4 border-b border-border/60">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs">
+      <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden w-full min-w-0">
+        <CardHeader className="p-4 sm:p-6 pb-4 border-b border-border/60">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs shrink-0">
               <HugeiconsIcon icon={Settings01Icon} size={18} />
             </div>
-            <div>
-              <CardTitle className="text-base font-bold font-heading text-foreground">
+            <div className="min-w-0">
+              <CardTitle className="text-base font-bold font-heading text-foreground truncate">
                 Receipt & Paper Setup
               </CardTitle>
               <CardDescription className="text-xs">
@@ -225,7 +225,7 @@ export function PrinterReceiptSettings({
       </Card>
 
       {/* 2. Interactive Receipt Preview Card */}
-      <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
+      <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden w-full min-w-0">
         <CardHeader className="p-4 sm:p-5 pb-2 border-b border-border/60">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-bold text-foreground">

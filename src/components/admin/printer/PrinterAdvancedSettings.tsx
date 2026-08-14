@@ -66,15 +66,15 @@ export function PrinterAdvancedSettings({
   };
 
   return (
-    <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
-      <CardHeader className="p-5 sm:p-6 pb-4 border-b border-border/60">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs">
+    <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden w-full min-w-0">
+      <CardHeader className="p-4 sm:p-6 pb-4 border-b border-border/60">
+        <div className="flex items-center justify-between gap-3 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs shrink-0">
               <HugeiconsIcon icon={CodeIcon} size={18} />
             </div>
-            <div>
-              <CardTitle className="text-base font-bold font-heading text-foreground">
+            <div className="min-w-0">
+              <CardTitle className="text-base font-bold font-heading text-foreground truncate">
                 Technical Details & Logs
               </CardTitle>
               <CardDescription className="text-xs">
@@ -88,16 +88,16 @@ export function PrinterAdvancedSettings({
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="h-8.5 text-xs text-muted-foreground hover:text-foreground gap-1.5 rounded-xl px-3"
+            className="h-8.5 text-xs text-muted-foreground hover:text-foreground gap-1.5 rounded-xl px-2.5 shrink-0"
           >
-            <span>{isExpanded ? 'Hide Details' : 'Show Details'}</span>
+            <span>{isExpanded ? 'Hide' : 'Details'}</span>
             <HugeiconsIcon icon={isExpanded ? ArrowUp01Icon : ArrowDown01Icon} size={13} />
           </Button>
         </div>
       </CardHeader>
 
       {isExpanded && (
-        <CardContent className="p-5 sm:p-6 space-y-5 text-xs">
+        <CardContent className="p-4 sm:p-6 space-y-5 text-xs">
           {/* Hardware Parameters Grid */}
           <div className="grid sm:grid-cols-2 gap-3.5">
             <div className="p-3.5 rounded-xl bg-secondary/30 border border-border/60 space-y-1.5">

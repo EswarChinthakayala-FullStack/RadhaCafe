@@ -63,12 +63,12 @@ export function PrinterStatusHero({
   };
 
   return (
-    <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-7 shadow-xs space-y-5">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+    <div className="rounded-2xl border border-border/80 bg-card p-4 sm:p-7 shadow-xs space-y-5 w-full min-w-0 overflow-hidden">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 w-full min-w-0">
         {/* Left: Device Icon + Title + Status */}
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3 sm:gap-4 w-full min-w-0">
           <div
-            className={`p-3.5 rounded-2xl shrink-0 border shadow-2xs transition-colors ${
+            className={`p-2.5 sm:p-3.5 rounded-2xl shrink-0 border shadow-2xs transition-colors ${
               isConnected
                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
                 : isConnecting
@@ -76,12 +76,12 @@ export function PrinterStatusHero({
                 : 'bg-secondary border-border text-muted-foreground'
             }`}
           >
-            <HugeiconsIcon icon={PrinterIcon} size={28} />
+            <HugeiconsIcon icon={PrinterIcon} size={24} className="sm:size-7" />
           </div>
 
-          <div className="space-y-1.5 min-w-0">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold font-heading text-foreground tracking-tight">
+          <div className="space-y-1.5 min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <h1 className="text-lg sm:text-2xl font-bold font-heading text-foreground tracking-tight truncate max-w-full">
                 {isConnected && device?.name
                   ? device.name
                   : savedPrinterName
@@ -92,7 +92,7 @@ export function PrinterStatusHero({
               {/* Status Badge */}
               <Badge
                 variant="outline"
-                className={`text-xs font-bold rounded-lg px-2.5 py-0.5 capitalize shrink-0 ${
+                className={`text-[11px] sm:text-xs font-bold rounded-lg px-2.5 py-0.5 capitalize shrink-0 ${
                   isConnected
                     ? 'bg-emerald-600 hover:bg-emerald-600 text-white border-emerald-600'
                     : isConnecting
@@ -109,7 +109,7 @@ export function PrinterStatusHero({
               </Badge>
             </div>
 
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed break-words">
               {isConnected
                 ? 'Ready to print customer receipts for counter and takeaway orders.'
                 : isConnecting
@@ -131,7 +131,7 @@ export function PrinterStatusHero({
                 <span className="bg-secondary/60 px-2 py-0.5 rounded-md border border-border/50 font-mono">
                   {paperWidth === 48 ? '80mm / 48 cols' : '58mm / 32 cols'}
                 </span>
-                <span className="bg-secondary/60 px-2 py-0.5 rounded-md border border-border/50 font-medium">
+                <span className="bg-secondary/60 px-2 py-0.5 rounded-md border border-border/50 font-medium truncate max-w-[160px]">
                   {activeTemplateName}
                 </span>
               </div>
@@ -140,7 +140,7 @@ export function PrinterStatusHero({
         </div>
 
         {/* Right: Operational Actions */}
-        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
+        <div className="flex items-center gap-2 flex-wrap shrink-0 pt-2 lg:pt-0">
           {isConnected ? (
             <>
               <Button

@@ -76,14 +76,14 @@ export function PrinterTestPanel({
   };
 
   return (
-    <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
-      <CardHeader className="p-5 sm:p-6 pb-4 border-b border-border/60">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs">
+    <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden w-full min-w-0">
+      <CardHeader className="p-4 sm:p-6 pb-4 border-b border-border/60">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs shrink-0">
             <HugeiconsIcon icon={PrinterIcon} size={18} />
           </div>
-          <div>
-            <CardTitle className="text-base font-bold font-heading text-foreground">
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-base font-bold font-heading text-foreground truncate">
               Printer Hardware Testing
             </CardTitle>
             <CardDescription className="text-xs">
@@ -93,10 +93,10 @@ export function PrinterTestPanel({
         </div>
       </CardHeader>
 
-      <CardContent className="p-5 sm:p-6 space-y-4 text-xs">
-        <div className="grid sm:grid-cols-2 gap-3.5">
+      <CardContent className="p-4 sm:p-6 space-y-4 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full min-w-0">
           {/* Option 1: Raw ESC/POS Diagnostics Test */}
-          <div className="p-4 rounded-xl bg-secondary/30 border border-border/60 space-y-3 flex flex-col justify-between">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-secondary/30 border border-border/60 space-y-3 flex flex-col justify-between min-w-0">
             <div className="space-y-1">
               <h4 className="font-bold text-foreground text-xs flex items-center gap-1.5">
                 <span>Standard Hardware Test</span>
@@ -129,7 +129,7 @@ export function PrinterTestPanel({
           </div>
 
           {/* Option 2: Active Template Real Receipt Test */}
-          <div className="p-4 rounded-xl bg-secondary/30 border border-border/60 space-y-3 flex flex-col justify-between">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-secondary/30 border border-border/60 space-y-3 flex flex-col justify-between min-w-0">
             <div className="space-y-1">
               <h4 className="font-bold text-foreground text-xs flex items-center gap-1.5">
                 <span>Active Template Test</span>
