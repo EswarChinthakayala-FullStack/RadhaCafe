@@ -1,11 +1,16 @@
+import { useEffect, useCallback } from 'react';
 import { usePrinterStore } from '../store/printerStore';
 import {
   disconnectBluetoothPrinter,
   requestBluetoothPrinter,
+  reconnectKnownPrinter,
+  getPreviouslyGrantedPrinters,
   sendEscPosData,
   isBluetoothSupported,
   isSecureContext,
+  isGetDevicesSupported,
   normalizePrinterError,
+  type ConnectionStage,
 } from '../lib/printer/bluetoothPrinter';
 import { encodeTestReceiptToEscPos, encodeTemplateReceiptToEscPos } from '../lib/printer/escpos';
 import { printOrderViaBrowser } from '../lib/printer/browserPrint';
@@ -18,47 +23,127 @@ export function useBluetoothPrinter() {
   const queryClient = useQueryClient();
 
   const status = usePrinterStore((state) => state.status);
+  const connectionStage = usePrinterStore((state) => state.connectionStage);
   const device = usePrinterStore((state) => state.device);
+  const knownPrinters = usePrinterStore((state) => state.knownPrinters);
   const lastError = usePrinterStore((state) => state.lastError);
   const setStatus = usePrinterStore((state) => state.setStatus);
+  const setConnectionStage = usePrinterStore((state) => state.setConnectionStage);
   const setDevice = usePrinterStore((state) => state.setDevice);
+  const setKnownPrinters = usePrinterStore((state) => state.setKnownPrinters);
   const setError = usePrinterStore((state) => state.setError);
   const resetStore = usePrinterStore((state) => state.reset);
 
   /**
-   * Connect to Bluetooth thermal printer.
-   * MUST originate from explicit user gesture (e.g. click event).
+   * Refreshes list of previously authorized Bluetooth devices
    */
-  const connect = async () => {
+  const refreshKnownPrinters = useCallback(async () => {
+    try {
+      const granted = await getPreviouslyGrantedPrinters();
+      setKnownPrinters(granted);
+    } catch {
+      // Ignore
+    }
+  }, [setKnownPrinters]);
+
+  // Load known devices on mount
+  useEffect(() => {
+    refreshKnownPrinters();
+  }, [refreshKnownPrinters]);
+
+  /**
+   * Scan for new thermal printer and connect via native browser chooser
+   * MUST originate from explicit user click.
+   */
+  const scanAndConnect = async () => {
     try {
       setError(null);
       setStatus('connecting');
+      setConnectionStage('requesting');
 
-      const btDevice = await requestBluetoothPrinter(() => {
-        setDevice(null);
-        setStatus('disconnected');
-      });
+      const btDevice = await requestBluetoothPrinter(
+        () => {
+          setDevice(null);
+          setStatus('disconnected');
+          setConnectionStage('idle');
+        },
+        (stage: ConnectionStage) => {
+          setConnectionStage(stage);
+        }
+      );
 
       const printerDevice = {
         id: btDevice.id,
-        name: btDevice.name || 'Thermal Printer',
+        name: btDevice.name || 'Bluetooth Thermal Printer',
         connected: true,
       };
 
       setDevice(printerDevice);
       setStatus('connected');
+      setConnectionStage('ready');
 
-      // Persist printer metadata to Supabase in background
+      // Persist preferred printer metadata to Supabase
       await updatePrinterSettings({
         printer_name: printerDevice.name,
         device_id: printerDevice.id,
       }).catch(() => null);
 
       queryClient.invalidateQueries({ queryKey: ['printerSettings'] });
+      refreshKnownPrinters();
+      return true;
+    } catch (err: any) {
+      const normalized = normalizePrinterError(err);
+      if (normalized.code === 'PERMISSION_DENIED') {
+        setStatus('disconnected');
+        setConnectionStage('idle');
+        setError(null); // Clean cancel without aggressive red error
+      } else {
+        setError(normalized.message);
+        setStatus('error');
+        setConnectionStage('idle');
+      }
+      return false;
+    }
+  };
+
+  /**
+   * Reconnects to a previously authorized Bluetooth device by ID (without opening chooser)
+   */
+  const reconnectKnownDevice = async (deviceId: string) => {
+    try {
+      setError(null);
+      setStatus('connecting');
+
+      const btDevice = await reconnectKnownPrinter(
+        deviceId,
+        () => {
+          setDevice(null);
+          setStatus('disconnected');
+          setConnectionStage('idle');
+        },
+        (stage: ConnectionStage) => {
+          setConnectionStage(stage);
+        }
+      );
+
+      const printerDevice = {
+        id: btDevice.id,
+        name: btDevice.name || 'Bluetooth Thermal Printer',
+        connected: true,
+      };
+
+      setDevice(printerDevice);
+      setStatus('connected');
+      setConnectionStage('ready');
+
+      queryClient.invalidateQueries({ queryKey: ['printerSettings'] });
+      return true;
     } catch (err: any) {
       const normalized = normalizePrinterError(err);
       setError(normalized.message);
       setStatus('error');
+      setConnectionStage('idle');
+      return false;
     }
   };
 
@@ -69,6 +154,7 @@ export function useBluetoothPrinter() {
     disconnectBluetoothPrinter();
     setDevice(null);
     setStatus('disconnected');
+    setConnectionStage('idle');
   };
 
   /**
@@ -83,6 +169,7 @@ export function useBluetoothPrinter() {
         device_id: null,
       });
       queryClient.invalidateQueries({ queryKey: ['printerSettings'] });
+      refreshKnownPrinters();
     } catch {
       // Ignore database cleanup errors
     }
@@ -94,7 +181,8 @@ export function useBluetoothPrinter() {
   const printOrder = async (order: Order, cafeSettings?: any): Promise<boolean> => {
     try {
       if (status !== 'connected') {
-        await connect();
+        const connected = await scanAndConnect();
+        if (!connected) return false;
       }
 
       setStatus('printing');
@@ -127,7 +215,8 @@ export function useBluetoothPrinter() {
   const printTestReceipt = async (cafeName = 'RadhaCafe'): Promise<boolean> => {
     try {
       if (status !== 'connected') {
-        await connect();
+        const connected = await scanAndConnect();
+        if (!connected) return false;
       }
 
       setStatus('printing');
@@ -150,6 +239,56 @@ export function useBluetoothPrinter() {
   };
 
   /**
+   * Prints sample receipt using active receipt template
+   */
+  const printTemplateTest = async (cafeName = 'RadhaCafe'): Promise<boolean> => {
+    try {
+      if (status !== 'connected') {
+        const connected = await scanAndConnect();
+        if (!connected) return false;
+      }
+
+      setStatus('printing');
+      setError(null);
+
+      const activeTemplate = await fetchActiveReceiptTemplate().catch(() => null);
+
+      const sampleOrder: Order = {
+        id: 'sample-test-01',
+        order_number: 'TEST-001',
+        customer_name: 'Sample Customer',
+        customer_phone: '9876543210',
+        status: 'completed',
+        subtotal: 350,
+        tax: 18,
+        discount: 0,
+        total: 368,
+        payment_method: 'upi',
+        created_at: new Date().toISOString(),
+        items: [
+          { name: 'Cold Coffee with Ice Cream', quantity: 2, unit_price: 120, total_price: 240 },
+          { name: 'Veg Grilled Cheese Sandwich', quantity: 1, unit_price: 110, total_price: 110 },
+        ],
+      } as any;
+
+      const escposBytes = encodeTemplateReceiptToEscPos(
+        sampleOrder,
+        activeTemplate?.template_config,
+        { cafe_name: cafeName }
+      );
+
+      await sendEscPosData(escposBytes);
+      setStatus('connected');
+      return true;
+    } catch (err: any) {
+      const normalized = normalizePrinterError(err);
+      setError(normalized.message);
+      setStatus('error');
+      return false;
+    }
+  };
+
+  /**
    * Browser fallback printing using HTML receipt window dialog
    */
   const printBrowserFallback = (order: Order, cafeSettings?: any): boolean => {
@@ -158,17 +297,26 @@ export function useBluetoothPrinter() {
 
   return {
     status,
+    connectionStage,
     device,
+    knownPrinters,
     lastError,
     isSupported: isBluetoothSupported(),
+    isGetDevicesSupported: isGetDevicesSupported(),
     isSecure: isSecureContext(),
     isConnected: status === 'connected',
     isPrinting: status === 'printing',
-    connect,
+    isConnecting: status === 'connecting',
+    connect: scanAndConnect,
+    scanAndConnect,
+    reconnectKnownDevice,
+    refreshKnownPrinters,
     disconnect,
     forgetPrinter,
     printOrder,
     printTestReceipt,
+    printTemplateTest,
     printBrowserFallback,
   };
 }
+
