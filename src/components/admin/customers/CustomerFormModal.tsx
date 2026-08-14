@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { customerSchema, type CustomerFormData } from '../../../validators/customerSchema';
-import { useCreateCustomer } from '../../../hooks/useCustomers';
+import { useCreateCustomer, useUpdateCustomer } from '../../../hooks/useCustomers';
 import type { Customer } from '../../../types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../ui/dialog';
 import { Button } from '../../ui/button';
@@ -10,17 +10,31 @@ import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Textarea } from '../../ui/textarea';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { UserAdd01Icon, UserIcon, SmartPhoneIcon, NoteIcon } from '@hugeicons/core-free-icons';
+import {
+  UserAdd01Icon,
+  UserIcon,
+  SmartPhoneIcon,
+  NoteIcon,
+  Edit02Icon,
+} from '@hugeicons/core-free-icons';
 import { toast } from '../../ui/toast';
 
 interface CustomerFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (createdCustomer: Customer) => void;
+  customer?: Customer | null;
+  onSuccess?: (savedCustomer: Customer) => void;
 }
 
-export function CustomerFormModal({ open, onOpenChange, onSuccess }: CustomerFormModalProps) {
+export function CustomerFormModal({
+  open,
+  onOpenChange,
+  customer,
+  onSuccess,
+}: CustomerFormModalProps) {
+  const isEditMode = Boolean(customer);
   const createCustomerMutation = useCreateCustomer();
+  const updateCustomerMutation = useUpdateCustomer();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const {
@@ -31,47 +45,90 @@ export function CustomerFormModal({ open, onOpenChange, onSuccess }: CustomerFor
   } = useForm<CustomerFormData>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
-      name: '',
-      phone: '',
-      notes: '',
+      name: customer?.name || '',
+      phone: customer?.phone || '',
+      notes: customer?.notes || '',
     },
   });
+
+  useEffect(() => {
+    if (customer) {
+      reset({
+        name: customer.name,
+        phone: customer.phone,
+        notes: customer.notes || '',
+      });
+    } else {
+      reset({
+        name: '',
+        phone: '',
+        notes: '',
+      });
+    }
+  }, [customer, reset, open]);
 
   const onSubmit = async (data: CustomerFormData) => {
     setErrorMsg(null);
     try {
-      const customer = await createCustomerMutation.mutateAsync({
-        name: data.name.trim(),
-        phone: data.phone.trim(),
-        notes: data.notes?.trim() || null,
-      });
+      if (isEditMode && customer) {
+        const updated = await updateCustomerMutation.mutateAsync({
+          id: customer.id,
+          payload: {
+            name: data.name.trim(),
+            phone: data.phone.trim(),
+            notes: data.notes?.trim() || null,
+          },
+        });
 
-      toast.add({
-        title: 'Customer Added',
-        description: `Customer profile for ${customer.name} created successfully.`,
-        type: 'success',
-      });
+        toast.add({
+          title: 'Customer Profile Updated',
+          description: `Changes to ${updated.name} have been saved.`,
+          type: 'success',
+        });
 
-      reset();
-      onOpenChange(false);
-      if (onSuccess) onSuccess(customer);
+        onOpenChange(false);
+        if (onSuccess) onSuccess(updated);
+      } else {
+        const created = await createCustomerMutation.mutateAsync({
+          name: data.name.trim(),
+          phone: data.phone.trim(),
+          notes: data.notes?.trim() || null,
+        });
+
+        toast.add({
+          title: 'Customer Added',
+          description: `Customer profile for ${created.name} created successfully.`,
+          type: 'success',
+        });
+
+        reset();
+        onOpenChange(false);
+        if (onSuccess) onSuccess(created);
+      }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to create customer profile.');
+      setErrorMsg(err.message || 'Failed to save customer profile.');
     }
   };
+
+  const isPending =
+    isSubmitting ||
+    createCustomerMutation.isPending ||
+    updateCustomerMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-2rem)] max-w-md bg-card border border-border/80 rounded-xl p-4 sm:p-6 shadow-2xl space-y-3 sm:space-y-4 max-h-[90vh] overflow-y-auto">
         <DialogHeader className="space-y-1 text-left">
           <div className="w-10 h-10 rounded-md bg-cinnamon/10 text-cinnamon border border-cinnamon/20 flex items-center justify-center mb-2 shadow-2xs">
-            <HugeiconsIcon icon={UserAdd01Icon} size={20} />
+            <HugeiconsIcon icon={isEditMode ? Edit02Icon : UserAdd01Icon} size={20} />
           </div>
           <DialogTitle className="text-xl font-bold font-heading text-foreground">
-            Create Customer Profile
+            {isEditMode ? 'Edit Customer Profile' : 'Create Customer Profile'}
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
-            Add a new customer for credit / Pay-Later tracking and order history.
+            {isEditMode
+              ? 'Update contact details and notes for this cafe customer.'
+              : 'Add a new customer for credit / Pay-Later tracking and order history.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -145,10 +202,14 @@ export function CustomerFormModal({ open, onOpenChange, onSuccess }: CustomerFor
             <Button
               type="submit"
               size="sm"
-              disabled={isSubmitting || createCustomerMutation.isPending}
+              disabled={isPending}
               className="h-9 text-xs bg-cinnamon hover:bg-cinnamon/90 text-white font-bold rounded-md shadow-xs"
             >
-              {isSubmitting || createCustomerMutation.isPending ? 'Saving...' : 'Create Customer'}
+              {isPending
+                ? 'Saving...'
+                : isEditMode
+                ? 'Save Changes'
+                : 'Create Customer'}
             </Button>
           </div>
         </form>
