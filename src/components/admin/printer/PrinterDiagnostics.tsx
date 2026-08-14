@@ -73,16 +73,16 @@ export function PrinterDiagnostics({
   return (
     <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden w-full min-w-0">
       <CardHeader className="p-4 sm:p-6 pb-4 border-b border-border/60">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full min-w-0">
+          <div className="flex items-start sm:items-center gap-2.5 min-w-0 flex-1">
+            <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs shrink-0 mt-0.5 sm:mt-0">
               <HugeiconsIcon icon={Shield01Icon} size={18} />
             </div>
-            <div className="min-w-0">
-              <CardTitle className="text-base font-bold font-heading text-foreground truncate">
+            <div className="min-w-0 flex-1">
+              <CardTitle className="text-sm sm:text-base font-bold font-heading text-foreground break-words leading-tight">
                 Printer Connection Diagnostics
               </CardTitle>
-              <CardDescription className="text-xs">
+              <CardDescription className="text-xs mt-0.5 leading-relaxed">
                 Inspect browser compatibility, GATT channel availability, and configuration status.
               </CardDescription>
             </div>
@@ -94,7 +94,7 @@ export function PrinterDiagnostics({
             size="sm"
             onClick={handleRunCheck}
             disabled={isRunningCheck}
-            className="h-8.5 text-xs font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-1.5 shadow-2xs"
+            className="h-8.5 text-xs font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-1.5 shadow-2xs self-start sm:self-auto shrink-0"
           >
             {isRunningCheck ? (
               <>
@@ -111,18 +111,18 @@ export function PrinterDiagnostics({
         </div>
       </CardHeader>
 
-      <CardContent className="p-5 sm:p-6 space-y-2.5 text-xs">
+      <CardContent className="p-4 sm:p-6 space-y-2.5 text-xs">
         {checks.map((check, i) => (
           <div
             key={i}
-            className="flex items-center justify-between p-3 rounded-xl bg-secondary/30 border border-border/60 gap-3"
+            className="flex items-start sm:items-center justify-between p-3 rounded-xl bg-secondary/30 border border-border/60 gap-3"
           >
-            <div className="space-y-0.5 min-w-0">
-              <p className="font-semibold text-foreground">{check.name}</p>
-              <p className="text-[11px] text-muted-foreground truncate">{check.desc}</p>
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <p className="font-semibold text-foreground text-xs">{check.name}</p>
+              <p className="text-[11px] text-muted-foreground break-words leading-relaxed">{check.desc}</p>
             </div>
 
-            <div className="shrink-0">
+            <div className="shrink-0 mt-0.5 sm:mt-0">
               {check.status === 'passed' ? (
                 <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white font-bold text-[10px] gap-1 rounded-md px-2 py-0.5">
                   <HugeiconsIcon icon={CheckmarkCircle02Icon} size={12} />

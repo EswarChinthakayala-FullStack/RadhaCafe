@@ -114,22 +114,22 @@ export function PrinterReceiptSettings({
       {/* 1. Configuration Controls Card */}
       <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden w-full min-w-0">
         <CardHeader className="p-4 sm:p-6 pb-4 border-b border-border/60">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs shrink-0">
+          <div className="flex items-start sm:items-center gap-2.5 min-w-0">
+            <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs shrink-0 mt-0.5 sm:mt-0">
               <HugeiconsIcon icon={Settings01Icon} size={18} />
             </div>
-            <div className="min-w-0">
-              <CardTitle className="text-base font-bold font-heading text-foreground truncate">
+            <div className="min-w-0 flex-1">
+              <CardTitle className="text-sm sm:text-base font-bold font-heading text-foreground break-words leading-tight">
                 Receipt & Paper Setup
               </CardTitle>
-              <CardDescription className="text-xs">
+              <CardDescription className="text-xs mt-0.5 leading-relaxed">
                 Configure thermal roll width, auto-reconnect, and active receipt template.
               </CardDescription>
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="p-5 sm:p-6 space-y-5 text-xs">
+        <CardContent className="p-4 sm:p-6 space-y-5 text-xs">
           {/* Paper Width Selection (Segmented UI) */}
           <div className="space-y-2">
             <Label className="text-xs font-bold text-foreground block">
@@ -139,7 +139,7 @@ export function PrinterReceiptSettings({
               Select the paper roll size loaded in your thermal receipt printer.
             </p>
 
-            <div className="grid grid-cols-2 gap-2.5 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={() => handleWidthSelect(32)}
@@ -198,12 +198,12 @@ export function PrinterReceiptSettings({
           </div>
 
           {/* Active Receipt Template Banner */}
-          <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-3 p-3.5 rounded-xl bg-secondary/30 border border-border/60">
-            <div className="space-y-0.5 min-w-0">
-              <div className="flex items-center gap-1.5 text-foreground font-semibold text-xs">
-                <HugeiconsIcon icon={FileAttachmentIcon} size={14} className="text-cinnamon" />
+          <div className="pt-3 border-t border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-secondary/30 border border-border/60">
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 text-foreground font-semibold text-xs flex-wrap">
+                <HugeiconsIcon icon={FileAttachmentIcon} size={14} className="text-cinnamon shrink-0" />
                 <span>Active Template:</span>
-                <span className="font-bold font-mono text-cinnamon truncate">{activeTemplateName}</span>
+                <span className="font-bold font-mono text-cinnamon break-words">{activeTemplateName}</span>
               </div>
               <p className="text-[10px] text-muted-foreground">
                 Headers, footers, and font styling configured in Template Builder.
@@ -215,7 +215,7 @@ export function PrinterReceiptSettings({
               variant="outline"
               size="xs"
               onClick={() => navigate('/admin/settings/receipts')}
-              className="h-8 text-xs font-semibold rounded-lg border-border/80 bg-card hover:bg-secondary gap-1 shrink-0"
+              className="h-8 text-xs font-semibold rounded-lg border-border/80 bg-card hover:bg-secondary gap-1 self-start sm:self-auto shrink-0"
             >
               <span>Edit Template</span>
               <HugeiconsIcon icon={ArrowRight01Icon} size={12} />

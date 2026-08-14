@@ -62,14 +62,14 @@ export function ReceiptGalleryHeader({
         </div>
       </div>
 
-      {/* Right Desktop Actions */}
-      <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+      {/* Right Actions */}
+      <div className="flex items-center gap-2.5 flex-wrap shrink-0 w-full sm:w-auto">
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={() => navigate(ROUTES.ADMIN.PRINTER)}
-          className="h-9 text-xs font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-1.5 shadow-2xs"
+          className="h-9 text-xs font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-1.5 shadow-2xs flex-1 sm:flex-none justify-center"
         >
           <HugeiconsIcon icon={PrinterIcon} size={14} />
           <span>Printer Setup</span>
@@ -79,7 +79,7 @@ export function ReceiptGalleryHeader({
           type="button"
           size="sm"
           onClick={onCreateTemplate}
-          className="h-9 text-xs font-bold rounded-xl bg-cinnamon hover:bg-cinnamon/90 text-white gap-1.5 shadow-2xs"
+          className="h-9 text-xs font-bold rounded-xl bg-cinnamon hover:bg-cinnamon/90 text-white gap-1.5 shadow-2xs flex-1 sm:flex-none justify-center"
         >
           <HugeiconsIcon icon={Add01Icon} size={15} />
           <span>Create Template</span>

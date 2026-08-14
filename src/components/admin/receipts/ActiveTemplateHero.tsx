@@ -119,11 +119,11 @@ export function ActiveTemplateHero({
             </div>
 
             {/* Operational Action Buttons */}
-            <div className="flex items-center gap-2.5 flex-wrap pt-2">
+            <div className="flex items-center gap-2.5 flex-wrap pt-2 w-full">
               <Button
                 type="button"
                 onClick={() => onCustomize(activeTemplate)}
-                className="h-10 text-xs sm:text-sm font-bold rounded-xl bg-cinnamon hover:bg-cinnamon/90 text-white gap-2 shadow-2xs"
+                className="h-10 text-xs sm:text-sm font-bold rounded-xl bg-cinnamon hover:bg-cinnamon/90 text-white gap-2 shadow-2xs flex-1 sm:flex-none justify-center"
               >
                 <HugeiconsIcon icon={Edit02Icon} size={16} />
                 <span>Customize Template</span>
@@ -133,7 +133,7 @@ export function ActiveTemplateHero({
                 type="button"
                 variant="outline"
                 onClick={() => onPreview(activeTemplate)}
-                className="h-10 text-xs sm:text-sm font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-2 shadow-2xs"
+                className="h-10 text-xs sm:text-sm font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-2 shadow-2xs flex-1 sm:flex-none justify-center"
               >
                 <HugeiconsIcon icon={ViewIcon} size={16} />
                 <span>Preview Full Receipt</span>
@@ -144,7 +144,7 @@ export function ActiveTemplateHero({
                 variant="outline"
                 onClick={onTestPrint}
                 disabled={isTestPrinting}
-                className="h-10 text-xs sm:text-sm font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-2 shadow-2xs"
+                className="h-10 text-xs sm:text-sm font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-2 shadow-2xs flex-1 sm:flex-none justify-center"
               >
                 <HugeiconsIcon icon={PrinterIcon} size={16} className="text-cinnamon" />
                 <span>{isTestPrinting ? 'Transmitting...' : 'Test Print'}</span>

@@ -68,16 +68,16 @@ export function PrinterAdvancedSettings({
   return (
     <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden w-full min-w-0">
       <CardHeader className="p-4 sm:p-6 pb-4 border-b border-border/60">
-        <div className="flex items-center justify-between gap-3 min-w-0">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full min-w-0">
+          <div className="flex items-start sm:items-center gap-2.5 min-w-0 flex-1">
+            <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs shrink-0 mt-0.5 sm:mt-0">
               <HugeiconsIcon icon={CodeIcon} size={18} />
             </div>
-            <div className="min-w-0">
-              <CardTitle className="text-base font-bold font-heading text-foreground truncate">
+            <div className="min-w-0 flex-1">
+              <CardTitle className="text-sm sm:text-base font-bold font-heading text-foreground break-words leading-tight">
                 Technical Details & Logs
               </CardTitle>
-              <CardDescription className="text-xs">
+              <CardDescription className="text-xs mt-0.5 leading-relaxed">
                 GATT service parameters, BLE transmission configurations, and live event history.
               </CardDescription>
             </div>
@@ -88,9 +88,9 @@ export function PrinterAdvancedSettings({
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="h-8.5 text-xs text-muted-foreground hover:text-foreground gap-1.5 rounded-xl px-2.5 shrink-0"
+            className="h-8.5 text-xs text-muted-foreground hover:text-foreground gap-1.5 rounded-xl px-2.5 self-start sm:self-auto shrink-0"
           >
-            <span>{isExpanded ? 'Hide' : 'Details'}</span>
+            <span>{isExpanded ? 'Hide Details' : 'View Details'}</span>
             <HugeiconsIcon icon={isExpanded ? ArrowUp01Icon : ArrowDown01Icon} size={13} />
           </Button>
         </div>

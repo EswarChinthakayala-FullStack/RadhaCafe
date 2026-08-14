@@ -12,15 +12,15 @@ export function PrinterTroubleshooting() {
   return (
     <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden w-full min-w-0">
       <CardHeader className="p-4 sm:p-6 pb-4 border-b border-border/60">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs shrink-0">
+        <div className="flex items-start sm:items-center gap-2.5 min-w-0">
+          <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs shrink-0 mt-0.5 sm:mt-0">
             <HugeiconsIcon icon={HelpCircleIcon} size={18} />
           </div>
           <div className="min-w-0 flex-1">
-            <CardTitle className="text-base font-bold font-heading text-foreground truncate">
+            <CardTitle className="text-sm sm:text-base font-bold font-heading text-foreground break-words leading-tight">
               Printer Troubleshooting Guide
             </CardTitle>
-            <CardDescription className="text-xs">
+            <CardDescription className="text-xs mt-0.5 leading-relaxed">
               Quick fixes for common thermal printer connectivity, pairing, and paper feed questions.
             </CardDescription>
           </div>

@@ -385,9 +385,9 @@ export function ReceiptTemplateEditorPage() {
   return (
     <div className="space-y-5 pb-16 w-full min-w-0">
       {/* 1. STICKY TOP BAR */}
-      <div className="sticky top-0 z-20 -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 px-4 py-3.5 sm:px-6 bg-card/95 backdrop-blur-md border-b border-border/80 shadow-xs flex items-center justify-between gap-3 flex-wrap">
+      <div className="sticky top-0 z-20 -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 px-4 py-3 sm:px-6 bg-card/95 backdrop-blur-md border-b border-border/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Left: Back Navigation + Template Identity */}
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0 w-full sm:w-auto">
           <Button
             type="button"
             variant="ghost"
@@ -399,12 +399,12 @@ export function ReceiptTemplateEditorPage() {
             <HugeiconsIcon icon={ArrowLeft01Icon} size={18} />
           </Button>
 
-          <div className="space-y-0.5 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+          <div className="space-y-0.5 min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
               <Input
                 value={templateName}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setTemplateName(e.target.value)}
-                className="h-8 font-bold text-sm sm:text-base font-heading bg-transparent border-transparent hover:border-border focus:border-cinnamon focus:bg-card px-1.5 py-0 max-w-[240px] sm:max-w-xs transition-colors"
+                className="h-8 font-bold text-sm sm:text-base font-heading bg-transparent border-transparent hover:border-border focus:border-cinnamon focus:bg-card px-1.5 py-0 max-w-[180px] sm:max-w-xs transition-colors"
                 placeholder="Template Name"
               />
 
@@ -437,7 +437,7 @@ export function ReceiptTemplateEditorPage() {
         </div>
 
         {/* Right: Workspace Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap shrink-0">
+        <div className="flex items-center gap-2 flex-wrap shrink-0 w-full sm:w-auto justify-end">
           {hasUnsavedChanges && (
             <Button
               type="button"

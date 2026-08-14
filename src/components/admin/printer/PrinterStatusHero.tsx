@@ -81,7 +81,7 @@ export function PrinterStatusHero({
 
           <div className="space-y-1.5 min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap min-w-0">
-              <h1 className="text-lg sm:text-2xl font-bold font-heading text-foreground tracking-tight truncate max-w-full">
+              <h1 className="text-base sm:text-2xl font-bold font-heading text-foreground tracking-tight break-words">
                 {isConnected && device?.name
                   ? device.name
                   : savedPrinterName
@@ -131,7 +131,7 @@ export function PrinterStatusHero({
                 <span className="bg-secondary/60 px-2 py-0.5 rounded-md border border-border/50 font-mono">
                   {paperWidth === 48 ? '80mm / 48 cols' : '58mm / 32 cols'}
                 </span>
-                <span className="bg-secondary/60 px-2 py-0.5 rounded-md border border-border/50 font-medium truncate max-w-[160px]">
+                <span className="bg-secondary/60 px-2 py-0.5 rounded-md border border-border/50 font-medium break-words">
                   {activeTemplateName}
                 </span>
               </div>
@@ -140,7 +140,7 @@ export function PrinterStatusHero({
         </div>
 
         {/* Right: Operational Actions */}
-        <div className="flex items-center gap-2 flex-wrap shrink-0 pt-2 lg:pt-0">
+        <div className="flex items-center gap-2 flex-wrap shrink-0 pt-2 lg:pt-0 w-full lg:w-auto">
           {isConnected ? (
             <>
               <Button
@@ -148,7 +148,7 @@ export function PrinterStatusHero({
                 size="sm"
                 onClick={onTestPrint}
                 disabled={isTestPrinting}
-                className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs rounded-xl h-10 px-4 shadow-2xs gap-1.5"
+                className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs rounded-xl h-10 px-4 shadow-2xs gap-1.5 flex-1 sm:flex-none justify-center"
               >
                 {isTestPrinting ? (
                   <>
@@ -168,7 +168,7 @@ export function PrinterStatusHero({
                 variant="outline"
                 size="sm"
                 onClick={onDisconnect}
-                className="text-xs font-semibold rounded-xl h-10 px-3 border-border/80 bg-card hover:bg-secondary text-foreground"
+                className="text-xs font-semibold rounded-xl h-10 px-3 border-border/80 bg-card hover:bg-secondary text-foreground flex-1 sm:flex-none justify-center"
               >
                 Disconnect
               </Button>
@@ -178,7 +178,7 @@ export function PrinterStatusHero({
                 variant="ghost"
                 size="sm"
                 onClick={onOpenWizard}
-                className="text-xs text-muted-foreground hover:text-foreground rounded-xl h-10 px-3"
+                className="text-xs text-muted-foreground hover:text-foreground rounded-xl h-10 px-3 flex-1 sm:flex-none justify-center"
               >
                 Choose Another
               </Button>
@@ -192,7 +192,7 @@ export function PrinterStatusHero({
                   size="sm"
                   onClick={() => onReconnect(savedDeviceId)}
                   disabled={isConnecting}
-                  className="text-xs font-bold rounded-xl h-10 px-3.5 border-cinnamon/40 bg-cinnamon/5 hover:bg-cinnamon/10 text-cinnamon gap-1.5 shadow-2xs"
+                  className="text-xs font-bold rounded-xl h-10 px-3.5 border-cinnamon/40 bg-cinnamon/5 hover:bg-cinnamon/10 text-cinnamon gap-1.5 shadow-2xs flex-1 sm:flex-none justify-center"
                 >
                   <HugeiconsIcon icon={RefreshIcon} size={14} />
                   <span>Reconnect</span>
@@ -204,7 +204,7 @@ export function PrinterStatusHero({
                 size="sm"
                 onClick={onOpenWizard}
                 disabled={isConnecting || !isSupported}
-                className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs rounded-xl h-10 px-4 shadow-2xs gap-1.5"
+                className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs rounded-xl h-10 px-4 shadow-2xs gap-1.5 flex-1 sm:flex-none justify-center"
               >
                 <HugeiconsIcon icon={BluetoothIcon} size={15} />
                 <span>{savedDeviceId ? 'Pair New Printer' : 'Connect Thermal Printer'}</span>
