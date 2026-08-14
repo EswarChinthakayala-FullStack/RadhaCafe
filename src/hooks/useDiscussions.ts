@@ -136,17 +136,55 @@ export function useToggleReviewHelpful() {
 }
 
 /**
- * Admin: Reply to customer review
+ * Admin: Reply to customer review (with instant optimistic update)
  */
 export function useAdminReplyReview() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ reviewId, reply }: { reviewId: string; reply: string }) =>
       adminReplyToReview(reviewId, reply),
+    onMutate: async ({ reviewId, reply }) => {
+      const nowIso = new Date().toISOString();
+
+      // 1. Instantly update single review detail cache
+      queryClient.setQueryData<DiscussionReview | null>(
+        [...ADMIN_REVIEW_DETAIL_QUERY_KEY, reviewId],
+        (prev) => (prev ? { ...prev, admin_reply: reply, admin_replied_at: nowIso } : null)
+      );
+
+      // 2. Instantly update all list queries in cache
+      queryClient.setQueriesData<AdminReviewsResponse>(
+        { queryKey: ADMIN_REVIEWS_QUERY_KEY },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.map((item) =>
+              item.id === reviewId ? { ...item, admin_reply: reply, admin_replied_at: nowIso } : item
+            ),
+          };
+        }
+      );
+
+      // 3. Instantly update summary counters
+      queryClient.setQueryData<AdminReviewSummary>(
+        ADMIN_REVIEW_SUMMARY_QUERY_KEY,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            needs_reply_count: Math.max(0, old.needs_reply_count - 1),
+            replied_count: old.replied_count + 1,
+          };
+        }
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DISCUSSIONS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_SUMMARY_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ADMIN_REVIEWS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_DETAIL_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_NAV_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: PUBLIC_REVIEWS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: REVIEW_SUMMARY_QUERY_KEY });
     },
@@ -154,16 +192,52 @@ export function useAdminReplyReview() {
 }
 
 /**
- * Admin: Delete reply from review
+ * Admin: Delete reply from review (with instant optimistic update)
  */
 export function useAdminDeleteReply() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (reviewId: string) => adminDeleteReviewReply(reviewId),
+    onMutate: async (reviewId: string) => {
+      // 1. Instantly update single review detail cache
+      queryClient.setQueryData<DiscussionReview | null>(
+        [...ADMIN_REVIEW_DETAIL_QUERY_KEY, reviewId],
+        (prev) => (prev ? { ...prev, admin_reply: null, admin_replied_at: null } : null)
+      );
+
+      // 2. Instantly update all list queries in cache
+      queryClient.setQueriesData<AdminReviewsResponse>(
+        { queryKey: ADMIN_REVIEWS_QUERY_KEY },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.map((item) =>
+              item.id === reviewId ? { ...item, admin_reply: null, admin_replied_at: null } : item
+            ),
+          };
+        }
+      );
+
+      // 3. Instantly update summary counters
+      queryClient.setQueryData<AdminReviewSummary>(
+        ADMIN_REVIEW_SUMMARY_QUERY_KEY,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            needs_reply_count: old.needs_reply_count + 1,
+            replied_count: Math.max(0, old.replied_count - 1),
+          };
+        }
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DISCUSSIONS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_SUMMARY_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ADMIN_REVIEWS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_DETAIL_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_NAV_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: PUBLIC_REVIEWS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: REVIEW_SUMMARY_QUERY_KEY });
     },
@@ -171,16 +245,52 @@ export function useAdminDeleteReply() {
 }
 
 /**
- * Admin: Approve a pending review
+ * Admin: Approve a pending review (with instant optimistic update)
  */
 export function useApproveDiscussion() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => approveReview(id),
+    onMutate: async (id: string) => {
+      // 1. Instantly update single review detail cache
+      queryClient.setQueryData<DiscussionReview | null>(
+        [...ADMIN_REVIEW_DETAIL_QUERY_KEY, id],
+        (prev) => (prev ? { ...prev, is_approved: true } : null)
+      );
+
+      // 2. Instantly update all list queries in cache
+      queryClient.setQueriesData<AdminReviewsResponse>(
+        { queryKey: ADMIN_REVIEWS_QUERY_KEY },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.map((item) =>
+              item.id === id ? { ...item, is_approved: true } : item
+            ),
+          };
+        }
+      );
+
+      // 3. Instantly update summary counters
+      queryClient.setQueryData<AdminReviewSummary>(
+        ADMIN_REVIEW_SUMMARY_QUERY_KEY,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pending_count: Math.max(0, old.pending_count - 1),
+            approved_count: old.approved_count + 1,
+          };
+        }
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DISCUSSIONS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_SUMMARY_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ADMIN_REVIEWS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_DETAIL_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_NAV_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: REVIEW_SUMMARY_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: PUBLIC_REVIEWS_QUERY_KEY });
     },
@@ -188,16 +298,52 @@ export function useApproveDiscussion() {
 }
 
 /**
- * Admin: Unpublish an approved review (revert to pending)
+ * Admin: Unpublish an approved review (with instant optimistic update)
  */
 export function useUnpublishDiscussion() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => unpublishReview(id),
+    onMutate: async (id: string) => {
+      // 1. Instantly update single review detail cache
+      queryClient.setQueryData<DiscussionReview | null>(
+        [...ADMIN_REVIEW_DETAIL_QUERY_KEY, id],
+        (prev) => (prev ? { ...prev, is_approved: false } : null)
+      );
+
+      // 2. Instantly update all list queries in cache
+      queryClient.setQueriesData<AdminReviewsResponse>(
+        { queryKey: ADMIN_REVIEWS_QUERY_KEY },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.map((item) =>
+              item.id === id ? { ...item, is_approved: false } : item
+            ),
+          };
+        }
+      );
+
+      // 3. Instantly update summary counters
+      queryClient.setQueryData<AdminReviewSummary>(
+        ADMIN_REVIEW_SUMMARY_QUERY_KEY,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pending_count: old.pending_count + 1,
+            approved_count: Math.max(0, old.approved_count - 1),
+          };
+        }
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DISCUSSIONS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_SUMMARY_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ADMIN_REVIEWS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_DETAIL_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_NAV_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: REVIEW_SUMMARY_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: PUBLIC_REVIEWS_QUERY_KEY });
     },
@@ -205,16 +351,35 @@ export function useUnpublishDiscussion() {
 }
 
 /**
- * Admin: Permanently delete a review
+ * Admin: Permanently delete a review (with instant optimistic removal)
  */
 export function useDeleteDiscussion() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteReview(id),
+    onMutate: async (id: string) => {
+      // 1. Instantly clear single review detail cache
+      queryClient.removeQueries({ queryKey: [...ADMIN_REVIEW_DETAIL_QUERY_KEY, id] });
+
+      // 2. Instantly remove from all cached lists
+      queryClient.setQueriesData<AdminReviewsResponse>(
+        { queryKey: ADMIN_REVIEWS_QUERY_KEY },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.filter((item) => item.id !== id),
+            totalCount: Math.max(0, old.totalCount - 1),
+          };
+        }
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DISCUSSIONS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_SUMMARY_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ADMIN_REVIEWS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_DETAIL_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_NAV_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: REVIEW_SUMMARY_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: PUBLIC_REVIEWS_QUERY_KEY });
     },
