@@ -21,7 +21,7 @@ export function Footer() {
     { label: 'Menu & Offerings', path: ROUTES.PUBLIC.MENU },
     { label: 'RadhaWater Plants', path: ROUTES.PUBLIC.WATER },
     { label: 'Photo Gallery', path: ROUTES.PUBLIC.GALLERY },
-    { label: 'Guest Reviews', path: ROUTES.PUBLIC.DISCUSSIONS },
+    { label: 'Guest Reviews', path: ROUTES.PUBLIC.REVIEWS },
     { label: 'Visit & Contact', path: ROUTES.PUBLIC.CONTACT },
   ];
 

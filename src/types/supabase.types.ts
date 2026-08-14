@@ -591,6 +591,9 @@ export interface Database {
           message: string
           rating: number | null
           is_approved: boolean
+          admin_reply: string | null
+          admin_replied_at: string | null
+          helpful_count: number
           created_at: string
         }
         Insert: {
@@ -599,6 +602,9 @@ export interface Database {
           message: string
           rating?: number | null
           is_approved?: boolean
+          admin_reply?: string | null
+          admin_replied_at?: string | null
+          helpful_count?: number
           created_at?: string
         }
         Update: {
@@ -607,6 +613,29 @@ export interface Database {
           message?: string
           rating?: number | null
           is_approved?: boolean
+          admin_reply?: string | null
+          admin_replied_at?: string | null
+          helpful_count?: number
+          created_at?: string
+        }
+      }
+      review_helpful_votes: {
+        Row: {
+          id: string
+          review_id: string
+          anonymous_session_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          review_id: string
+          anonymous_session_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          review_id?: string
+          anonymous_session_id?: string
           created_at?: string
         }
       }

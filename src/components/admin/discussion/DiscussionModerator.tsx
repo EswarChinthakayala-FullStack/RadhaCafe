@@ -9,6 +9,7 @@ import { Card, CardContent } from '../../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { supabase } from '../../../lib/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { AdminReplyModal } from './AdminReplyModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +29,7 @@ import {
   Comment01Icon,
   Cancel01Icon,
   UserIcon,
+  Message01Icon,
 } from '@hugeicons/core-free-icons';
 import type { DiscussionReview } from '../../../lib/supabase/queries/discussion';
 
@@ -39,8 +41,10 @@ export function DiscussionModerator() {
 
   const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'all'>('pending');
   const [ratingFilter, setRatingFilter] = useState<string>('all');
+  const [replyFilter, setReplyFilter] = useState<'all' | 'replied' | 'unreplied'>('all');
   const [search, setSearch] = useState('');
   const [deletingReview, setDeletingReview] = useState<DiscussionReview | null>(null);
+  const [replyingReview, setReplyingReview] = useState<DiscussionReview | null>(null);
 
   // Single lifecycle-controlled Realtime subscription to refresh discussions queue upon public user submission
   useEffect(() => {
@@ -73,6 +77,7 @@ export function DiscussionModerator() {
   const allReviews = reviews || [];
   const pendingCount = allReviews.filter((r) => !r.is_approved).length;
   const approvedCount = allReviews.filter((r) => r.is_approved).length;
+  const repliedCount = allReviews.filter((r) => !!r.admin_reply).length;
 
   const avgRating =
     allReviews.length > 0
@@ -88,12 +93,17 @@ export function DiscussionModerator() {
     const matchesRating =
       ratingFilter === 'all' || r.rating === parseInt(ratingFilter, 10);
 
+    const matchesReply =
+      replyFilter === 'all' ||
+      (replyFilter === 'replied' && !!r.admin_reply) ||
+      (replyFilter === 'unreplied' && !r.admin_reply);
+
     const matchesSearch =
       !search.trim() ||
       r.customer_name.toLowerCase().includes(search.toLowerCase()) ||
       r.message.toLowerCase().includes(search.toLowerCase());
 
-    return matchesStatus && matchesRating && matchesSearch;
+    return matchesStatus && matchesRating && matchesReply && matchesSearch;
   });
 
   const handleDeleteConfirm = async () => {
@@ -148,11 +158,11 @@ export function DiscussionModerator() {
         <Card className="border-border/80 bg-card shadow-xs rounded-md">
           <CardContent className="p-3.5 sm:p-4 flex items-center justify-between">
             <div>
-              <p className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Total Reviews</p>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-foreground font-heading mt-0.5">{allReviews.length}</h3>
+              <p className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Owner Replies</p>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-foreground font-heading mt-0.5">{repliedCount}</h3>
             </div>
-            <Badge variant="outline" className="text-muted-foreground border-border text-[10px] hidden sm:inline-flex">
-              All Time
+            <Badge variant="outline" className="text-cinnamon border-cinnamon/30 bg-cinnamon/10 text-[10px] hidden sm:inline-flex">
+              Responded
             </Badge>
           </CardContent>
         </Card>
@@ -195,7 +205,7 @@ export function DiscussionModerator() {
           {/* Rating Filter & Search */}
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <Select value={ratingFilter} onValueChange={(val) => setRatingFilter(val || 'all')}>
-              <SelectTrigger size="default" className="!h-9 w-36 text-xs rounded-md border-border/80 bg-background font-medium px-3 shadow-xs">
+              <SelectTrigger size="default" className="!h-9 w-32 text-xs rounded-md border-border/80 bg-background font-medium px-3 shadow-xs">
                 <SelectValue placeholder="All Ratings" />
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
@@ -208,7 +218,18 @@ export function DiscussionModerator() {
               </SelectContent>
             </Select>
 
-            <div className="relative flex-1 sm:w-64">
+            <Select value={replyFilter} onValueChange={(val) => setReplyFilter(val as any)}>
+              <SelectTrigger size="default" className="!h-9 w-36 text-xs rounded-md border-border/80 bg-background font-medium px-3 shadow-xs">
+                <SelectValue placeholder="All Replies" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                <SelectItem value="all">All Replies</SelectItem>
+                <SelectItem value="replied">With Reply</SelectItem>
+                <SelectItem value="unreplied">No Reply</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="relative flex-1 sm:w-60">
               <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-muted-foreground">
                 <HugeiconsIcon icon={Search01Icon} size={14} />
               </div>
@@ -240,7 +261,7 @@ export function DiscussionModerator() {
                 <th className="p-3.5">Customer</th>
                 <th className="p-3.5">Rating</th>
                 <th className="p-3.5">Review Message</th>
-                <th className="p-3.5">Submitted</th>
+                <th className="p-3.5">Owner Response</th>
                 <th className="p-3.5">Status</th>
                 <th className="p-3.5 text-right">Actions</th>
               </tr>
@@ -253,7 +274,10 @@ export function DiscussionModerator() {
                       <div className="w-7 h-7 rounded-full bg-cinnamon/10 text-cinnamon flex items-center justify-center font-bold text-xs shrink-0">
                         {review.customer_name.charAt(0).toUpperCase()}
                       </div>
-                      <span>{review.customer_name}</span>
+                      <div>
+                        <p>{review.customer_name}</p>
+                        <p className="text-[10px] text-muted-foreground font-normal">{formatDate(review.created_at)}</p>
+                      </div>
                     </td>
                     <td className="p-3.5">
                       <div className="flex items-center gap-0.5 text-amber-500">
@@ -267,10 +291,23 @@ export function DiscussionModerator() {
                         ))}
                       </div>
                     </td>
-                    <td className="p-3.5 max-w-sm">
-                      <p className="text-foreground leading-relaxed font-normal">{review.message}</p>
+                    <td className="p-3.5 max-w-xs">
+                      <p className="text-foreground leading-relaxed font-normal line-clamp-2">{review.message}</p>
                     </td>
-                    <td className="p-3.5 text-muted-foreground whitespace-nowrap">{formatDate(review.created_at)}</td>
+                    <td className="p-3.5 max-w-xs">
+                      {review.admin_reply ? (
+                        <div className="space-y-0.5">
+                          <Badge variant="outline" className="text-cinnamon border-cinnamon/30 bg-cinnamon/10 text-[10px]">
+                            Replied
+                          </Badge>
+                          <p className="text-[11px] text-muted-foreground line-clamp-1 italic">
+                            "{review.admin_reply}"
+                          </p>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground/60 italic text-[11px]">No response</span>
+                      )}
+                    </td>
                     <td className="p-3.5">
                       <Badge
                         variant={review.is_approved ? 'default' : 'outline'}
@@ -282,7 +319,18 @@ export function DiscussionModerator() {
                         {review.is_approved ? 'Approved' : 'Pending'}
                       </Badge>
                     </td>
-                    <td className="p-3.5 text-right space-x-2 whitespace-nowrap">
+                    <td className="p-3.5 text-right space-x-1.5 whitespace-nowrap">
+                      {/* Owner Reply Button */}
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        onClick={() => setReplyingReview(review)}
+                        className="gap-1 text-xs rounded-md border-border text-foreground hover:bg-secondary"
+                      >
+                        <HugeiconsIcon icon={Message01Icon} size={13} className="text-cinnamon" />
+                        <span>{review.admin_reply ? 'Edit Reply' : 'Reply'}</span>
+                      </Button>
+
                       {!review.is_approved && (
                         <Button
                           size="xs"
@@ -335,15 +383,22 @@ export function DiscussionModerator() {
                   </div>
                 </div>
 
-                <Badge
-                  variant={review.is_approved ? 'default' : 'outline'}
-                  className={`text-[10px] font-bold rounded-lg ${review.is_approved
-                    ? 'bg-emerald-600 text-white border-emerald-600'
-                    : 'text-amber-700 border-amber-500/40 bg-amber-500/10'
-                    }`}
-                >
-                  {review.is_approved ? 'Approved' : 'Pending'}
-                </Badge>
+                <div className="flex items-center gap-1.5">
+                  {review.admin_reply && (
+                    <Badge variant="outline" className="text-cinnamon border-cinnamon/30 bg-cinnamon/10 text-[9px]">
+                      Replied
+                    </Badge>
+                  )}
+                  <Badge
+                    variant={review.is_approved ? 'default' : 'outline'}
+                    className={`text-[10px] font-bold rounded-lg ${review.is_approved
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'text-amber-700 border-amber-500/40 bg-amber-500/10'
+                      }`}
+                  >
+                    {review.is_approved ? 'Approved' : 'Pending'}
+                  </Badge>
+                </div>
               </div>
 
               <div className="flex items-center gap-0.5 text-amber-500">
@@ -362,7 +417,24 @@ export function DiscussionModerator() {
                 "{review.message}"
               </p>
 
+              {review.admin_reply && (
+                <div className="p-2 rounded-md bg-cinnamon/5 border border-cinnamon/20 text-xs space-y-1">
+                  <span className="font-bold text-[10px] text-cinnamon uppercase">Response from RadhaCafe:</span>
+                  <p className="text-muted-foreground italic text-[11px]">"{review.admin_reply}"</p>
+                </div>
+              )}
+
               <div className="flex items-center justify-end gap-2 pt-1 border-t border-border/60">
+                <Button
+                  size="xs"
+                  variant="outline"
+                  onClick={() => setReplyingReview(review)}
+                  className="gap-1 text-xs rounded-md border-border text-foreground flex-1 justify-center"
+                >
+                  <HugeiconsIcon icon={Message01Icon} size={13} className="text-cinnamon" />
+                  <span>{review.admin_reply ? 'Edit Reply' : 'Reply'}</span>
+                </Button>
+
                 {!review.is_approved && (
                   <Button
                     size="xs"
@@ -371,7 +443,7 @@ export function DiscussionModerator() {
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1 text-xs rounded-md shadow-xs flex-1 justify-center"
                   >
                     <HugeiconsIcon icon={CheckmarkCircle02Icon} size={13} />
-                    <span>Approve Review</span>
+                    <span>Approve</span>
                   </Button>
                 )}
                 <Button
@@ -393,6 +465,13 @@ export function DiscussionModerator() {
           </div>
         )}
       </div>
+
+      {/* Admin Reply Modal */}
+      <AdminReplyModal
+        review={replyingReview}
+        open={!!replyingReview}
+        onOpenChange={(open) => !open && setReplyingReview(null)}
+      />
 
       {/* Delete Review Confirmation Alert Dialog */}
       <AlertDialog open={!!deletingReview} onOpenChange={(open) => !open && setDeletingReview(null)}>

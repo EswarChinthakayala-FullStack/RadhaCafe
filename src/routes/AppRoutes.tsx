@@ -3,7 +3,7 @@ import { ROUTES } from '../constants/routes';
 
 import { LandingPage } from '../pages/landing/LandingPage';
 import { PublicGalleryPage } from '../pages/public/PublicGalleryPage';
-import { PublicDiscussionPage } from '../pages/public/PublicDiscussionPage';
+import { PublicReviewsPage } from '../pages/public/PublicReviewsPage';
 import { PublicMenuPage } from '../pages/public/PublicMenuPage';
 import { PublicContactPage } from '../pages/public/PublicContactPage';
 import { PublicWaterPage } from '../pages/public/PublicWaterPage';
@@ -42,7 +42,8 @@ export function AppRoutes() {
       {/* Public Routes */}
       <Route path={ROUTES.PUBLIC.HOME} element={<LandingPage />} />
       <Route path={ROUTES.PUBLIC.GALLERY} element={<PublicGalleryPage />} />
-      <Route path={ROUTES.PUBLIC.DISCUSSIONS} element={<PublicDiscussionPage />} />
+      <Route path={ROUTES.PUBLIC.REVIEWS} element={<PublicReviewsPage />} />
+      <Route path="/discussions" element={<PublicReviewsPage />} />
       <Route path={ROUTES.PUBLIC.MENU} element={<PublicMenuPage />} />
       <Route path={ROUTES.PUBLIC.CONTACT} element={<PublicContactPage />} />
       <Route path={ROUTES.PUBLIC.WATER} element={<PublicWaterPage />} />

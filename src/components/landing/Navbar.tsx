@@ -46,7 +46,7 @@ export function Navbar() {
     { label: 'Menu', href: ROUTES.PUBLIC.MENU, sectionId: 'menu' },
     { label: 'RadhaWater', href: ROUTES.PUBLIC.WATER, sectionId: 'water' },
     { label: 'Gallery', href: ROUTES.PUBLIC.GALLERY, sectionId: 'gallery' },
-    { label: 'Reviews', href: ROUTES.PUBLIC.DISCUSSIONS, sectionId: 'reviews' },
+    { label: 'Reviews', href: ROUTES.PUBLIC.REVIEWS, sectionId: 'reviews' },
     { label: 'Contact', href: ROUTES.PUBLIC.CONTACT, sectionId: 'contact' },
   ];
 
