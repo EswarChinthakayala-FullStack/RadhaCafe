@@ -23,7 +23,7 @@ export function PrinterStatusCard() {
     <Card className="border border-border/80 bg-card rounded-xl p-4 shadow-2xs">
       <CardContent className="p-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Left Status Details */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
           <div
             className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border ${
               isConnected
@@ -34,8 +34,8 @@ export function PrinterStatusCard() {
             <HugeiconsIcon icon={PrinterIcon} size={20} />
           </div>
 
-          <div className="space-y-0.5 min-w-0">
-            <div className="flex items-center gap-2">
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-bold text-xs text-foreground">
                 Thermal POS Printer
               </span>
@@ -55,7 +55,7 @@ export function PrinterStatusCard() {
               </Badge>
             </div>
 
-            <p className="text-[11px] text-muted-foreground truncate">
+            <p className="text-[11px] text-muted-foreground line-clamp-1">
               {isConnected
                 ? device?.name || 'ESC/POS Bluetooth Printer Connected'
                 : lastError || 'Receipt printing requires paired Bluetooth connection'}
@@ -64,7 +64,7 @@ export function PrinterStatusCard() {
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-border/40">
+        <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-border/40 self-end sm:self-auto">
           {!isConnected && (
             <Button
               size="sm"
@@ -77,13 +77,13 @@ export function PrinterStatusCard() {
                 size={13}
                 className={isConnecting ? 'animate-pulse' : ''}
               />
-              <span>{isConnecting ? 'Connecting...' : 'Connect Printer'}</span>
+              <span>{isConnecting ? 'Connecting...' : 'Connect'}</span>
             </Button>
           )}
 
           <Link
             to={ROUTES.ADMIN.PRINTER}
-            className="inline-flex items-center justify-center p-2 rounded-lg border border-border/70 text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
+            className="inline-flex items-center justify-center p-2 rounded-lg border border-border/70 text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors shrink-0"
             title="Printer Settings"
             aria-label="Printer Settings"
           >

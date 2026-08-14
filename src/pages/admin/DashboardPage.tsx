@@ -70,18 +70,18 @@ export function DashboardPage() {
         {/* Recent Orders Live Feed */}
         <RecentOrders />
 
-        {/* Outstanding Dues & Printer Connection */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Outstanding Dues & Thermal Printer Connection */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <OutstandingPayments />
-          <div className="space-y-6 flex flex-col justify-between">
-            <PrinterStatusCard />
-            <div className="space-y-2">
-              <span className="text-xs font-bold font-heading uppercase tracking-wider text-muted-foreground block px-1">
-                Quick POS Navigation
-              </span>
-              <DashboardQuickActions />
-            </div>
-          </div>
+          <PrinterStatusCard />
+        </div>
+
+        {/* Quick POS Navigation - Full Width Responsive Grid */}
+        <div className="space-y-2.5 pt-2 border-t border-border/60">
+          <span className="text-xs font-bold font-heading uppercase tracking-wider text-muted-foreground block px-1">
+            Quick POS Navigation
+          </span>
+          <DashboardQuickActions />
         </div>
       </section>
     </div>

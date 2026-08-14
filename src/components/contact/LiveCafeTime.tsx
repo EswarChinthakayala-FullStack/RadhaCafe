@@ -2,7 +2,12 @@ import { useState, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Clock01Icon } from '@hugeicons/core-free-icons';
 
-export function LiveCafeTime({ className = '' }: { className?: string }) {
+interface LiveCafeTimeProps {
+  className?: string;
+  dark?: boolean;
+}
+
+export function LiveCafeTime({ className = '', dark = false }: LiveCafeTimeProps) {
   const [timeString, setTimeString] = useState<string>('');
 
   useEffect(() => {
@@ -31,9 +36,21 @@ export function LiveCafeTime({ className = '' }: { className?: string }) {
   if (!timeString) return null;
 
   return (
-    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E5A88B]/10 border border-[#E5A88B]/20 text-xs font-semibold text-[#E5A88B] ${className}`}>
-      <HugeiconsIcon icon={Clock01Icon} size={13} className="text-[#E5A88B]" />
-      <span>Local Time (IST): <strong className="font-mono text-white">{timeString}</strong></span>
+    <div
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+        dark
+          ? 'bg-[#E5A88B]/10 border border-[#E5A88B]/20 text-[#E5A88B]'
+          : 'bg-secondary/80 border border-border/80 text-foreground'
+      } ${className}`}
+    >
+      <HugeiconsIcon
+        icon={Clock01Icon}
+        size={13}
+        className={dark ? 'text-[#E5A88B]' : 'text-cinnamon shrink-0'}
+      />
+      <span className="whitespace-nowrap">
+        IST: <strong className={`font-mono font-bold ${dark ? 'text-white' : 'text-foreground'}`}>{timeString}</strong>
+      </span>
     </div>
   );
 }

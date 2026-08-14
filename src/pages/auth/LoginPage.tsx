@@ -63,7 +63,7 @@ export function LoginPage() {
           {/* Bottom Detail Strip */}
           <div className="relative z-10 pt-6 border-t border-[#2C1810] flex items-center justify-between text-xs text-[#EAD5C3]/60">
             <span>RadhaCafe POS &middot; Tallur, AP</span>
-            <LiveCafeTime />
+            <LiveCafeTime dark />
           </div>
         </div>
 
