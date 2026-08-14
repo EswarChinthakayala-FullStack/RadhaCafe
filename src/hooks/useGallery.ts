@@ -25,16 +25,29 @@ export function useIncrementGalleryView() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => incrementGalleryItemView(id),
-    onSuccess: (_, id) => {
-      // Optimistically update view count in cache without re-ordering array live
+    onMutate: async (id: string) => {
+      // Cancel outgoing refetches so they don't overwrite optimistic update
+      await queryClient.cancelQueries({ queryKey: GALLERY_QUERY_KEY });
+
+      // Snapshot previous value
+      const previousItems = queryClient.getQueryData<GalleryItem[]>(GALLERY_QUERY_KEY);
+
+      // Optimistically update query data instantly
       queryClient.setQueryData<GalleryItem[]>(GALLERY_QUERY_KEY, (old) => {
         if (!old) return old;
         return old.map((item) =>
           item.id === id
-            ? { ...item, views_count: (item.views_count || 0) + 1 }
+            ? { ...item, views_count: (item.views_count ?? 0) + 1 }
             : item
         );
       });
+
+      return { previousItems };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousItems) {
+        queryClient.setQueryData(GALLERY_QUERY_KEY, context.previousItems);
+      }
     },
   });
 }

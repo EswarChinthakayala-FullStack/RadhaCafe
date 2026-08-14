@@ -50,6 +50,7 @@ export function GalleryViewer({
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [copiedToast, setCopiedToast] = useState<boolean>(false);
   const [imageError, setImageError] = useState<boolean>(false);
+  const [localViews, setLocalViews] = useState<Record<string, number>>({});
 
   const viewedInSession = useRef<Set<string>>(new Set());
   const isClosingRef = useRef<boolean>(false);
@@ -74,9 +75,20 @@ export function GalleryViewer({
     const id = currentItem.id;
     if (!viewedInSession.current.has(id)) {
       viewedInSession.current.add(id);
+
+      // Instant 0ms local state update
+      setLocalViews((prev) => ({
+        ...prev,
+        [id]: (prev[id] ?? currentItem.views_count ?? 0) + 1,
+      }));
+
       incrementViewMutation.mutate(id);
     }
   }, [isOpen, currentItem]);
+
+  const activeViews = currentItem
+    ? (localViews[currentItem.id] ?? currentItem.views_count ?? 0)
+    : 0;
 
   // Deep-linking: sync URL ?photo=<id>
   useEffect(() => {
@@ -408,12 +420,10 @@ export function GalleryViewer({
           </h3>
 
           {/* Views Badge */}
-          {currentItem.views_count !== undefined && currentItem.views_count !== null && (
-            <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E5A88B]/10 border border-[#E5A88B]/25 text-[11px] font-semibold text-[#E5A88B] shrink-0">
-              <HugeiconsIcon icon={ViewIcon} size={13} />
-              <span>{currentItem.views_count} views</span>
-            </div>
-          )}
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E5A88B]/10 border border-[#E5A88B]/25 text-[11px] font-semibold text-[#E5A88B] shrink-0">
+            <HugeiconsIcon icon={ViewIcon} size={13} />
+            <span>{activeViews} views</span>
+          </div>
         </div>
 
         {/* Right: Controls (Share, Zoom, Fullscreen, Close) */}
@@ -647,12 +657,10 @@ export function GalleryViewer({
 
           <div className="flex items-center gap-3 shrink-0">
             {/* Mobile views badge */}
-            {currentItem.views_count !== undefined && currentItem.views_count !== null && (
-              <div className="sm:hidden inline-flex items-center gap-1 text-[11px] text-[#E5A88B] font-semibold">
-                <HugeiconsIcon icon={ViewIcon} size={12} />
-                <span>{currentItem.views_count} views</span>
-              </div>
-            )}
+            <div className="sm:hidden inline-flex items-center gap-1 text-[11px] text-[#E5A88B] font-semibold">
+              <HugeiconsIcon icon={ViewIcon} size={12} />
+              <span>{activeViews} views</span>
+            </div>
 
             {currentItem.created_at && (
               <span className="text-[10px] text-cream/50 hidden md:inline font-mono">
