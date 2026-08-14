@@ -49,7 +49,8 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
           return (
             <div
               key={item.id}
-              className={`rounded-lg border bg-card p-2 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden ${
+              onClick={() => addItem(item)}
+              className={`rounded-lg border bg-card p-2 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden cursor-pointer active:scale-[0.99] select-none ${
                 qtyInCart > 0 ? 'border-amber-500/50 ring-1 ring-amber-400/20' : 'border-amber-500/25 hover:border-amber-500/50'
               }`}
             >
@@ -63,19 +64,19 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="h-full w-full flex flex-col items-center justify-center bg-amber-50 dark:bg-amber-950/20 text-amber-400/50 gap-0.5">
+                    <div className="h-full w-full flex flex-col items-center justify-center bg-secondary/50 text-muted-foreground/40 gap-0.5">
                       <HugeiconsIcon icon={Coffee02Icon} size={20} />
-                      <span className="text-[8px] font-bold uppercase tracking-wider">Special</span>
+                      <span className="text-[8px] font-bold uppercase tracking-wider">RadhaCafe</span>
                     </div>
                   )}
                   <div className="absolute top-1 left-1">
-                    <Badge className="bg-amber-600/90 backdrop-blur-xs text-white text-[9px] px-1.5 py-0 font-bold shadow-xs flex items-center gap-0.5">
+                    <Badge className="bg-amber-600/90 backdrop-blur-xs text-white text-[9px] px-1.5 py-0 font-bold shadow-2xs flex items-center gap-0.5">
                       <HugeiconsIcon icon={StarIcon} size={8} />
-                      <span>Today's Special</span>
+                      <span>Special</span>
                     </Badge>
                   </div>
                   {qtyInCart > 0 && (
-                    <div className="absolute top-1 right-1 bg-cinnamon text-white text-[10px] font-bold h-5 min-w-[20px] px-1 rounded-full flex items-center justify-center shadow-xs border border-white/20">
+                    <div className="absolute top-1 right-1 bg-amber-600 text-white text-[10px] font-bold h-5 min-w-[20px] px-1 rounded-full flex items-center justify-center shadow-xs border border-white/20">
                       {qtyInCart}
                     </div>
                   )}
@@ -101,12 +102,15 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
               </div>
 
               {/* Dedicated Full-Width Action Row */}
-              <div className="pt-2 mt-1.5 border-t border-border/50">
+              <div className="pt-2 mt-1.5 border-t border-border/50" onClick={(e) => e.stopPropagation()}>
                 {qtyInCart > 0 ? (
                   <div className="w-full h-7 bg-cinnamon text-white rounded-lg flex items-center justify-between px-1 shadow-2xs">
                     <button
                       type="button"
-                      onClick={() => updateQuantity(item.id, qtyInCart - 1)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateQuantity(item.id, qtyInCart - 1);
+                      }}
                       className="h-6 w-7 rounded flex items-center justify-center text-white hover:bg-black/15 active:scale-90 transition-all"
                       aria-label={`Decrease ${item.name}`}
                     >
@@ -117,7 +121,10 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
                     </span>
                     <button
                       type="button"
-                      onClick={() => updateQuantity(item.id, qtyInCart + 1)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateQuantity(item.id, qtyInCart + 1);
+                      }}
                       className="h-6 w-7 rounded flex items-center justify-center text-white hover:bg-black/15 active:scale-90 transition-all"
                       aria-label={`Increase ${item.name}`}
                     >
@@ -127,7 +134,10 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => addItem(item)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addItem(item);
+                    }}
                     className="w-full h-7 bg-amber-600/15 hover:bg-amber-600 text-amber-700 dark:text-amber-300 hover:text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1 active:scale-[0.98] border border-amber-600/30 hover:border-amber-600"
                   >
                     <HugeiconsIcon icon={PlusSignIcon} size={13} />

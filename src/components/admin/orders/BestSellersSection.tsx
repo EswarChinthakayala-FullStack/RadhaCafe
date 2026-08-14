@@ -68,8 +68,9 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
           return (
             <div
               key={item.id}
-              className={`rounded-lg border bg-card p-2 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden ${
-                qtyInCart > 0 ? 'border-cinnamon/50 ring-1 ring-cinnamon/15' : 'border-border/70 hover:border-orange-400/50'
+              onClick={() => addItem(item)}
+              className={`rounded-lg border bg-card p-2 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden cursor-pointer active:scale-[0.99] select-none ${
+                qtyInCart > 0 ? 'border-cinnamon/50 ring-1 ring-cinnamon/15' : 'border-border/70 hover:border-cinnamon/40'
               }`}
             >
               <div className="space-y-1.5">
@@ -114,12 +115,15 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
               </div>
 
               {/* Dedicated Full-Width Action Row */}
-              <div className="pt-2 mt-1.5 border-t border-border/40">
+              <div className="pt-2 mt-1.5 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
                 {qtyInCart > 0 ? (
                   <div className="w-full h-7 bg-cinnamon text-white rounded-lg flex items-center justify-between px-1 shadow-2xs">
                     <button
                       type="button"
-                      onClick={() => updateQuantity(item.id, qtyInCart - 1)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateQuantity(item.id, qtyInCart - 1);
+                      }}
                       className="h-6 w-7 rounded flex items-center justify-center text-white hover:bg-black/15 active:scale-90 transition-all"
                       aria-label={`Decrease ${item.name}`}
                     >
@@ -130,7 +134,10 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
                     </span>
                     <button
                       type="button"
-                      onClick={() => updateQuantity(item.id, qtyInCart + 1)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateQuantity(item.id, qtyInCart + 1);
+                      }}
                       className="h-6 w-7 rounded flex items-center justify-center text-white hover:bg-black/15 active:scale-90 transition-all"
                       aria-label={`Increase ${item.name}`}
                     >
@@ -140,7 +147,10 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
                 ) : (
                   <button
                     type="button"
-                    onClick={() => addItem(item)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addItem(item);
+                    }}
                     className="w-full h-7 bg-cinnamon/10 hover:bg-cinnamon text-cinnamon hover:text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1 active:scale-[0.98] border border-cinnamon/20 hover:border-cinnamon"
                   >
                     <HugeiconsIcon icon={PlusSignIcon} size={13} />

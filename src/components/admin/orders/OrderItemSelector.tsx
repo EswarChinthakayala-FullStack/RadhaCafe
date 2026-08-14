@@ -374,8 +374,9 @@ export function OrderItemSelector() {
             return (
               <div
                 key={item.id}
-                className={`group/card rounded-xl border bg-card p-2 sm:p-2.5 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden relative ${
-                  qty > 0 ? 'border-cinnamon/60 ring-1 ring-cinnamon/20 bg-cinnamon/[0.02]' : 'border-border/80 hover:border-border'
+                onClick={() => addItem(item)}
+                className={`group/card rounded-xl border bg-card p-2 sm:p-2.5 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden relative cursor-pointer active:scale-[0.99] select-none ${
+                  qty > 0 ? 'border-cinnamon/60 ring-1 ring-cinnamon/20 bg-cinnamon/[0.02]' : 'border-border/80 hover:border-cinnamon/40'
                 }`}
               >
                 <div className="space-y-1 sm:space-y-1.5">
@@ -454,12 +455,15 @@ export function OrderItemSelector() {
                 </div>
 
                 {/* Dedicated Full-Width Action Row — 100% overflow-proof and touch-friendly */}
-                <div className="pt-2 mt-1.5 border-t border-border/50">
+                <div className="pt-2 mt-1.5 border-t border-border/50" onClick={(e) => e.stopPropagation()}>
                   {qty > 0 ? (
                     <div className="w-full h-7 bg-cinnamon text-white rounded-lg flex items-center justify-between px-1 shadow-2xs">
                       <button
                         type="button"
-                        onClick={() => updateQuantity(item.id, qty - 1)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateQuantity(item.id, qty - 1);
+                        }}
                         className="h-6 w-7 rounded flex items-center justify-center text-white hover:bg-black/15 active:scale-90 transition-all"
                         aria-label={`Decrease ${item.name}`}
                       >
@@ -470,7 +474,10 @@ export function OrderItemSelector() {
                       </span>
                       <button
                         type="button"
-                        onClick={() => updateQuantity(item.id, qty + 1)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateQuantity(item.id, qty + 1);
+                        }}
                         className="h-6 w-7 rounded flex items-center justify-center text-white hover:bg-black/15 active:scale-90 transition-all"
                         aria-label={`Increase ${item.name}`}
                       >
@@ -480,7 +487,10 @@ export function OrderItemSelector() {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => addItem(item)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addItem(item);
+                      }}
                       className="w-full h-7 bg-cinnamon/10 hover:bg-cinnamon text-cinnamon hover:text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1 active:scale-[0.98] border border-cinnamon/20 hover:border-cinnamon"
                     >
                       <HugeiconsIcon icon={PlusSignIcon} size={13} />
