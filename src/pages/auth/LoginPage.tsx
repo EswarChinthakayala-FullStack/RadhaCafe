@@ -7,10 +7,6 @@ import {
   LockKeyIcon,
   LockedIcon,
   ArrowLeft01Icon,
-  Invoice01Icon,
-  ChartLineData01Icon,
-  Restaurant01Icon,
-  ShoppingBag01Icon,
 } from '@hugeicons/core-free-icons';
 
 export function LoginPage() {
@@ -53,37 +49,6 @@ export function LoginPage() {
             <p className="text-sm text-[#EAD5C3]/80 leading-relaxed font-normal">
               Real-time POS order dispatch, thermal receipt printing, live menu catalog control, customer accounts, and revenue analytics.
             </p>
-          </div>
-
-          {/* Operational Capability Badges */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <div className="p-3 rounded-xl bg-[#140A06]/80 border border-[#3E2519]/70 backdrop-blur-md flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-[#E5A88B]/10 text-[#E5A88B]">
-                <HugeiconsIcon icon={ShoppingBag01Icon} size={16} />
-              </div>
-              <span className="text-xs font-bold text-cream">Orders & POS Dispatch</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-[#140A06]/80 border border-[#3E2519]/70 backdrop-blur-md flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-[#E5A88B]/10 text-[#E5A88B]">
-                <HugeiconsIcon icon={Invoice01Icon} size={16} />
-              </div>
-              <span className="text-xs font-bold text-cream">Thermal Receipts</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-[#140A06]/80 border border-[#3E2519]/70 backdrop-blur-md flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-[#E5A88B]/10 text-[#E5A88B]">
-                <HugeiconsIcon icon={Restaurant01Icon} size={16} />
-              </div>
-              <span className="text-xs font-bold text-cream">Menu Catalog Control</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-[#140A06]/80 border border-[#3E2519]/70 backdrop-blur-md flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-[#E5A88B]/10 text-[#E5A88B]">
-                <HugeiconsIcon icon={ChartLineData01Icon} size={16} />
-              </div>
-              <span className="text-xs font-bold text-cream">Store Analytics</span>
-            </div>
           </div>
         </div>
 
