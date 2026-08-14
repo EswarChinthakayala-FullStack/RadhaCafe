@@ -172,20 +172,37 @@ export async function fetchCafeDashboardMetrics(): Promise<CafeDashboardMetrics>
   }
 
   // 2. Fetch payments recorded today (from payment ledger receipts)
+  // To avoid double-counting upfront payments already tracked in today's completed order paid_amount,
+  // we only add payments for older orders (or account-level payments) created before today.
+  const todayOrdersCollected = completedToday.reduce(
+    (sum: number, o: any) =>
+      sum +
+      Number(
+        o.paid_amount ?? (o.payment_status === 'paid' && o.payment_method !== 'pay_later' ? o.total_amount : 0) ?? 0
+      ),
+    0
+  );
+
   const { data: todayPayments } = await (supabase as any)
     .from('payments')
-    .select('amount')
+    .select(`
+      amount,
+      created_at,
+      order:orders ( created_at )
+    `)
     .gte('created_at', todayStart)
     .lte('created_at', todayEnd);
 
-  const paymentsLedgerTotal = (todayPayments || []).reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+  const olderDuesCollectedToday = (todayPayments || []).reduce((sum: number, p: any) => {
+    const orderCreatedAt = p.order?.created_at;
+    if (orderCreatedAt && new Date(orderCreatedAt) >= new Date(todayStart)) {
+      // Payment belongs to an order created today, already counted in todayOrdersCollected
+      return sum;
+    }
+    return sum + Number(p.amount || 0);
+  }, 0);
 
-  // Direct paid orders cash collected today
-  const directPaidToday = completedToday
-    .filter((o: any) => o.payment_status === 'paid' && o.payment_method !== 'pay_later')
-    .reduce((sum: number, o: any) => sum + Number(o.paid_amount ?? o.total_amount ?? 0), 0);
-
-  const collected_today = directPaidToday + paymentsLedgerTotal;
+  const collected_today = todayOrdersCollected + olderDuesCollectedToday;
 
   // 3. Fetch Total Outstanding Credit across all active completed orders
   const { data: outstandingOrders } = await (supabase as any)
