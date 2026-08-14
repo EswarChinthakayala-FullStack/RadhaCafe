@@ -93,20 +93,29 @@ export function PublicReviewsPage() {
     setAccumulatedItems([]);
   };
 
-  // Accumulate pages for "Load More" browsing
+  // Display items: on page 1, immediately use reviewsData?.items (no delay or stale state flash)
+  const displayItems = useMemo(() => {
+    if (page === 1) {
+      return reviewsData?.items || [];
+    }
+    return accumulatedItems.length > 0 ? accumulatedItems : (reviewsData?.items || []);
+  }, [page, reviewsData?.items, accumulatedItems]);
+
+  // Accumulate pages when page > 1 (for "Load More" browsing)
   useEffect(() => {
     if (reviewsData?.items) {
       if (page === 1) {
         setAccumulatedItems(reviewsData.items);
       } else {
         setAccumulatedItems((prev) => {
-          const existingIds = new Set(prev.map((i) => i.id));
+          const base = prev.length > 0 ? prev : (page === 1 ? reviewsData.items : []);
+          const existingIds = new Set(base.map((i) => i.id));
           const newUnique = reviewsData.items.filter((i) => !existingIds.has(i.id));
-          return [...prev, ...newUnique];
+          return [...base, ...newUnique];
         });
       }
     }
-  }, [reviewsData, page]);
+  }, [reviewsData?.items, page]);
 
   const handleLoadMore = () => {
     if (reviewsData?.hasMore && !isFetching) {
@@ -123,7 +132,7 @@ export function PublicReviewsPage() {
   }, [reviewsData?.userVotedIds]);
 
   const totalFiltered = reviewsData?.totalCount ?? 0;
-  const isInitialLoading = isListLoading && page === 1;
+  const isInitialLoading = isListLoading || (isFetching && page === 1 && !reviewsData);
 
   return (
     <div className="min-h-screen bg-[#140A06] text-cream flex flex-col selection:bg-cinnamon selection:text-white">
@@ -158,7 +167,7 @@ export function PublicReviewsPage() {
               {/* Review Feed Content */}
               {isInitialLoading ? (
                 <ReviewSkeleton count={6} />
-              ) : accumulatedItems.length === 0 ? (
+              ) : displayItems.length === 0 ? (
                 search || selectedRating !== 'all' || hasResponseOnly ? (
                   <div className="p-12 text-center bg-[#1D100A] rounded-2xl border border-dashed border-[#3E2519] space-y-3">
                     <HugeiconsIcon icon={Comment01Icon} size={32} className="mx-auto text-[#E5A88B]/50" />
@@ -187,7 +196,7 @@ export function PublicReviewsPage() {
                 <div className="space-y-6">
                   {/* Reviews Grid */}
                   <div className="grid sm:grid-cols-2 gap-5 sm:gap-6">
-                    {accumulatedItems.map((r) => (
+                    {displayItems.map((r) => (
                       <ReviewCard
                         key={r.id}
                         id={r.id}
@@ -225,7 +234,7 @@ export function PublicReviewsPage() {
                           </>
                         )}
                       </Button>
-                    ) : accumulatedItems.length > 0 ? (
+                    ) : displayItems.length > 0 ? (
                       <p className="text-[11px] text-cream/40 font-mono italic">
                         You've reached the end of all {totalFiltered} approved reviews.
                       </p>

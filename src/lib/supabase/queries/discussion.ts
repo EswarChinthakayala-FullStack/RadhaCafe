@@ -191,8 +191,9 @@ export async function fetchPublicReviewsList({
     .eq('is_approved', true);
 
   // Rating filter
-  if (typeof rating === 'number' && rating >= 1 && rating <= 5) {
-    query = query.eq('rating', rating);
+  const numRating = typeof rating === 'string' && rating !== 'all' ? Number(rating) : rating;
+  if (typeof numRating === 'number' && !isNaN(numRating) && numRating >= 1 && numRating <= 5) {
+    query = query.eq('rating', numRating);
   }
 
   // Search filter
@@ -561,8 +562,9 @@ export async function fetchAdminReviewsList({
   }
 
   // Rating Filter
-  if (typeof rating === 'number' && rating >= 1 && rating <= 5) {
-    query = query.eq('rating', rating);
+  const numRating = typeof rating === 'string' && rating !== 'all' ? Number(rating) : rating;
+  if (typeof numRating === 'number' && !isNaN(numRating) && numRating >= 1 && numRating <= 5) {
+    query = query.eq('rating', numRating);
   }
 
   // Reply Filter
