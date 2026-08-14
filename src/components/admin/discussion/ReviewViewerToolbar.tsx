@@ -61,34 +61,31 @@ export function ReviewViewerToolbar({
   const hasNext = navInfo?.hasNext ?? false;
 
   return (
-    <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border/80 px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2.5 transition-all">
+    <div className="flex items-center justify-between gap-3 pb-2">
       {/* Left: Back Button & Review Position */}
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+      <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={onBackToList}
-          className="h-8 sm:h-9 px-2.5 sm:px-3 text-xs font-semibold rounded-lg gap-1.5 border-border/80 bg-card text-foreground hover:bg-secondary shadow-2xs shrink-0"
+          className="h-9 px-3 text-xs font-bold rounded-xl gap-1.5 border-border/80 bg-card text-foreground hover:bg-secondary/70 shadow-2xs shrink-0"
         >
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
-          <span className="hidden sm:inline">Back to Reviews</span>
-          <span className="sm:hidden">Back</span>
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={15} />
+          <span>Back to Reviews</span>
         </Button>
 
-        <div className="h-4 w-px bg-border/80 hidden sm:block" />
-
         {/* Position Counter Pill */}
-        <div className="flex items-center gap-1.5 truncate">
+        <div className="flex items-center gap-2 truncate">
           <Badge
             variant="outline"
-            className="text-[11px] font-mono font-bold text-foreground border-border/80 bg-secondary/40 px-2 sm:px-2.5 py-0.5 rounded-md shrink-0"
+            className="text-xs font-mono font-bold text-foreground border-border/80 bg-card px-2.5 py-1 rounded-lg shrink-0 shadow-2xs"
           >
             {currentIndex} of {totalCount}
           </Badge>
 
           {queueLabel && (
-            <span className="text-xs text-muted-foreground font-medium hidden md:inline truncate">
+            <span className="text-xs text-muted-foreground font-medium hidden sm:inline truncate">
               in {queueLabel}
             </span>
           )}
@@ -96,7 +93,7 @@ export function ReviewViewerToolbar({
       </div>
 
       {/* Right: Prev/Next Slider Navigation & Actions Menu */}
-      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         {/* Previous Button */}
         <Button
           type="button"
@@ -104,11 +101,11 @@ export function ReviewViewerToolbar({
           size="sm"
           disabled={!hasPrev}
           onClick={onNavigatePrev}
-          className="h-8 sm:h-9 px-2 sm:px-3 text-xs font-semibold rounded-lg gap-1 border-border/80 bg-card text-foreground hover:bg-secondary shadow-2xs disabled:opacity-40"
-          title="Previous review (Left Arrow)"
+          className="h-9 px-3 text-xs font-semibold rounded-xl gap-1 border-border/80 bg-card text-foreground hover:bg-secondary shadow-2xs disabled:opacity-40"
+          title="Previous review (←)"
         >
           <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
-          <span className="hidden md:inline">Previous</span>
+          <span className="hidden sm:inline">Previous</span>
         </Button>
 
         {/* Next Button */}
@@ -118,10 +115,10 @@ export function ReviewViewerToolbar({
           size="sm"
           disabled={!hasNext}
           onClick={onNavigateNext}
-          className="h-8 sm:h-9 px-2 sm:px-3 text-xs font-semibold rounded-lg gap-1 border-border/80 bg-card text-foreground hover:bg-secondary shadow-2xs disabled:opacity-40"
-          title="Next review (Right Arrow)"
+          className="h-9 px-3 text-xs font-semibold rounded-xl gap-1 border-border/80 bg-card text-foreground hover:bg-secondary shadow-2xs disabled:opacity-40"
+          title="Next review (→)"
         >
-          <span className="hidden md:inline">Next</span>
+          <span className="hidden sm:inline">Next</span>
           <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
         </Button>
 
@@ -133,12 +130,12 @@ export function ReviewViewerToolbar({
                 type="button"
                 variant="outline"
                 size="icon"
-                className="h-8 sm:h-9 w-8 sm:w-9 rounded-lg border-border/80 bg-card text-muted-foreground hover:text-foreground shadow-2xs"
+                className="h-9 w-9 rounded-xl border-border/80 bg-card text-muted-foreground hover:text-foreground shadow-2xs"
                 title="More review options"
               />
             }
           >
-            <HugeiconsIcon icon={MoreVerticalIcon} size={15} />
+            <HugeiconsIcon icon={MoreVerticalIcon} size={16} />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-52 bg-card border-border/80 text-xs rounded-xl shadow-xl p-1.5">
@@ -167,7 +164,7 @@ export function ReviewViewerToolbar({
                   className="gap-2 p-2 rounded-lg cursor-pointer text-amber-600 hover:bg-amber-500/10"
                 >
                   <HugeiconsIcon icon={Cancel01Icon} size={14} />
-                  <span>Unpublish Review</span>
+                  <span>Unpublish (Make Pending)</span>
                 </DropdownMenuItem>
               </>
             )}

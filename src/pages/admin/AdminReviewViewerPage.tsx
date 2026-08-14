@@ -460,8 +460,8 @@ export function AdminReviewViewerPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12 -mx-4 sm:-mx-6 -mt-4 sm:-mt-6">
-      {/* 1. Full-Width Top Sticky Viewer Toolbar */}
+    <div className="space-y-4 pb-12 max-w-6xl mx-auto">
+      {/* 1. Integrated Top Viewer Toolbar */}
       <ReviewViewerToolbar
         review={review}
         navInfo={navInfo}
@@ -478,31 +478,29 @@ export function AdminReviewViewerPage() {
       />
 
       {/* 2. Responsive 2-Column Desktop / Stacked Tablet & Mobile Layout */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Customer Review Content (~65%) */}
-          <div className="lg:col-span-8 space-y-6">
-            <ReviewViewerContent review={review} />
-          </div>
+      <div className="grid lg:grid-cols-12 gap-5 items-start">
+        {/* Left Column: Customer Review Content (~65%) */}
+        <div className="lg:col-span-8 space-y-4">
+          <ReviewViewerContent review={review} />
+        </div>
 
-          {/* Right Column: Moderation & RadhaCafe Response Management (~35%, Sticky on Desktop) */}
-          <div className="lg:col-span-4 lg:sticky lg:top-16 space-y-6">
-            <ReviewModerationPanel
-              review={review}
-              onApprove={handleApprove}
-              onApproveAndReply={handleApproveAndReply}
-              onUnpublish={handleUnpublish}
-              onDeleteRequest={() => setIsDeleteAlertOpen(true)}
-              onSaveReply={handleSaveReply}
-              onRemoveReply={handleRemoveReply}
-              isApprovePending={approveMutation.isPending}
-              isUnpublishPending={unpublishMutation.isPending}
-              isReplySaving={replyMutation.isPending}
-              isReplyRemoving={deleteReplyMutation.isPending}
-              isInitialReplying={isInitialReplying}
-              onDirtyChange={setIsReplyDirty}
-            />
-          </div>
+        {/* Right Column: Moderation & RadhaCafe Response Management (~35%, Sticky on Desktop) */}
+        <div className="lg:col-span-4 lg:sticky lg:top-4 space-y-4">
+          <ReviewModerationPanel
+            review={review}
+            onApprove={handleApprove}
+            onApproveAndReply={handleApproveAndReply}
+            onUnpublish={handleUnpublish}
+            onDeleteRequest={() => setIsDeleteAlertOpen(true)}
+            onSaveReply={handleSaveReply}
+            onRemoveReply={handleRemoveReply}
+            isApprovePending={approveMutation.isPending}
+            isUnpublishPending={unpublishMutation.isPending}
+            isReplySaving={replyMutation.isPending}
+            isReplyRemoving={deleteReplyMutation.isPending}
+            isInitialReplying={isInitialReplying}
+            onDirtyChange={setIsReplyDirty}
+          />
         </div>
       </div>
 

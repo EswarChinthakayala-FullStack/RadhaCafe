@@ -11,6 +11,7 @@ import {
   EyeIcon,
   ArrowDown01Icon,
   ArrowUp01Icon,
+  QuoteDownIcon,
 } from '@hugeicons/core-free-icons';
 import type { DiscussionReview } from '../../../lib/supabase/queries/discussion';
 
@@ -51,11 +52,12 @@ export function ReviewViewerContent({ review }: ReviewViewerContentProps) {
   const isApproved = review.is_approved;
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      {/* Customer Header */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-card border border-border/80 shadow-2xs space-y-4">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          {/* Avatar & Customer Name */}
+    <div className="space-y-4">
+      {/* Primary Customer Review Card (Clean Editorial Style) */}
+      <div className="p-6 sm:p-8 rounded-2xl bg-card border border-border/80 shadow-2xs space-y-6">
+        {/* Customer Header */}
+        <div className="flex items-start justify-between gap-4 pb-5 border-b border-border/60 flex-wrap">
+          {/* Avatar & Customer Details */}
           <div className="flex items-center gap-3.5 min-w-0">
             <Avatar className="h-12 w-12 sm:h-14 sm:w-14 border border-border/80 shadow-2xs shrink-0">
               <AvatarFallback className={`font-extrabold text-base sm:text-lg ${avatarColor}`}>
@@ -63,9 +65,9 @@ export function ReviewViewerContent({ review }: ReviewViewerContentProps) {
               </AvatarFallback>
             </Avatar>
 
-            <div className="min-w-0">
+            <div className="min-w-0 space-y-1">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h2 className="text-lg sm:text-xl font-bold font-heading text-foreground tracking-tight truncate">
+                <h2 className="text-xl sm:text-2xl font-bold font-heading text-foreground tracking-tight truncate">
                   {review.customer_name}
                 </h2>
 
@@ -81,10 +83,10 @@ export function ReviewViewerContent({ review }: ReviewViewerContentProps) {
                 </Badge>
               </div>
 
-              <div className="flex items-center gap-2.5 text-xs text-muted-foreground mt-1 flex-wrap">
+              <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                 <span>{formatDate(review.created_at)}</span>
                 {review.helpful_count && review.helpful_count > 0 ? (
-                  <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+                  <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold">
                     <HugeiconsIcon icon={ThumbsUpIcon} size={13} />
                     <span>{review.helpful_count} people found this helpful</span>
                   </span>
@@ -103,8 +105,8 @@ export function ReviewViewerContent({ review }: ReviewViewerContentProps) {
                 <HugeiconsIcon
                   key={i}
                   icon={StarIcon}
-                  size={18}
-                  className={i < review.rating ? 'fill-amber-500 text-amber-500' : 'text-muted/40'}
+                  size={19}
+                  className={i < review.rating ? 'fill-amber-500 text-amber-500' : 'text-muted/30'}
                 />
               ))}
             </div>
@@ -112,18 +114,24 @@ export function ReviewViewerContent({ review }: ReviewViewerContentProps) {
           </div>
         </div>
 
-        {/* Customer Review Text Message */}
-        <div className="pt-3 border-t border-border/60 space-y-2">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block">
-            Customer Feedback
-          </span>
-          <div className="p-4 sm:p-5 rounded-xl bg-secondary/30 border border-border/60 text-foreground text-sm sm:text-base leading-relaxed whitespace-pre-wrap font-normal">
-            {review.message}
+        {/* Customer Review Body (Clean Quote Typography without heavy nested card) */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-cinnamon/60">
+            <HugeiconsIcon icon={QuoteDownIcon} size={20} />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              Customer Feedback
+            </span>
+          </div>
+
+          <div className="pl-3 sm:pl-4 border-l-2 border-cinnamon/30 py-1">
+            <p className="text-base sm:text-lg text-foreground/95 leading-relaxed font-normal whitespace-pre-wrap">
+              {review.message}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Collapsible Public Card Preview */}
+      {/* Collapsible Public Appearance Preview */}
       <div className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-2xs space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-bold text-foreground">
