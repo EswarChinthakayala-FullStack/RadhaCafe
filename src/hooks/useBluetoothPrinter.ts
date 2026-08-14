@@ -295,10 +295,46 @@ export function useBluetoothPrinter() {
     return printOrderViaBrowser(order, cafeSettings);
   };
 
+  /**
+   * Encodes custom receipt template configuration and prints sample order via BLE
+   */
+  const printCustomReceipt = async (
+    order: Order,
+    templateConfig: any,
+    cafeSettings?: any
+  ): Promise<boolean> => {
+    const store = usePrinterStore.getState();
+    try {
+      if (store.status !== 'connected') {
+        const connected = await scanAndConnect();
+        if (!connected) return false;
+      }
+
+      store.setStatus('printing');
+      store.setError(null);
+
+      const escposBytes = encodeTemplateReceiptToEscPos(
+        order,
+        templateConfig,
+        cafeSettings
+      );
+
+      await sendEscPosData(escposBytes);
+      usePrinterStore.getState().setStatus('connected');
+      return true;
+    } catch (err: any) {
+      const normalized = normalizePrinterError(err);
+      usePrinterStore.getState().setError(normalized.message);
+      usePrinterStore.getState().setStatus('error');
+      return false;
+    }
+  };
+
   return {
     status,
     connectionStage,
     device,
+    savedPrinterName: device?.name || null,
     knownPrinters,
     lastError,
     isSupported: isBluetoothSupported(),
@@ -316,7 +352,9 @@ export function useBluetoothPrinter() {
     printOrder,
     printTestReceipt,
     printTemplateTest,
+    printCustomReceipt,
     printBrowserFallback,
   };
 }
+
 

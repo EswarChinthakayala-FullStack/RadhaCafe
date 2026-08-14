@@ -24,6 +24,7 @@ import { AdminReviewViewerPage } from '../pages/admin/AdminReviewViewerPage';
 import { PrinterPage } from '../pages/admin/PrinterPage';
 import { SettingsPage } from '../pages/admin/SettingsPage';
 import { ReceiptsPage } from '../pages/admin/ReceiptsPage';
+import { ReceiptTemplateEditorPage } from '../pages/admin/ReceiptTemplateEditorPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 
 // RadhaWater Admin Modules
@@ -73,6 +74,8 @@ export function AppRoutes() {
                 <Route path="printer" element={<PrinterPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="settings/receipts" element={<ReceiptsPage />} />
+                <Route path="settings/receipts/new" element={<ReceiptTemplateEditorPage />} />
+                <Route path="settings/receipts/:templateId/edit" element={<ReceiptTemplateEditorPage />} />
 
                 {/* RadhaWater Independent Admin Routes */}
                 <Route path="water" element={<WaterDashboardPage />} />

@@ -22,6 +22,9 @@ export const ROUTES = {
     DISCUSSION_DETAILS: '/admin/discussion/:reviewId',
     PRINTER: '/admin/printer',
     SETTINGS: '/admin/settings',
+    RECEIPTS: '/admin/settings/receipts',
+    RECEIPT_NEW: '/admin/settings/receipts/new',
+    RECEIPT_EDIT: '/admin/settings/receipts/:templateId/edit',
     WATER: {
       DASHBOARD: '/admin/water',
       ORDERS: '/admin/water/orders',
