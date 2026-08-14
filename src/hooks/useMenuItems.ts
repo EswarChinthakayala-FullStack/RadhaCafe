@@ -5,8 +5,10 @@ import {
   updateMenuItem,
   deleteMenuItem,
   toggleMenuItemAvailability,
+  duplicateMenuItem,
+  setDailySpecial,
 } from '../lib/supabase/queries/menuItems';
-import type { CreateMenuItemInput, UpdateMenuItemInput } from '../types';
+import type { CreateMenuItemInput, MenuItem, UpdateMenuItemInput } from '../types';
 import { toast } from '../components/ui/toast';
 
 export const MENU_QUERY_KEYS = {
@@ -28,6 +30,7 @@ export function useCreateMenuItem() {
     mutationFn: (input: CreateMenuItemInput) => createMenuItem(input),
     onSuccess: (newItem) => {
       queryClient.invalidateQueries({ queryKey: MENU_QUERY_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: ['menu'] });
       toast.add({
         title: 'Menu Item Created',
         description: `"${newItem.name}" added to menu catalog.`,
@@ -50,6 +53,7 @@ export function useUpdateMenuItem() {
     mutationFn: ({ id, input }: { id: string; input: UpdateMenuItemInput }) => updateMenuItem(id, input),
     onSuccess: (updatedItem) => {
       queryClient.invalidateQueries({ queryKey: MENU_QUERY_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: ['menu'] });
       toast.add({
         title: 'Menu Item Updated',
         description: `"${updatedItem.name}" details saved successfully.`,
@@ -73,6 +77,7 @@ export function useToggleMenuItemAvailability() {
       toggleMenuItemAvailability(id, is_available),
     onSuccess: (item) => {
       queryClient.invalidateQueries({ queryKey: MENU_QUERY_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: ['menu'] });
       toast.add({
         title: 'Availability Updated',
         description: `"${item.name}" is now ${item.is_available ? 'Available' : 'Unavailable'}.`,
@@ -89,12 +94,62 @@ export function useToggleMenuItemAvailability() {
   });
 }
 
+export function useSetTodaySpecial() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, date }: { id: string; date: string | null }) => setDailySpecial(id, date),
+    onSuccess: (item) => {
+      queryClient.invalidateQueries({ queryKey: MENU_QUERY_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: ['menu'] });
+      queryClient.invalidateQueries({ queryKey: ['menu', 'todays-specials'] });
+      toast.add({
+        title: item.daily_special_date ? "Special Set" : "Special Removed",
+        description: item.daily_special_date
+          ? `"${item.name}" marked as Today's Special.`
+          : `"${item.name}" removed from specials.`,
+        type: 'success',
+      });
+    },
+    onError: (err: Error) => {
+      toast.add({
+        title: 'Error Updating Special',
+        description: err.message || "Unable to update special status.",
+        type: 'error',
+      });
+    },
+  });
+}
+
+export function useDuplicateMenuItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (item: MenuItem) => duplicateMenuItem(item),
+    onSuccess: (newItem) => {
+      queryClient.invalidateQueries({ queryKey: MENU_QUERY_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: ['menu'] });
+      toast.add({
+        title: 'Menu Item Duplicated',
+        description: `Created copy "${newItem.name}".`,
+        type: 'success',
+      });
+    },
+    onError: (err: Error) => {
+      toast.add({
+        title: 'Error Duplicating Item',
+        description: err.message || 'Unable to duplicate menu item.',
+        type: 'error',
+      });
+    },
+  });
+}
+
 export function useDeleteMenuItem() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteMenuItem(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MENU_QUERY_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: ['menu'] });
       toast.add({
         title: 'Menu Item Deleted',
         description: 'Menu item removed from catalog.',

@@ -92,6 +92,52 @@ export async function toggleMenuItemAvailability(id: string, is_available: boole
   return data as unknown as MenuItem;
 }
 
+export async function setDailySpecial(id: string, date: string | null): Promise<MenuItem> {
+  const payload = {
+    daily_special_date: date,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await (supabase as any)
+    .from('menu_items')
+    .update(payload)
+    .eq('id', id)
+    .select(`
+      *,
+      category:categories(*)
+    `)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data as unknown as MenuItem;
+}
+
+export async function duplicateMenuItem(item: MenuItem): Promise<MenuItem> {
+  const payload = {
+    name: `${item.name} (Copy)`,
+    description: item.description || null,
+    price: item.price,
+    category_id: item.category_id || null,
+    image_url: item.image_url || null,
+    is_available: item.is_available ?? true,
+    daily_special_date: null,
+    tags: item.tags || [],
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await (supabase as any)
+    .from('menu_items')
+    .insert([payload])
+    .select(`
+      *,
+      category:categories(*)
+    `)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data as unknown as MenuItem;
+}
+
 export async function deleteMenuItem(id: string): Promise<void> {
   const { error } = await (supabase as any).from('menu_items').delete().eq('id', id);
   if (error) throw new Error(error.message);
