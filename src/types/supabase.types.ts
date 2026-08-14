@@ -550,21 +550,33 @@ export interface Database {
         Row: {
           id: string
           image_url: string
+          title: string | null
           caption: string | null
+          alt_text: string | null
+          width: number | null
+          height: number | null
           display_order: number
           created_at: string
         }
         Insert: {
           id?: string
           image_url: string
+          title?: string | null
           caption?: string | null
+          alt_text?: string | null
+          width?: number | null
+          height?: number | null
           display_order?: number
           created_at?: string
         }
         Update: {
           id?: string
           image_url?: string
+          title?: string | null
           caption?: string | null
+          alt_text?: string | null
+          width?: number | null
+          height?: number | null
           display_order?: number
           created_at?: string
         }

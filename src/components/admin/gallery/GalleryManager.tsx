@@ -51,7 +51,10 @@ export function GalleryManager() {
   const [replacingItem, setReplacingItem] = useState<GalleryItem | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [fileDimensions, setFileDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [title, setTitle] = useState('');
   const [caption, setCaption] = useState('');
+  const [altText, setAltText] = useState('');
   const [uploading, setUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -64,7 +67,10 @@ export function GalleryManager() {
     setReplacingItem(null);
     setSelectedFile(null);
     setPreviewUrl(null);
+    setFileDimensions(null);
+    setTitle('');
     setCaption('');
+    setAltText('');
     setErrorMsg(null);
     setIsUploadOpen(true);
   };
@@ -78,6 +84,14 @@ export function GalleryManager() {
 
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     const objectUrl = URL.createObjectURL(file);
+
+    // Read natural dimensions client-side
+    const img = new Image();
+    img.onload = () => {
+      setFileDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.src = objectUrl;
+
     setSelectedFile(file);
     setPreviewUrl(objectUrl);
     setErrorMsg(null);
@@ -123,10 +137,16 @@ export function GalleryManager() {
       }
 
       if (replacingItem) {
-        // Update image_url and caption for replacing item
+        // Update image_url, dimensions, and metadata for replacing item
         await updateMutation.mutateAsync({
           id: replacingItem.id,
-          input: { caption: caption.trim() || undefined },
+          input: {
+            title: title.trim() || null,
+            caption: caption.trim() || null,
+            alt_text: altText.trim() || null,
+            width: fileDimensions?.width || null,
+            height: fileDimensions?.height || null,
+          },
         });
         setReplacingItem(null);
       } else {
@@ -134,7 +154,11 @@ export function GalleryManager() {
         const displayOrder = (items?.length || 0) + 1;
         await createMutation.mutateAsync({
           image_url: url,
-          caption: caption.trim() || undefined,
+          title: title.trim() || null,
+          caption: caption.trim() || null,
+          alt_text: altText.trim() || null,
+          width: fileDimensions?.width || null,
+          height: fileDimensions?.height || null,
           display_order: displayOrder,
         });
       }
@@ -148,17 +172,28 @@ export function GalleryManager() {
     }
   };
 
+  const handleOpenEdit = (item: GalleryItem) => {
+    setEditingItem(item);
+    setTitle(item.title || '');
+    setCaption(item.caption || '');
+    setAltText(item.alt_text || '');
+  };
+
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingItem) return;
     try {
       await updateMutation.mutateAsync({
         id: editingItem.id,
-        input: { caption: caption.trim() || undefined },
+        input: {
+          title: title.trim() || null,
+          caption: caption.trim() || null,
+          alt_text: altText.trim() || null,
+        },
       });
       setEditingItem(null);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to update photo caption.');
+      setErrorMsg(err.message || 'Failed to update photo metadata.');
     }
   };
 
@@ -224,13 +259,19 @@ export function GalleryManager() {
                 <div className="relative aspect-[4/3] bg-secondary/30 overflow-hidden cursor-pointer" onClick={() => setLightboxItem(item)}>
                   <img
                     src={item.image_url}
-                    alt={item.caption || `RadhaCafe Gallery Photo ${idx + 1}`}
+                    alt={item.alt_text || item.caption || `RadhaCafe Gallery Photo ${idx + 1}`}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     loading="lazy"
                   />
                   <Badge variant="secondary" className="absolute top-2 left-2 text-[10px] font-bold bg-background/90 backdrop-blur shadow-xs">
                     #{idx + 1}
                   </Badge>
+
+                  {item.width && item.height && (
+                    <Badge variant="outline" className="absolute top-2 right-2 text-[9px] font-mono bg-background/80 backdrop-blur border-border/60">
+                      {item.width}×{item.height}
+                    </Badge>
+                  )}
 
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1 text-xs font-semibold">
                     <HugeiconsIcon icon={ViewIcon} size={18} />
@@ -239,9 +280,16 @@ export function GalleryManager() {
                 </div>
 
                 <CardContent className="p-3 space-y-2 text-xs">
-                  <p className="font-medium text-foreground line-clamp-1 min-h-[1.25rem]">
-                    {item.caption || <span className="text-muted-foreground italic">No caption provided</span>}
-                  </p>
+                  <div>
+                    {item.title && (
+                      <h4 className="font-bold text-foreground truncate">
+                        {item.title}
+                      </h4>
+                    )}
+                    <p className="font-medium text-muted-foreground line-clamp-1 text-[11px] min-h-[1.1rem]">
+                      {item.caption || <span className="italic">No caption provided</span>}
+                    </p>
+                  </div>
 
                   <div className="flex items-center justify-between pt-2 border-t border-border/60">
                     {/* Reorder Arrows */}
@@ -275,22 +323,19 @@ export function GalleryManager() {
                       </Tooltip>
                     </div>
 
-                    {/* Actions: Edit Caption, Replace, Delete */}
+                    {/* Actions: Edit Metadata, Replace, Delete */}
                     <div className="flex items-center gap-1">
                       <Tooltip>
                         <TooltipTrigger>
                           <button
-                            onClick={() => {
-                              setEditingItem(item);
-                              setCaption(item.caption || '');
-                            }}
+                            onClick={() => handleOpenEdit(item)}
                             className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                            aria-label="Edit photo caption"
+                            aria-label="Edit photo metadata"
                           >
                             <HugeiconsIcon icon={Edit01Icon} size={14} />
                           </button>
                         </TooltipTrigger>
-                        <TooltipContent className="text-[10px]">Edit Caption</TooltipContent>
+                        <TooltipContent className="text-[10px]">Edit Metadata</TooltipContent>
                       </Tooltip>
 
                       <Tooltip>
@@ -300,7 +345,10 @@ export function GalleryManager() {
                               setReplacingItem(item);
                               setSelectedFile(null);
                               setPreviewUrl(null);
+                              setFileDimensions(null);
+                              setTitle(item.title || '');
                               setCaption(item.caption || '');
+                              setAltText(item.alt_text || '');
                               setIsUploadOpen(true);
                             }}
                             className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
@@ -351,7 +399,7 @@ export function GalleryManager() {
                 {replacingItem ? 'Replace Gallery Photo' : 'Upload Gallery Photo'}
               </DialogTitle>
               <DialogDescription className="text-xs">
-                Drag and drop or select a JPEG, PNG, or WebP photo (up to 5MB).
+                Select a JPEG, PNG, or WebP photo (up to 5MB). Dimensions are detected automatically.
               </DialogDescription>
             </DialogHeader>
 
@@ -363,7 +411,14 @@ export function GalleryManager() {
               )}
 
               <div className="space-y-2">
-                <Label className="font-bold">Select Photo</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="font-bold">Select Photo</Label>
+                  {fileDimensions && (
+                    <span className="text-[10px] font-mono text-cinnamon font-bold">
+                      {fileDimensions.width} × {fileDimensions.height} px
+                    </span>
+                  )}
+                </div>
                 {previewUrl ? (
                   <div className="relative aspect-[4/3] rounded-md border border-border overflow-hidden bg-secondary">
                     <img src={previewUrl} alt="Upload preview" className="w-full h-full object-cover" />
@@ -399,12 +454,34 @@ export function GalleryManager() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="gallery-caption" className="font-bold">Photo Caption (Optional)</Label>
+                <Label htmlFor="gallery-title" className="font-bold">Photo Title (Optional)</Label>
+                <Input
+                  id="gallery-title"
+                  placeholder="e.g. Evening Coffee Moments"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="rounded-md border-border/80 text-xs"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="gallery-caption" className="font-bold">Caption (Optional)</Label>
                 <Input
                   id="gallery-caption"
-                  placeholder="e.g. Freshly Roasted Artisanal Espresso"
+                  placeholder="e.g. Warm artisanal brew served in traditional brass davarah"
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
+                  className="rounded-md border-border/80 text-xs"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="gallery-alt" className="font-bold">Alt Text for Screen Readers (Optional)</Label>
+                <Input
+                  id="gallery-alt"
+                  placeholder="e.g. Barista preparing fresh filter coffee at the counter"
+                  value={altText}
+                  onChange={(e) => setAltText(e.target.value)}
                   className="rounded-md border-border/80 text-xs"
                 />
               </div>
@@ -421,28 +498,55 @@ export function GalleryManager() {
           </DialogContent>
         </Dialog>
 
-        {/* Edit Caption Dialog */}
+        {/* Edit Metadata Dialog */}
         <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
           <DialogContent className="max-w-md bg-card rounded-md p-6">
             <DialogHeader className="p-0 border-b border-border/60 pb-3">
-              <DialogTitle className="text-base font-bold font-heading">Edit Photo Caption</DialogTitle>
+              <DialogTitle className="text-base font-bold font-heading">Edit Photo Information</DialogTitle>
+              <DialogDescription className="text-xs">
+                Update title, caption, and alt text for this published gallery photo.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSaveEdit} className="space-y-4 text-xs pt-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-title" className="font-bold">Title</Label>
+                <Input
+                  id="edit-title"
+                  placeholder="e.g. Cozy Corner Seating"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="rounded-md border-border/80 text-xs"
+                />
+              </div>
+
               <div className="space-y-1.5">
                 <Label htmlFor="edit-caption" className="font-bold">Caption</Label>
                 <Input
                   id="edit-caption"
+                  placeholder="e.g. Perfect spot for reading and conversations"
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
                   className="rounded-md border-border/80 text-xs"
                 />
               </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-alt" className="font-bold">Alt Text</Label>
+                <Input
+                  id="edit-alt"
+                  placeholder="e.g. Warmly lit wooden tables with plants"
+                  value={altText}
+                  onChange={(e) => setAltText(e.target.value)}
+                  className="rounded-md border-border/80 text-xs"
+                />
+              </div>
+
               <div className="flex justify-end gap-2 border-t border-border/60 pt-2">
                 <Button type="button" variant="outline" size="sm" onClick={() => setEditingItem(null)} className="rounded-md text-xs">
                   Cancel
                 </Button>
                 <Button type="submit" size="sm" className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold rounded-md text-xs">
-                  Save Caption
+                  Save Changes
                 </Button>
               </div>
             </form>
@@ -454,7 +558,7 @@ export function GalleryManager() {
           <DialogContent className="max-w-3xl bg-card rounded-md p-6">
             <DialogHeader className="p-0 border-b border-border/60 pb-3">
               <DialogTitle className="text-base font-bold font-heading">
-                {lightboxItem?.caption || 'Photo Preview'}
+                {lightboxItem?.title || lightboxItem?.caption || 'Photo Preview'}
               </DialogTitle>
             </DialogHeader>
             {lightboxItem && (
@@ -464,6 +568,9 @@ export function GalleryManager() {
                 </div>
                 <div className="flex justify-between items-center text-xs text-muted-foreground">
                   <span>Display Order: #{lightboxItem.display_order}</span>
+                  {lightboxItem.width && lightboxItem.height && (
+                    <span className="font-mono">{lightboxItem.width} × {lightboxItem.height} px</span>
+                  )}
                   <span>Uploaded: {formatDate(lightboxItem.created_at)}</span>
                 </div>
               </div>

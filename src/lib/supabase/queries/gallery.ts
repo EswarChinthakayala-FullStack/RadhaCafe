@@ -4,15 +4,38 @@ import { BUCKETS } from '../storage';
 export interface GalleryItem {
   id: string;
   image_url: string;
+  title?: string | null;
   caption: string | null;
+  alt_text?: string | null;
+  width?: number | null;
+  height?: number | null;
   display_order: number;
   created_at: string;
+}
+
+export interface CreateGalleryItemInput {
+  image_url: string;
+  title?: string | null;
+  caption?: string | null;
+  alt_text?: string | null;
+  width?: number | null;
+  height?: number | null;
+  display_order?: number;
+}
+
+export interface UpdateGalleryItemInput {
+  title?: string | null;
+  caption?: string | null;
+  alt_text?: string | null;
+  width?: number | null;
+  height?: number | null;
+  display_order?: number;
 }
 
 export async function fetchGalleryItems(): Promise<GalleryItem[]> {
   const { data, error } = await (supabase as any)
     .from('gallery_images')
-    .select('*')
+    .select('id, image_url, title, caption, alt_text, width, height, display_order, created_at')
     .order('display_order', { ascending: true })
     .order('created_at', { ascending: true });
 
@@ -20,14 +43,20 @@ export async function fetchGalleryItems(): Promise<GalleryItem[]> {
   return (data as GalleryItem[]) || [];
 }
 
-export async function createGalleryItem(
-  image_url: string,
-  caption?: string,
-  display_order = 0
-): Promise<GalleryItem> {
+export async function createGalleryItem(input: CreateGalleryItemInput): Promise<GalleryItem> {
   const { data, error } = await (supabase as any)
     .from('gallery_images')
-    .insert([{ image_url, caption: caption || null, display_order }])
+    .insert([
+      {
+        image_url: input.image_url,
+        title: input.title || null,
+        caption: input.caption || null,
+        alt_text: input.alt_text || null,
+        width: input.width || null,
+        height: input.height || null,
+        display_order: input.display_order ?? 0,
+      },
+    ])
     .select()
     .single();
 
@@ -37,7 +66,7 @@ export async function createGalleryItem(
 
 export async function updateGalleryItem(
   id: string,
-  input: { caption?: string; display_order?: number }
+  input: UpdateGalleryItemInput
 ): Promise<GalleryItem> {
   const { data, error } = await (supabase as any)
     .from('gallery_images')

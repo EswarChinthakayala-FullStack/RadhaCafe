@@ -306,33 +306,43 @@ html, body, * {
 /* Fade-up on scroll reveal */
 .reveal {
   opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(20px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .reveal.visible {
   opacity: 1;
   transform: translateY(0);
 }
 
-/* Fade-up-left */
+/* Fade-up-left (mobile safe) */
 .reveal-left {
   opacity: 0;
-  transform: translateX(-60px) translateY(20px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(16px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (min-width: 768px) {
+  .reveal-left {
+    transform: translateX(-24px) translateY(12px);
+  }
 }
 .reveal-left.visible {
   opacity: 1;
   transform: translateX(0) translateY(0);
 }
 
-/* Fade-up-right */
+/* Fade-up-right (mobile safe) */
 .reveal-right {
   opacity: 0;
-  transform: translateX(60px) translateY(20px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(16px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (min-width: 768px) {
+  .reveal-right {
+    transform: translateX(24px) translateY(12px);
+  }
 }
 .reveal-right.visible {
   opacity: 1;
@@ -342,13 +352,22 @@ html, body, * {
 /* Scale-up reveal */
 .reveal-scale {
   opacity: 0;
-  transform: scale(0.85);
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: scale(0.95);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .reveal-scale.visible {
   opacity: 1;
   transform: scale(1);
+}
+
+/* Pure fade reveal */
+.reveal-fade {
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-fade.visible {
+  opacity: 1;
 }
 
 /* Stagger children delays */
@@ -477,7 +496,8 @@ section[id] {
   .reveal,
   .reveal-left,
   .reveal-right,
-  .reveal-scale {
+  .reveal-scale,
+  .reveal-fade {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;

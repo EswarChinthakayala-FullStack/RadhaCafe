@@ -4,14 +4,6 @@ import { cn } from '../../lib/utils/cn';
 
 /**
  * Radha Coffee Cafe — Official Vintage Circular Seal Emblem
- *
- * The logo is a Starbucks-style circular badge with:
- *   • Thick outer dark-brown ring with "RADHA" arched at top, "ESTD 2026" at bottom
- *   • Double cream inner border lines
- *   • Central medallion: coffee cup with steam, saucer, serving hand
- *   • Horizontal hatch lines behind the cup
- *   • Coffee beans flanking left & right with 4-point star accents
- *   • Curved ribbon banner across the lower third with "COFFEE CAFE"
  */
 export function RadhaCafeLogo({ className }: { className?: string }) {
   // Primary palette
@@ -39,10 +31,8 @@ export function RadhaCafeLogo({ className }: { className?: string }) {
       </defs>
 
       {/* ═══════════ OUTER RING & SHIELD ═══════════ */}
-      {/* Outer contrast boundary ring */}
       <circle cx="256" cy="256" r="250" fill={cream} />
       <circle cx="256" cy="256" r="242" fill={dark} />
-      {/* Double cream & gold accent border rings */}
       <circle cx="256" cy="256" r="230" fill="none" stroke={cream} strokeWidth="8" />
       <circle cx="256" cy="256" r="218" fill="none" stroke={accent} strokeWidth="3" />
 
@@ -87,7 +77,7 @@ export function RadhaCafeLogo({ className }: { className?: string }) {
         ))}
       </g>
 
-      {/* ═══════════ COFFEE CUP & STEAM (ENLARGED) ═══════════ */}
+      {/* ═══════════ COFFEE CUP & STEAM ═══════════ */}
       {/* Steam lines */}
       <g fill={cream} opacity="0.95">
         <path d="M 234,180 C 220,150 260,130 276,105 C 282,96 284,85 277,75 C 272,92 244,110 234,130 C 223,150 230,165 234,180 Z" />
@@ -153,21 +143,18 @@ export function RadhaCafeLogo({ className }: { className?: string }) {
       </g>
 
       {/* ═══════════ RIBBON BANNER ═══════════ */}
-      {/* Left ribbon tail */}
       <path
         d="M 45,365 L 88,340 L 88,395 L 45,418 L 64,390 Z"
         fill={ribbonShade}
         stroke={dark}
         strokeWidth="3"
       />
-      {/* Right ribbon tail */}
       <path
         d="M 467,365 L 424,340 L 424,395 L 467,418 L 448,390 Z"
         fill={ribbonShade}
         stroke={dark}
         strokeWidth="3"
       />
-      {/* Main banner body */}
       <path
         d="M 55,350 Q 256,392 457,350 L 475,398 Q 256,445 37,398 Z"
         fill={ribbonFill}
@@ -191,12 +178,175 @@ export function RadhaCafeLogo({ className }: { className?: string }) {
   );
 }
 
+/**
+ * Radha Water — Official Vintage Circular Seal Emblem with Water Drop & Ripples
+ */
+export function RadhaWaterLogo({ className }: { className?: string }) {
+  const dark = '#1F1009';
+  const cream = '#F7EBDC';
+  const midBrown = '#543118';
+  const accent = '#D9825B';
+  const ribbonFill = '#EDE0D0';
+  const ribbonShade = '#C8B299';
+
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 512 512"
+      className={cn('w-full h-full block', className)}
+      aria-hidden="true"
+    >
+      <defs>
+        {/* Top arc for RADHA */}
+        <path id="rw-top-arc" d="M 95,256 A 161,161 0 0,1 417,256" fill="none" />
+        {/* Bottom arc for ESTD 2026 */}
+        <path id="rw-bot-arc" d="M 115,256 A 141,141 0 0,0 397,256" fill="none" />
+        {/* Ribbon text arc */}
+        <path id="rw-ribbon-arc" d="M 70,385 Q 256,435 442,385" fill="none" />
+      </defs>
+
+      {/* ═══════════ OUTER RING & SHIELD ═══════════ */}
+      <circle cx="256" cy="256" r="250" fill={cream} />
+      <circle cx="256" cy="256" r="242" fill={dark} />
+      <circle cx="256" cy="256" r="230" fill="none" stroke={cream} strokeWidth="8" />
+      <circle cx="256" cy="256" r="218" fill="none" stroke={accent} strokeWidth="3" />
+
+      {/* ═══════════ ARCHED TEXT: RADHA ═══════════ */}
+      <text
+        fill={cream}
+        fontSize="56"
+        fontWeight="900"
+        fontFamily="Georgia, 'Times New Roman', serif"
+        letterSpacing="14"
+      >
+        <textPath href="#rw-top-arc" startOffset="50%" textAnchor="middle">
+          RADHA
+        </textPath>
+      </text>
+
+      {/* ═══════════ ARCHED TEXT: ESTD 2026 ═══════════ */}
+      <text
+        fill={accent}
+        fontSize="22"
+        fontWeight="800"
+        fontFamily="'Trebuchet MS', Arial, sans-serif"
+        letterSpacing="6"
+      >
+        <textPath href="#rw-bot-arc" startOffset="50%" textAnchor="middle">
+          ESTD  2026
+        </textPath>
+      </text>
+
+      {/* ═══════════ CENTER MEDALLION ═══════════ */}
+      <circle cx="256" cy="236" r="142" fill={midBrown} />
+      <circle cx="256" cy="236" r="136" fill="none" stroke={cream} strokeWidth="4" />
+      <circle cx="256" cy="236" r="128" fill="none" stroke={accent} strokeWidth="2" opacity="0.8" />
+
+      {/* Horizontal hatch lines inside medallion */}
+      <clipPath id="rw-medal-clip">
+        <circle cx="256" cy="236" r="126" />
+      </clipPath>
+      <g clipPath="url(#rw-medal-clip)" stroke={cream} strokeWidth="1.5" opacity="0.25">
+        {[135, 150, 165, 180, 195, 210, 225, 240, 255, 270, 285, 300, 315].map((y) => (
+          <line key={y} x1="110" y1={y} x2="402" y2={y} />
+        ))}
+      </g>
+
+      {/* ═══════════ PURE WATER DROPLET & RIPPLES ═══════════ */}
+      {/* Water Ripple Waves */}
+      <g stroke={cream} strokeWidth="3" fill="none" opacity="0.9">
+        <ellipse cx="256" cy="308" rx="84" ry="16" />
+        <ellipse cx="256" cy="316" rx="54" ry="10" opacity="0.6" />
+      </g>
+
+      {/* Central Water Drop Body */}
+      <path
+        d="M 256,110 C 256,110 188,212 188,260 C 188,298 218,328 256,328 C 294,328 324,298 324,260 C 324,212 256,110 256,110 Z"
+        fill={cream}
+        stroke={dark}
+        strokeWidth="3.5"
+      />
+
+      {/* Inner Droplet Contour & Highlight */}
+      <path
+        d="M 256,134 C 256,134 204,218 204,258 C 204,286 226,310 256,310 C 286,310 308,286 308,258 C 308,218 256,134 256,134 Z"
+        fill={dark}
+        opacity="0.12"
+      />
+
+      {/* Glossy Curved Light Reflection */}
+      <path
+        d="M 230,175 C 220,195 214,222 214,248 C 214,272 224,292 238,298 C 230,290 224,272 224,248 C 224,224 230,200 238,182 Z"
+        fill={cream}
+        opacity="0.95"
+      />
+
+      {/* Small Secondary Gleam Dot */}
+      <circle cx="282" cy="272" r="7" fill={cream} opacity="0.9" />
+
+      {/* ═══════════ WATER DROPLETS (LEFT & RIGHT) ═══════════ */}
+      <g transform="translate(118, 240)">
+        <path
+          d="M 0,-18 C 0,-18 -12,2 -12,10 C -12,17 -6,22 0,22 C 6,22 12,17 12,10 C 12,2 0,-18 0,-18 Z"
+          fill={cream}
+          stroke={dark}
+          strokeWidth="1.5"
+        />
+        <path d="M -4,2 C -6,6 -6,12 -3,16" fill="none" stroke={dark} strokeWidth="1.5" strokeLinecap="round" />
+      </g>
+      <g transform="translate(394, 240)">
+        <path
+          d="M 0,-18 C 0,-18 -12,2 -12,10 C -12,17 -6,22 0,22 C 6,22 12,17 12,10 C 12,2 0,-18 0,-18 Z"
+          fill={cream}
+          stroke={dark}
+          strokeWidth="1.5"
+        />
+        <path d="M -4,2 C -6,6 -6,12 -3,16" fill="none" stroke={dark} strokeWidth="1.5" strokeLinecap="round" />
+      </g>
+
+      {/* ═══════════ RIBBON BANNER ═══════════ */}
+      <path
+        d="M 45,365 L 88,340 L 88,395 L 45,418 L 64,390 Z"
+        fill={ribbonShade}
+        stroke={dark}
+        strokeWidth="3"
+      />
+      <path
+        d="M 467,365 L 424,340 L 424,395 L 467,418 L 448,390 Z"
+        fill={ribbonShade}
+        stroke={dark}
+        strokeWidth="3"
+      />
+      <path
+        d="M 55,350 Q 256,392 457,350 L 475,398 Q 256,445 37,398 Z"
+        fill={ribbonFill}
+        stroke={dark}
+        strokeWidth="3.5"
+      />
+
+      {/* ═══════════ RIBBON TEXT: DRINKING WATER ═══════════ */}
+      <text
+        fill={dark}
+        fontSize="36"
+        fontWeight="900"
+        fontFamily="'Trebuchet MS', 'Arial Black', sans-serif"
+        letterSpacing="5"
+      >
+        <textPath href="#rw-ribbon-arc" startOffset="50%" textAnchor="middle">
+          DRINKING WATER
+        </textPath>
+      </text>
+    </svg>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════════
-   AppLogo — Composable brand mark used across the app.
-   Supports variant (default | compact | icon) and size (sm | md | lg | xl).
+   AppLogo — Composable brand mark used across RadhaCafe and RadhaWater.
+   Supports type ('cafe' | 'water'), variant, size, and href.
    ═══════════════════════════════════════════════════════════════════ */
 
 export interface AppLogoProps {
+  type?: 'cafe' | 'water';
   variant?: 'default' | 'compact' | 'icon';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   href?: string;
@@ -205,6 +355,7 @@ export interface AppLogoProps {
 }
 
 export function AppLogo({
+  type = 'cafe',
   variant = 'default',
   size = 'md',
   href,
@@ -219,11 +370,12 @@ export function AppLogo({
   };
 
   const s = sizeStyles[size] ?? sizeStyles.md;
+  const isWater = type === 'water';
 
   const logo: ReactNode = (
     <div className={cn('inline-flex items-center gap-2.5 select-none', className)}>
       <div className={cn('shrink-0 rounded-full overflow-hidden transition-transform hover:scale-105', s.wrap)}>
-        <RadhaCafeLogo className="size-full" />
+        {isWater ? <RadhaWaterLogo className="size-full" /> : <RadhaCafeLogo className="size-full" />}
       </div>
 
       {variant !== 'icon' && (
@@ -235,7 +387,7 @@ export function AppLogo({
             variant === 'compact' && 'text-base sm:text-lg'
           )}
         >
-          Radha<span className="text-cinnamon">Cafe</span>
+          Radha<span className="text-cinnamon">{isWater ? 'Water' : 'Cafe'}</span>
         </span>
       )}
     </div>
@@ -246,7 +398,7 @@ export function AppLogo({
       <Link
         to={href}
         className="inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
-        aria-label="RadhaCafe"
+        aria-label={isWater ? 'RadhaWater' : 'RadhaCafe'}
       >
         {logo}
       </Link>

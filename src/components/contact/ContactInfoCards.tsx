@@ -21,27 +21,26 @@ export function ContactInfoCards() {
   const phone = settings?.phone || '09966630913';
   const email = settings?.email || 'radhacafe.tallur@gmail.com';
   const openingHours = settings?.opening_hours || 'Mon - Sun: 4:30 AM - 10:00 PM';
-
   const mapsUrl = 'https://maps.app.goo.gl/u6JadwVD4jGvgLnE9';
 
   return (
     <div className="grid sm:grid-cols-3 gap-6 text-left">
       {/* Address Card */}
       {address && (
-        <Card className="border border-[#2C1810] bg-[#1D100A] rounded-md shadow-lg hover:border-[#E5A88B]/40 transition-all duration-300 flex flex-col justify-between group">
+        <Card className="border border-[#3E2519]/70 bg-[#1D100A]/90 rounded-2xl shadow-lg hover:border-[#E5A88B]/50 transition-all duration-300 flex flex-col justify-between group">
           <CardContent className="p-6 space-y-4">
-            <div className="w-11 h-11 rounded-md bg-[#E5A88B]/15 text-[#E5A88B] flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-[#E5A88B]/15 text-[#E5A88B] flex items-center justify-center group-hover:scale-110 transition-transform shrink-0 border border-[#E5A88B]/20">
               <HugeiconsIcon icon={Location01Icon} size={22} />
             </div>
 
             <div className="space-y-1">
-              <h3 className="font-bold text-base text-cream font-heading">
+              <h3 className="font-heading font-bold text-base text-cream">
                 Address & Location
               </h3>
-              <p className="text-xs text-cream/70 leading-relaxed">{address}</p>
+              <p className="text-xs text-[#EAD5C3]/75 leading-relaxed">{address}</p>
             </div>
 
-            <div className="pt-2 border-t border-[#2C1810]">
+            <div className="pt-3 border-t border-[#3E2519]/70">
               <a
                 href={mapsUrl}
                 target="_blank"
@@ -58,20 +57,20 @@ export function ContactInfoCards() {
 
       {/* Opening Hours Card */}
       {openingHours && (
-        <Card className="border border-[#2C1810] bg-[#1D100A] rounded-md shadow-lg hover:border-[#E5A88B]/40 transition-all duration-300 flex flex-col justify-between group">
+        <Card className="border border-[#3E2519]/70 bg-[#1D100A]/90 rounded-2xl shadow-lg hover:border-[#E5A88B]/50 transition-all duration-300 flex flex-col justify-between group">
           <CardContent className="p-6 space-y-4">
-            <div className="w-11 h-11 rounded-md bg-[#E5A88B]/15 text-[#E5A88B] flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-[#E5A88B]/15 text-[#E5A88B] flex items-center justify-center group-hover:scale-110 transition-transform shrink-0 border border-[#E5A88B]/20">
               <HugeiconsIcon icon={Clock01Icon} size={22} />
             </div>
 
             <div className="space-y-1">
-              <h3 className="font-bold text-base text-cream font-heading">
+              <h3 className="font-heading font-bold text-base text-cream">
                 Opening Hours
               </h3>
-              <p className="text-xs text-cream/70 leading-relaxed">{openingHours}</p>
+              <p className="text-xs text-[#EAD5C3]/75 leading-relaxed">{openingHours}</p>
             </div>
 
-            <div className="pt-2 border-t border-[#2C1810]">
+            <div className="pt-3 border-t border-[#3E2519]/70">
               <span className="text-[11px] font-bold text-[#E5A88B] uppercase tracking-wider">
                 Fresh Brews Served All Day
               </span>
@@ -82,18 +81,18 @@ export function ContactInfoCards() {
 
       {/* Phone & Email Card */}
       {(phone || email) && (
-        <Card className="border border-[#2C1810] bg-[#1D100A] rounded-md shadow-lg hover:border-[#E5A88B]/40 transition-all duration-300 flex flex-col justify-between group">
+        <Card className="border border-[#3E2519]/70 bg-[#1D100A]/90 rounded-2xl shadow-lg hover:border-[#E5A88B]/50 transition-all duration-300 flex flex-col justify-between group">
           <CardContent className="p-6 space-y-4">
-            <div className="w-11 h-11 rounded-md bg-[#E5A88B]/15 text-[#E5A88B] flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-[#E5A88B]/15 text-[#E5A88B] flex items-center justify-center group-hover:scale-110 transition-transform shrink-0 border border-[#E5A88B]/20">
               <HugeiconsIcon icon={CallIcon} size={22} />
             </div>
 
             <div className="space-y-2">
-              <h3 className="font-bold text-base text-cream font-heading">
+              <h3 className="font-heading font-bold text-base text-cream">
                 Direct Contact
               </h3>
 
-              <div className="space-y-2 text-xs text-cream/75">
+              <div className="space-y-2 text-xs text-[#EAD5C3]/80">
                 {phone && (
                   <a
                     href={`tel:${phone.replace(/\s+/g, '')}`}
@@ -115,7 +114,7 @@ export function ContactInfoCards() {
               </div>
             </div>
 
-            <div className="pt-2 border-t border-[#2C1810] flex items-center gap-3">
+            <div className="pt-3 border-t border-[#3E2519]/70 flex items-center gap-3">
               {phone && (
                 <a
                   href={`tel:${phone.replace(/\s+/g, '')}`}

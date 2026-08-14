@@ -6,20 +6,24 @@ import { Location01Icon } from '@hugeicons/core-free-icons';
 
 export function ContactSection() {
   return (
-    <section id="contact" className="py-20 bg-[#140A06] text-cream border-b border-[#2C1810]">
-      <div className="container px-4 md:px-8 max-w-5xl mx-auto space-y-12">
+    <section
+      id="contact"
+      className="py-20 sm:py-28 bg-[#140A06] text-cream border-b border-[#2C1810] relative overflow-hidden"
+      aria-label="Location and Contact"
+    >
+      <div className="container px-4 md:px-8 max-w-7xl mx-auto space-y-12 relative z-10">
         <ScrollReveal>
-          <div className="text-center max-w-xl mx-auto space-y-2">
-            <span className="text-xs font-bold text-[#E5A88B] tracking-widest uppercase">
-              Visit & Contact
-            </span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-bold text-cream flex items-center justify-center gap-3">
+          <div className="text-center max-w-xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E5A88B]/10 border border-[#E5A88B]/25 text-[#E5A88B] text-[11px] font-bold tracking-[0.2em] uppercase">
+              <HugeiconsIcon icon={Location01Icon} size={13} />
+              <span>Visit Us In Tallur</span>
+            </div>
+            <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-extrabold text-cream leading-tight">
               Location &{' '}
               <span className="font-serif italic font-normal text-[#E5A88B]">Directions</span>
-              <HugeiconsIcon icon={Location01Icon} size={28} className="text-[#E5A88B]" />
             </h2>
-            <p className="text-xs sm:text-sm text-cream/70">
-              We look forward to serving you fresh coffee. Find our exact location & hours below.
+            <p className="text-xs sm:text-sm text-[#EAD5C3]/75 leading-relaxed">
+              We look forward to serving you. Find our exact location, opening hours, and direct contact details below.
             </p>
           </div>
         </ScrollReveal>

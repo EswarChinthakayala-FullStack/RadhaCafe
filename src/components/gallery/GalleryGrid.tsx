@@ -77,7 +77,7 @@ export function GalleryGrid({ items, onSelectImage, maxItems }: GalleryGridProps
     return (
       <button
         onClick={() => onSelectImage(index)}
-        className={`group relative w-full overflow-hidden rounded-md bg-[#1D100A] border border-[#2C1810] shadow-lg hover:shadow-2xl hover:border-[#E5A88B]/50 transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E5A88B] ${aspectClass}`}
+        className={`group relative w-full overflow-hidden rounded-xl bg-[#1D100A] border border-[#2C1810] shadow-lg hover:shadow-2xl hover:border-[#E5A88B]/50 transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E5A88B] ${aspectClass}`}
         aria-label={item.caption || `View gallery image ${index + 1}`}
       >
         {isFailed ? (

@@ -5,6 +5,8 @@ import {
   updateGalleryItem,
   deleteGalleryItem,
   reorderGalleryItems,
+  type CreateGalleryItemInput,
+  type UpdateGalleryItemInput,
 } from '../lib/supabase/queries/gallery';
 
 export const GALLERY_QUERY_KEY = ['gallery', 'images'] as const;
@@ -20,8 +22,7 @@ export function useGalleryImages() {
 export function useCreateGalleryItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { image_url: string; caption?: string; display_order?: number }) =>
-      createGalleryItem(input.image_url, input.caption, input.display_order),
+    mutationFn: (input: CreateGalleryItemInput) => createGalleryItem(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: GALLERY_QUERY_KEY });
     },
@@ -31,7 +32,7 @@ export function useCreateGalleryItem() {
 export function useUpdateGalleryItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: { caption?: string; display_order?: number } }) =>
+    mutationFn: ({ id, input }: { id: string; input: UpdateGalleryItemInput }) =>
       updateGalleryItem(id, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: GALLERY_QUERY_KEY });
