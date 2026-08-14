@@ -189,7 +189,7 @@ export function WaterCustomerFormModal({ open, onOpenChange, onSuccess }: WaterC
                 size="sm"
                 onClick={handleDetectLocation}
                 disabled={isLocating}
-                className="h-6 text-[11px] px-2 text-cinnamon hover:bg-cinnamon/10 border border-cinnamon/20 rounded-md flex items-center gap-1"
+                className="h-6 text-[11px] px-2 text-cinnamon hover:bg-cinnamon/10 border border-cinnamon/20 rounded-md flex items-center gap-1 shrink-0 whitespace-nowrap"
               >
                 {isLocating ? (
                   <>

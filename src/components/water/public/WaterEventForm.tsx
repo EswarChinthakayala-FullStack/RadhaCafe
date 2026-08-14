@@ -295,21 +295,22 @@ export function WaterEventForm() {
 
                 {/* Delivery Location with Auto Detect */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <Label htmlFor="req-loc" className="text-xs font-semibold flex items-center gap-1.5 text-[#E5A88B]">
-                      <HugeiconsIcon icon={Location01Icon} size={14} className="text-[#E5A88B]" />
-                      <span>Delivery Location / Venue Address *</span>
+                  <div className="flex items-center justify-between gap-2 pb-0.5">
+                    <Label htmlFor="req-loc" className="font-bold text-xs text-cream flex items-center gap-1.5 min-w-0">
+                      <HugeiconsIcon icon={Location01Icon} size={14} className="text-[#E5A88B] shrink-0" />
+                      <span className="truncate sm:hidden">Delivery Location *</span>
+                      <span className="hidden sm:inline">Delivery Location / Venue Address *</span>
                     </Label>
                     <button
                       type="button"
                       onClick={handleDetectLocation}
                       disabled={isLocating}
-                      className="h-7 text-[11px] px-2.5 text-[#E5A88B] hover:text-white hover:bg-[#B85C1E]/20 border border-[#B85C1E]/30 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                      className="h-7 text-[11px] px-2.5 text-[#E5A88B] hover:text-white hover:bg-[#B85C1E]/20 border border-[#B85C1E]/30 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 shrink-0 whitespace-nowrap"
                     >
                       {isLocating ? (
                         <>
                           <HugeiconsIcon icon={Loading03Icon} size={13} className="animate-spin text-[#E5A88B]" />
-                          <span>Detecting GPS...</span>
+                          <span>Detecting...</span>
                         </>
                       ) : (
                         <>
