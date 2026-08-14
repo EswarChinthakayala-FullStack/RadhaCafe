@@ -216,23 +216,24 @@ export function WaterHero() {
           {activeSlide.subtitle}
         </p>
 
-        {/* Action CTAs */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-3 sm:gap-4 pt-2 w-full max-w-md">
+        {/* Action CTAs - Responsive Single Row on Mobile */}
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-center sm:gap-4 pt-2 w-full max-w-md">
           <button
             type="button"
             onClick={() => handleScrollTo('events')}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#B85C1E] to-[#D97026] hover:from-[#C86624] hover:to-[#E87E34] text-white font-bold text-xs sm:text-sm px-6 sm:px-8 py-3.5 sm:py-4 shadow-xl shadow-[#B85C1E]/25 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-full bg-gradient-to-r from-[#B85C1E] to-[#D97026] hover:from-[#C86624] hover:to-[#E87E34] text-white font-bold text-[11px] sm:text-sm px-3 sm:px-8 py-3 sm:py-3.5 shadow-xl shadow-[#B85C1E]/25 transition-all hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
           >
-            <span>Plan Event Supply</span>
-            <HugeiconsIcon icon={ArrowUpRight01Icon} size={15} />
+            <span className="sm:hidden">Event Supply</span>
+            <span className="hidden sm:inline">Plan Event Supply</span>
+            <HugeiconsIcon icon={ArrowUpRight01Icon} size={14} />
           </button>
 
           <button
             type="button"
             onClick={() => handleScrollTo('products')}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/20 text-cream font-semibold text-xs sm:text-sm px-6 sm:px-8 py-3.5 sm:py-4 backdrop-blur-sm transition-all hover:border-[#E5A88B]/50 cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/20 text-cream font-semibold text-[11px] sm:text-sm px-3 sm:px-8 py-3 sm:py-3.5 backdrop-blur-sm transition-all hover:border-[#E5A88B]/50 cursor-pointer whitespace-nowrap"
           >
-            <HugeiconsIcon icon={TruckIcon} size={15} className="text-[#E5A88B]" />
+            <HugeiconsIcon icon={TruckIcon} size={14} className="text-[#E5A88B]" />
             <span>Water Products</span>
           </button>
         </div>
