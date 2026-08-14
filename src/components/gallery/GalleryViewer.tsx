@@ -41,19 +41,31 @@ export function GalleryViewer({
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const [panStart, setPanStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const [touchDeltaX, setTouchDeltaX] = useState<number>(0);
+  // Smooth sliding carousel state
+  const [slideOffsetPercent, setSlideOffsetPercent] = useState<number>(-100);
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
+  const [dragDistanceX, setDragDistanceX] = useState<number>(0);
+  const [isDraggingTrack, setIsDraggingTrack] = useState<boolean>(false);
+
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [copiedToast, setCopiedToast] = useState<boolean>(false);
   const [imageError, setImageError] = useState<boolean>(false);
 
-  // View counter tracking
   const viewedInSession = useRef<Set<string>>(new Set());
   const isClosingRef = useRef<boolean>(false);
+  const isAnimatingRef = useRef<boolean>(false);
+  const dragStartXRef = useRef<number>(0);
+  const dragStartYRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isOpen = selectedIndex !== null && selectedIndex >= 0 && selectedIndex < items.length;
   const currentItem = isOpen ? items[selectedIndex] : null;
+
+  const prevIndex = isOpen && items.length > 1 ? (selectedIndex - 1 + items.length) % items.length : null;
+  const nextIndex = isOpen && items.length > 1 ? (selectedIndex + 1) % items.length : null;
+
+  const prevItem = prevIndex !== null ? items[prevIndex] : null;
+  const nextItem = nextIndex !== null ? items[nextIndex] : null;
 
   // View count increment logic
   useEffect(() => {
@@ -66,7 +78,7 @@ export function GalleryViewer({
     }
   }, [isOpen, currentItem]);
 
-  // Deep-linking: sync URL ?photo=<id> when viewer opens or changes photo
+  // Deep-linking: sync URL ?photo=<id>
   useEffect(() => {
     if (isClosingRef.current) return;
 
@@ -80,7 +92,7 @@ export function GalleryViewer({
     }
   }, [isOpen, currentItem, searchParams, setSearchParams]);
 
-  // Deep-linking: open viewer if ?photo=<id> is in URL on page load
+  // Deep-linking: open viewer on load
   useEffect(() => {
     if (isClosingRef.current) return;
 
@@ -93,7 +105,7 @@ export function GalleryViewer({
     }
   }, [searchParams, items, onSelectIndex, selectedIndex]);
 
-  // Handle Closing cleanly
+  // Handle Closing
   const handleClose = useCallback(() => {
     isClosingRef.current = true;
 
@@ -105,20 +117,21 @@ export function GalleryViewer({
 
     setZoom(1);
     setPan({ x: 0, y: 0 });
-    setTouchDeltaX(0);
+    setDragDistanceX(0);
+    setSlideOffsetPercent(-100);
+    setIsTransitioning(false);
     onClose();
 
-    // Reset closing flag after state settles
     setTimeout(() => {
       isClosingRef.current = false;
     }, 200);
   }, [searchParams, setSearchParams, onClose]);
 
-  // Reset zoom whenever image changes
+  // Reset zoom & pan on slide change
   useEffect(() => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
-    setTouchDeltaX(0);
+    setDragDistanceX(0);
     setImageError(false);
   }, [selectedIndex]);
 
@@ -126,30 +139,51 @@ export function GalleryViewer({
   useEffect(() => {
     if (!isOpen || items.length <= 1 || selectedIndex === null) return;
 
-    const prevIdx = (selectedIndex - 1 + items.length) % items.length;
-    const nextIdx = (selectedIndex + 1) % items.length;
-
-    if (items[prevIdx]?.image_url) {
+    if (prevItem?.image_url) {
       const img1 = new Image();
-      img1.src = items[prevIdx].image_url;
+      img1.src = prevItem.image_url;
     }
 
-    if (items[nextIdx]?.image_url) {
+    if (nextItem?.image_url) {
       const img2 = new Image();
-      img2.src = items[nextIdx].image_url;
+      img2.src = nextItem.image_url;
     }
-  }, [isOpen, selectedIndex, items]);
+  }, [isOpen, selectedIndex, items, prevItem, nextItem]);
 
-  const handlePrev = useCallback(() => {
-    if (selectedIndex === null || items.length === 0) return;
-    const newIdx = (selectedIndex - 1 + items.length) % items.length;
-    onSelectIndex(newIdx);
+  // Silky smooth sliding to Next
+  const handleNext = useCallback(() => {
+    if (selectedIndex === null || items.length <= 1 || isAnimatingRef.current) return;
+
+    isAnimatingRef.current = true;
+    setIsTransitioning(true);
+    setSlideOffsetPercent(-200); // Slide track to the left
+
+    setTimeout(() => {
+      const newIdx = (selectedIndex + 1) % items.length;
+      onSelectIndex(newIdx);
+      setIsTransitioning(false);
+      setSlideOffsetPercent(-100); // Reset track position seamlessly
+      setDragDistanceX(0);
+      isAnimatingRef.current = false;
+    }, 300);
   }, [selectedIndex, items.length, onSelectIndex]);
 
-  const handleNext = useCallback(() => {
-    if (selectedIndex === null || items.length === 0) return;
-    const newIdx = (selectedIndex + 1) % items.length;
-    onSelectIndex(newIdx);
+  // Silky smooth sliding to Previous
+  const handlePrev = useCallback(() => {
+    if (selectedIndex === null || items.length <= 1 || isAnimatingRef.current) return;
+
+    isAnimatingRef.current = true;
+    setIsTransitioning(true);
+    setSlideOffsetPercent(0); // Slide track to the right
+
+    setTimeout(() => {
+      const newIdx = (selectedIndex - 1 + items.length) % items.length;
+      onSelectIndex(newIdx);
+      setIsTransitioning(false);
+      setSlideOffsetPercent(-100); // Reset track position seamlessly
+      setDragDistanceX(0);
+      isAnimatingRef.current = false;
+    }, 300);
   }, [selectedIndex, items.length, onSelectIndex]);
 
   // Zoom controls (1x to 4x)
@@ -202,7 +236,7 @@ export function GalleryViewer({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Web Share API with Clipboard copy fallback
+  // Web Share API
   const handleShare = async () => {
     if (!currentItem) return;
 
@@ -256,7 +290,7 @@ export function GalleryViewer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleClose, handlePrev, handleNext]);
 
-  // Lock body scroll when viewer is active
+  // Lock body scroll
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -273,6 +307,10 @@ export function GalleryViewer({
     if (zoom > 1) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    } else if (items.length > 1) {
+      setIsDraggingTrack(true);
+      dragStartXRef.current = e.clientX;
+      dragStartYRef.current = e.clientY;
     }
   };
 
@@ -282,37 +320,65 @@ export function GalleryViewer({
       const newX = Math.min(Math.max(e.clientX - panStart.x, -maxBound), maxBound);
       const newY = Math.min(Math.max(e.clientY - panStart.y, -maxBound), maxBound);
       setPan({ x: newX, y: newY });
+    } else if (zoom === 1 && isDraggingTrack) {
+      const deltaX = e.clientX - dragStartXRef.current;
+      setDragDistanceX(deltaX);
     }
   };
 
   const handleMouseUp = () => {
     if (isPanning) setIsPanning(false);
+
+    if (isDraggingTrack) {
+      setIsDraggingTrack(false);
+      if (dragDistanceX < -70) {
+        handleNext();
+      } else if (dragDistanceX > 70) {
+        handlePrev();
+      } else {
+        // Spring back smoothly
+        setIsTransitioning(true);
+        setDragDistanceX(0);
+        setTimeout(() => setIsTransitioning(false), 200);
+      }
+    }
   };
 
-  // Touch Swipe handlers
+  // Touch Swipe handlers with continuous tracking
   const handleTouchStart = (e: React.TouchEvent) => {
     if (zoom > 1) return;
-    setTouchStartX(e.touches[0].clientX);
-    setTouchDeltaX(0);
+    const touch = e.touches[0];
+    dragStartXRef.current = touch.clientX;
+    dragStartYRef.current = touch.clientY;
+    setIsDraggingTrack(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (zoom > 1 || touchStartX === null) return;
-    const currentX = e.touches[0].clientX;
-    setTouchDeltaX(currentX - touchStartX);
+    if (zoom > 1 || !isDraggingTrack) return;
+    const touch = e.touches[0];
+    const diffX = touch.clientX - dragStartXRef.current;
+    const diffY = touch.clientY - dragStartYRef.current;
+
+    // Only drag horizontally if motion is primary horizontal
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+      setDragDistanceX(diffX);
+    }
   };
 
   const handleTouchEnd = () => {
-    if (zoom > 1 || touchStartX === null) return;
+    if (zoom > 1) return;
+    setIsDraggingTrack(false);
 
-    if (touchDeltaX > 50) {
-      handlePrev();
-    } else if (touchDeltaX < -50) {
+    if (dragDistanceX < -50) {
       handleNext();
+    } else if (dragDistanceX > 50) {
+      handlePrev();
+    } else {
+      // Spring back smoothly
+      setIsTransitioning(true);
+      setDragDistanceX(0);
+      setTimeout(() => setIsTransitioning(false), 200);
     }
-
-    setTouchStartX(null);
-    setTouchDeltaX(0);
   };
 
   if (!isOpen || !currentItem) return null;
@@ -325,6 +391,7 @@ export function GalleryViewer({
       aria-modal="true"
       aria-label={`Viewing photo ${selectedIndex + 1} of ${items.length}`}
       onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
     >
       {/* ── Top Toolbar ── */}
       <header className="relative z-30 flex items-center justify-between px-4 sm:px-6 py-3 border-b border-[#2C1810]/70 bg-[#140A06]/90 backdrop-blur-md">
@@ -433,10 +500,16 @@ export function GalleryViewer({
         </div>
       </header>
 
-      {/* ── Center Stage & Sliding Track ── */}
+      {/* ── Center Stage with Smooth 3-Slide Sliding Carousel ── */}
       <main
-        className={`relative flex-1 w-full overflow-hidden flex items-center justify-center p-2 sm:p-6 ${
-          zoom > 1 ? (isPanning ? 'cursor-grabbing' : 'cursor-grab') : ''
+        className={`relative flex-1 w-full overflow-hidden flex items-center justify-center p-0 ${
+          zoom > 1
+            ? isPanning
+              ? 'cursor-grabbing'
+              : 'cursor-grab'
+            : isDraggingTrack
+            ? 'cursor-grabbing'
+            : 'cursor-grab'
         }`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -460,22 +533,60 @@ export function GalleryViewer({
             </button>
           </div>
         ) : (
+          /* Multi-Slide Horizontal Track */
           <div
-            key={currentItem.id}
-            className="relative flex items-center justify-center will-change-transform transition-transform duration-200 ease-out"
+            className={`flex h-full w-full will-change-transform ${
+              isTransitioning
+                ? 'transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]'
+                : 'transition-none'
+            }`}
             style={{
-              transform: `translate3d(${touchDeltaX + pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
-              transformOrigin: 'center center',
+              transform: `translate3d(calc(${slideOffsetPercent}% + ${dragDistanceX}px), 0, 0)`,
             }}
-            onDoubleClick={handleToggleZoom}
           >
-            <img
-              src={currentItem.image_url}
-              alt={currentItem.alt_text || currentItem.caption || currentItem.title || 'RadhaCafe photo'}
-              onError={() => setImageError(true)}
-              className="max-h-[68vh] sm:max-h-[75vh] w-auto max-w-full object-contain rounded-md shadow-2xl transition-all duration-300 pointer-events-auto select-none"
-              draggable={false}
-            />
+            {/* Slide -1: Previous Image */}
+            <div className="w-full h-full flex-shrink-0 flex items-center justify-center p-2 sm:p-6 opacity-60 scale-95 transition-opacity">
+              {prevItem && (
+                <img
+                  src={prevItem.image_url}
+                  alt={prevItem.alt_text || 'Previous photo'}
+                  className="max-h-[68vh] sm:max-h-[75vh] w-auto max-w-full object-contain rounded-md shadow-2xl pointer-events-none select-none"
+                  draggable={false}
+                />
+              )}
+            </div>
+
+            {/* Slide 0: Current Active Image */}
+            <div className="w-full h-full flex-shrink-0 flex items-center justify-center p-2 sm:p-6">
+              <div
+                className="relative flex items-center justify-center transition-transform duration-150 ease-out"
+                style={{
+                  transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
+                  transformOrigin: 'center center',
+                }}
+                onDoubleClick={handleToggleZoom}
+              >
+                <img
+                  src={currentItem.image_url}
+                  alt={currentItem.alt_text || currentItem.caption || currentItem.title || 'RadhaCafe photo'}
+                  onError={() => setImageError(true)}
+                  className="max-h-[68vh] sm:max-h-[75vh] w-auto max-w-full object-contain rounded-md shadow-2xl pointer-events-auto select-none"
+                  draggable={false}
+                />
+              </div>
+            </div>
+
+            {/* Slide +1: Next Image */}
+            <div className="w-full h-full flex-shrink-0 flex items-center justify-center p-2 sm:p-6 opacity-60 scale-95 transition-opacity">
+              {nextItem && (
+                <img
+                  src={nextItem.image_url}
+                  alt={nextItem.alt_text || 'Next photo'}
+                  className="max-h-[68vh] sm:max-h-[75vh] w-auto max-w-full object-contain rounded-md shadow-2xl pointer-events-none select-none"
+                  draggable={false}
+                />
+              )}
+            </div>
           </div>
         )}
 
