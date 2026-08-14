@@ -45,14 +45,26 @@ export async function signOut() {
 }
 
 export async function getSession() {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error) throw error;
-  return session;
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      // Gracefully clear expired/invalid refresh tokens
+      await supabase.auth.signOut().catch(() => {});
+      return null;
+    }
+    return session;
+  } catch {
+    return null;
+  }
 }
 
 export function onAuthStateChange(callback: (session: any) => void) {
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-    callback(session);
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT' || !session) {
+      callback(null);
+    } else {
+      callback(session);
+    }
   });
   return subscription;
 }
