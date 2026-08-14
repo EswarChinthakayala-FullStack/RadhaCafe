@@ -7,7 +7,7 @@ import {
   SETTINGS_CATEGORIES,
   type SettingsSectionKey,
 } from '../../components/admin/settings/SettingsSidebar';
-import { SettingsMobileHome } from '../../components/admin/settings/SettingsMobileHome';
+import { SettingsMobileTabs } from '../../components/admin/settings/SettingsMobileTabs';
 import { GeneralSettings } from '../../components/admin/settings/GeneralSettings';
 import { CafeProfileSettings } from '../../components/admin/settings/CafeProfileSettings';
 import { OrderPaymentSettings } from '../../components/admin/settings/OrderPaymentSettings';
@@ -30,7 +30,7 @@ import {
 } from '../../components/ui/alert-dialog';
 import { ROUTES } from '../../constants/routes';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Cancel01Icon, ArrowLeft01Icon } from '@hugeicons/core-free-icons';
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 
 const VALID_SECTIONS: SettingsSectionKey[] = [
   'general',
@@ -66,9 +66,6 @@ export function SettingsPage() {
     return 'general';
   }, [rawSection]);
 
-  // Mobile navigation state (whether user is viewing mobile category list or a specific category)
-  const [mobileViewingCategory, setMobileViewingCategory] = useState<boolean>(Boolean(rawSection));
-
   // Dirty tracking for active category
   const [isCurrentCategoryDirty, setIsCurrentCategoryDirty] = useState<boolean>(false);
   const [pendingTargetSection, setPendingTargetSection] = useState<SettingsSectionKey | null>(null);
@@ -94,7 +91,6 @@ export function SettingsPage() {
   // Handle section switching with unsaved changes guard
   const handleSelectSection = (key: SettingsSectionKey) => {
     if (key === activeSection) {
-      setMobileViewingCategory(true);
       return;
     }
 
@@ -106,7 +102,6 @@ export function SettingsPage() {
 
     setIsCurrentCategoryDirty(false);
     setSearchParams({ section: key }, { replace: true });
-    setMobileViewingCategory(true);
   };
 
   // Confirm discarding changes
@@ -127,7 +122,6 @@ export function SettingsPage() {
     if (pendingTargetSection) {
       setSearchParams({ section: pendingTargetSection }, { replace: true });
       setPendingTargetSection(null);
-      setMobileViewingCategory(true);
     }
   };
 
@@ -146,9 +140,9 @@ export function SettingsPage() {
   const currentCategoryDef = SETTINGS_CATEGORIES.find((c) => c.key === activeSection) || SETTINGS_CATEGORIES[0];
 
   return (
-    <div className="w-full min-w-0 flex items-center justify-center min-h-[calc(100svh-5rem)] py-2 sm:py-6">
+    <div className="w-full h-[calc(100svh-4rem)] md:h-[calc(100svh-4.5rem)] flex items-center justify-center p-0 sm:p-3 md:p-4 overflow-hidden">
       {/* Centered Large Settings Dialog Surface (Desktop & Tablet) */}
-      <div className="w-full max-w-5xl h-[88svh] max-h-[820px] min-h-[580px] bg-card border border-border/80 rounded-3xl shadow-xl overflow-hidden flex flex-col relative animate-in fade-in zoom-in-[0.99] duration-150">
+      <div className="w-full max-w-5xl h-full max-h-full md:max-h-[820px] bg-card border-0 sm:border border-border/80 rounded-none sm:rounded-3xl shadow-xl overflow-hidden flex flex-col relative animate-in fade-in zoom-in-[0.99] duration-150">
         
         {/* Desktop Top Close Floating Button */}
         <button
@@ -195,76 +189,58 @@ export function SettingsPage() {
           </div>
         </div>
 
-        {/* 2. MOBILE FULL-SCREEN FLOW (< 768px) */}
-        <div className="md:hidden flex flex-col h-full w-full overflow-y-auto bg-card">
-          {!mobileViewingCategory ? (
-            /* Mobile Home Category List */
-            <SettingsMobileHome
-              onSelectCategory={(catKey) => {
-                handleSelectSection(catKey);
-                setMobileViewingCategory(true);
-              }}
-              onClose={handleClose}
+        {/* 2. MOBILE SCROLLABLE TABS LAYOUT (< 768px) */}
+        <div className="md:hidden flex flex-col h-full w-full bg-card overflow-hidden">
+          {/* Mobile Top Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/80 bg-card shrink-0">
+            <div>
+              <h2 className="text-base font-bold font-heading text-foreground">
+                Settings
+              </h2>
+              <p className="text-[11px] text-muted-foreground">
+                RadhaCafe Admin Center
+              </p>
+            </div>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleClose}
+              className="h-8.5 w-8.5 p-0 rounded-full hover:bg-secondary text-muted-foreground"
+              aria-label="Close Settings"
+            >
+              <HugeiconsIcon icon={Cancel01Icon} size={17} />
+            </Button>
+          </div>
+
+          {/* Horizontal Scroll Tabs with Slider Buttons */}
+          <div className="shrink-0">
+            <SettingsMobileTabs
+              activeKey={activeSection}
+              onSelectKey={handleSelectSection}
               printerConnected={printerConnected}
             />
-          ) : (
-            /* Mobile Active Category Full-Screen View */
-            <div className="flex flex-col h-full">
-              {/* Category Top Bar */}
-              <div className="sticky top-0 z-20 px-4 py-3 bg-card/95 backdrop-blur-md border-b border-border/80 shadow-2xs flex items-center justify-between gap-3">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    if (isCurrentCategoryDirty) {
-                      setShowDiscardDialog(true);
-                    } else {
-                      setMobileViewingCategory(false);
-                    }
-                  }}
-                  className="h-8 px-2 text-xs font-semibold rounded-xl text-muted-foreground hover:text-foreground gap-1 -ml-2"
-                >
-                  <HugeiconsIcon icon={ArrowLeft01Icon} size={15} />
-                  <span>Settings</span>
-                </Button>
+          </div>
 
-                <span className="font-bold font-heading text-xs text-foreground truncate">
-                  {currentCategoryDef.label}
-                </span>
-
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleClose}
-                  className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-foreground"
-                  aria-label="Close Settings"
-                >
-                  <HugeiconsIcon icon={Cancel01Icon} size={16} />
-                </Button>
-              </div>
-
-              {/* Mobile Active Category Content */}
-              <div className="p-4 flex-1 overflow-y-auto pb-16">
-                {activeSection === 'general' && (
-                  <GeneralSettings onDirtyChange={setIsCurrentCategoryDirty} />
-                )}
-                {activeSection === 'profile' && (
-                  <CafeProfileSettings onDirtyChange={setIsCurrentCategoryDirty} />
-                )}
-                {activeSection === 'orders' && (
-                  <OrderPaymentSettings onDirtyChange={setIsCurrentCategoryDirty} />
-                )}
-                {activeSection === 'printer' && <PrinterSettingsSummary />}
-                {activeSection === 'receipts' && <ReceiptSettingsSummary />}
-                {activeSection === 'appearance' && <AppearanceSettings />}
-                {activeSection === 'preferences' && <PreferencesSettings />}
-                {activeSection === 'account' && <AccountSecuritySettings />}
-                {activeSection === 'about' && <AboutSettings />}
-              </div>
-            </div>
-          )}
+          {/* Scrollable Content for Selected Category */}
+          <div className="flex-1 overflow-y-auto p-4 pb-20">
+            {activeSection === 'general' && (
+              <GeneralSettings onDirtyChange={setIsCurrentCategoryDirty} />
+            )}
+            {activeSection === 'profile' && (
+              <CafeProfileSettings onDirtyChange={setIsCurrentCategoryDirty} />
+            )}
+            {activeSection === 'orders' && (
+              <OrderPaymentSettings onDirtyChange={setIsCurrentCategoryDirty} />
+            )}
+            {activeSection === 'printer' && <PrinterSettingsSummary />}
+            {activeSection === 'receipts' && <ReceiptSettingsSummary />}
+            {activeSection === 'appearance' && <AppearanceSettings />}
+            {activeSection === 'preferences' && <PreferencesSettings />}
+            {activeSection === 'account' && <AccountSecuritySettings />}
+            {activeSection === 'about' && <AboutSettings />}
+          </div>
         </div>
       </div>
 
