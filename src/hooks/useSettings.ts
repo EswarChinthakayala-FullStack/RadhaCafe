@@ -19,9 +19,13 @@ export function useUpdateCafeSettings() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: Partial<CafeSettings>) => updateCafeSettings(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: SETTINGS_QUERY_KEYS.cafe });
-      queryClient.invalidateQueries({ queryKey: ['settings', 'cafe'] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: SETTINGS_QUERY_KEYS.cafe }),
+        queryClient.invalidateQueries({ queryKey: ['settings', 'cafe'] }),
+        queryClient.invalidateQueries({ queryKey: ['cafeSettings'] }),
+        queryClient.refetchQueries({ queryKey: SETTINGS_QUERY_KEYS.cafe }),
+      ]);
     },
   });
 }
