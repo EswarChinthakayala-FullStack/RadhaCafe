@@ -20,7 +20,7 @@ export function NewOrderPage() {
   const isPrinterConnecting = printerStatus === 'connecting';
 
   return (
-    <div className="space-y-3 sm:space-y-4 max-w-7xl mx-auto min-w-0 w-full pb-8">
+    <div className="space-y-3 sm:space-y-4 max-w-[1680px] mx-auto min-w-0 w-full pb-8">
       {/* Header Bar — Compact, touch-ready & fully responsive */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 border-b border-border/80 pb-3">
         <div className="space-y-0.5 min-w-0">

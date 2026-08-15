@@ -26,14 +26,14 @@ export function NewOrderForm() {
 
   return (
     <div className={`space-y-4 min-w-0 w-full ${totalItemCount > 0 ? 'pb-24 lg:pb-0' : ''}`}>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 xl:gap-6 items-start min-w-0 w-full">
-        {/* Left Column: POS Item Selector (approx 67% on desktop) */}
-        <div className="lg:col-span-8 min-w-0 w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 xl:gap-5 items-start min-w-0 w-full">
+        {/* Left Column: POS Item Selector (approx 67%-75% on desktop/widescreen) */}
+        <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-9 min-w-0 w-full">
           <OrderItemSelector />
         </div>
 
-        {/* Right Column: Desktop Sticky Live Cart (approx 33% on desktop) */}
-        <div className="hidden lg:block lg:col-span-4 sticky top-0 self-start min-w-0 z-10 max-h-[calc(100vh-5.5rem)] overflow-y-auto scrollbar-thin">
+        {/* Right Column: Desktop Sticky Live Cart (approx 25%-33% on desktop/widescreen) */}
+        <div className="hidden lg:block lg:col-span-4 xl:col-span-4 2xl:col-span-3 sticky top-0 self-start min-w-0 z-10 max-h-[calc(100vh-5.5rem)] overflow-y-auto scrollbar-thin">
           <OrderCart />
         </div>
       </div>

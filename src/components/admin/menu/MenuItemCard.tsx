@@ -55,14 +55,14 @@ export function MenuItemCard({
       }`}
     >
       {/* Top Image Section */}
-      <div className="relative aspect-4/3 w-full bg-secondary/40 overflow-hidden shrink-0">
+      <div className="relative aspect-4/3 w-full bg-white border-b border-border/40 overflow-hidden shrink-0 flex items-center justify-center p-1.5">
         {item.image_url && !imgError ? (
           <img
             src={item.image_url}
             alt={item.name}
             loading="lazy"
             onError={() => setImgError(true)}
-            className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+            className={`w-full h-full object-contain ${
               !item.is_available ? 'grayscale-[50%] contrast-[90%]' : ''
             }`}
           />

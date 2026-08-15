@@ -199,8 +199,8 @@ export function OrderItemSelector() {
 
   return (
     <div className="space-y-0 min-w-0 max-w-full">
-      {/* ── Sticky Search + Category Area ── */}
-      <div className="sticky top-0 z-20 bg-background pb-2.5 pt-0.5 space-y-2.5">
+      {/* ── Sticky Search + Category Area (Flush with Admin top nav, zero gap) ── */}
+      <div className="sticky -top-4 md:-top-6 z-20 bg-background/95 backdrop-blur-md -mt-4 md:-mt-6 pt-4 md:pt-6 pb-2.5 space-y-2.5 border-b border-border/40">
         {/* Search Input with [/] Shortcut */}
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
@@ -350,7 +350,7 @@ export function OrderItemSelector() {
         </div>
       )}
 
-      {/* ── Main Menu Item Grid — Responsive across all device breakpoints ── */}
+      {/* ── Main Menu Item Grid — 8 cols laptop, 6 cols tablet, 4 cols mobile ── */}
       {!filteredItems || filteredItems.length === 0 ? (
         <div className="p-8 sm:p-10 text-center bg-card rounded-xl border border-dashed border-border/80 space-y-2">
           <div className="w-10 h-10 mx-auto rounded-full bg-secondary flex items-center justify-center text-muted-foreground/50">
@@ -360,7 +360,7 @@ export function OrderItemSelector() {
           <p className="text-[11px] text-muted-foreground">Try adjusting your search query or category filter.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-2.5">
+        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-1.5 sm:gap-2 lg:gap-2">
           {filteredItems.map((item) => {
             const qty = getCartQuantity(item.id);
             const hasImage = item.image_url && !failedImages[item.id];
@@ -375,101 +375,94 @@ export function OrderItemSelector() {
               <div
                 key={item.id}
                 onClick={() => addItem(item)}
-                className={`group/card rounded-xl border bg-card p-2 sm:p-2.5 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden relative cursor-pointer active:scale-[0.99] select-none ${
+                className={`group/card rounded-lg border bg-card p-1 sm:p-1.5 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden relative cursor-pointer active:scale-[0.99] select-none ${
                   qty > 0 ? 'border-cinnamon/60 ring-1 ring-cinnamon/20 bg-cinnamon/[0.02]' : 'border-border/80 hover:border-cinnamon/40'
                 }`}
               >
-                <div className="space-y-1 sm:space-y-1.5">
+                <div>
                   {/* Item Image Container */}
-                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-secondary/40">
+                  <div className="relative aspect-square w-full overflow-hidden rounded-md bg-white border border-border/40 flex items-center justify-center">
                     {hasImage ? (
                       <LazyImage
                         src={item.image_url!}
                         alt={item.name}
-                        className="h-full w-full object-cover group-hover/card:scale-[1.03] transition-transform duration-300"
+                        containerClassName="bg-white"
+                        className="h-full w-full object-contain p-1"
                         onError={() => handleImageError(item.id)}
                       />
                     ) : (
-                      <div className="h-full w-full flex flex-col items-center justify-center bg-secondary/50 text-muted-foreground/40 gap-1">
-                        <HugeiconsIcon icon={Coffee02Icon} size={22} />
-                        <span className="text-[9px] font-bold uppercase tracking-wider">RadhaCafe</span>
+                      <div className="h-full w-full flex flex-col items-center justify-center bg-secondary/40 text-muted-foreground/40 gap-0.5">
+                        <HugeiconsIcon icon={Coffee02Icon} size={18} />
+                        <span className="text-[7.5px] font-bold uppercase tracking-wider">RadhaCafe</span>
                       </div>
                     )}
 
                     {/* System Priority Badges */}
-                    <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 z-10">
+                    <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-10 max-w-[85%]">
                       {isTodaySpec && (
-                        <Badge className="bg-amber-600/90 backdrop-blur-xs text-white text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0 font-bold shadow-xs flex items-center gap-0.5">
-                          <HugeiconsIcon icon={StarIcon} size={9} />
-                          <span>Special</span>
+                        <Badge className="bg-amber-600/95 backdrop-blur-xs text-white text-[7.5px] sm:text-[8.5px] px-1 py-0 font-bold shadow-xs flex items-center gap-0.5 rounded leading-tight">
+                          <HugeiconsIcon icon={StarIcon} size={8} />
+                          <span className="truncate">Special</span>
                         </Badge>
                       )}
                       {isBestSell && !isTodaySpec && (
-                        <Badge className="bg-cinnamon/90 backdrop-blur-xs text-white text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0 font-bold shadow-xs flex items-center gap-0.5">
-                          <HugeiconsIcon icon={FireIcon} size={9} />
-                          <span>Popular</span>
+                        <Badge className="bg-cinnamon/95 backdrop-blur-xs text-white text-[7.5px] sm:text-[8.5px] px-1 py-0 font-bold shadow-xs flex items-center gap-0.5 rounded leading-tight">
+                          <HugeiconsIcon icon={FireIcon} size={8} />
+                          <span className="truncate">Popular</span>
                         </Badge>
                       )}
                     </div>
 
                     {/* Cart Quantity Overlay Badge */}
                     {qty > 0 && (
-                      <div className="absolute top-1.5 right-1.5 bg-cinnamon text-white text-[10px] font-mono font-bold h-5 min-w-[20px] px-1 rounded-full flex items-center justify-center shadow-md border border-white/20">
+                      <div className="absolute top-1 right-1 bg-cinnamon text-white text-[9px] font-mono font-bold h-4.5 min-w-[18px] px-0.5 rounded-full flex items-center justify-center shadow-md border border-white/30">
                         {qty}
                       </div>
                     )}
                   </div>
 
                   {/* Item Details */}
-                  <div className="space-y-0.5">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate">
-                        {categoryName || 'Menu Item'}
+                  <div className="space-y-0.5 pt-1">
+                    <div className="flex items-center justify-between gap-0.5">
+                      <span className="text-[8px] sm:text-[9px] font-semibold text-muted-foreground uppercase tracking-wider truncate">
+                        {categoryName || 'Menu'}
                       </span>
-
-                      {/* Manual Tags */}
                       {tags.length > 0 && (
-                        <span className="text-[8px] sm:text-[9px] font-semibold text-cinnamon/80 truncate">
+                        <span className="text-[7.5px] sm:text-[8px] font-semibold text-cinnamon/80 truncate hidden sm:inline">
                           {tags[0]}
                         </span>
                       )}
                     </div>
 
-                    <h4 className="font-bold text-xs sm:text-sm text-foreground line-clamp-2 leading-tight min-h-[1.75rem] sm:min-h-[2rem]">
+                    <h4 className="font-bold text-[11px] sm:text-xs text-foreground line-clamp-1 leading-tight group-hover/card:text-cinnamon transition-colors" title={item.name}>
                       {item.name}
                     </h4>
 
                     {/* Price Tag */}
-                    <div className="pt-0.5">
-                      <span className="font-extrabold text-xs sm:text-sm text-cinnamon font-heading">
+                    <div>
+                      <span className="font-extrabold text-[11px] sm:text-xs text-cinnamon font-heading">
                         {formatCurrency(item.price)}
                       </span>
                     </div>
-
-                    {item.description && (
-                      <p className="text-[10px] text-muted-foreground line-clamp-1 hidden sm:block">
-                        {item.description}
-                      </p>
-                    )}
                   </div>
                 </div>
 
-                {/* Dedicated Full-Width Action Row — 100% overflow-proof and touch-friendly */}
-                <div className="pt-2 mt-1.5 border-t border-border/50" onClick={(e) => e.stopPropagation()}>
+                {/* Dedicated Compact Action Row */}
+                <div className="pt-1 mt-1 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
                   {qty > 0 ? (
-                    <div className="w-full h-7 bg-cinnamon text-white rounded-lg flex items-center justify-between px-1 shadow-2xs">
+                    <div className="w-full h-6 sm:h-6.5 bg-cinnamon text-white rounded-md flex items-center justify-between px-0.5 shadow-2xs">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           updateQuantity(item.id, qty - 1);
                         }}
-                        className="h-6 w-7 rounded flex items-center justify-center text-white hover:bg-black/15 active:scale-90 transition-all"
+                        className="h-5 w-5 sm:w-6 rounded flex items-center justify-center text-white hover:bg-black/20 active:scale-90 transition-all"
                         aria-label={`Decrease ${item.name}`}
                       >
-                        <HugeiconsIcon icon={MinusSignIcon} size={12} />
+                        <HugeiconsIcon icon={MinusSignIcon} size={11} />
                       </button>
-                      <span className="text-xs font-bold font-mono text-white select-none leading-none">
+                      <span className="text-[11px] sm:text-xs font-bold font-mono text-white select-none leading-none">
                         {qty}
                       </span>
                       <button
@@ -478,10 +471,10 @@ export function OrderItemSelector() {
                           e.stopPropagation();
                           updateQuantity(item.id, qty + 1);
                         }}
-                        className="h-6 w-7 rounded flex items-center justify-center text-white hover:bg-black/15 active:scale-90 transition-all"
+                        className="h-5 w-5 sm:w-6 rounded flex items-center justify-center text-white hover:bg-black/20 active:scale-90 transition-all"
                         aria-label={`Increase ${item.name}`}
                       >
-                        <HugeiconsIcon icon={PlusSignIcon} size={12} />
+                        <HugeiconsIcon icon={PlusSignIcon} size={11} />
                       </button>
                     </div>
                   ) : (
@@ -491,9 +484,9 @@ export function OrderItemSelector() {
                         e.stopPropagation();
                         addItem(item);
                       }}
-                      className="w-full h-7 bg-cinnamon/10 hover:bg-cinnamon text-cinnamon hover:text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1 active:scale-[0.98] border border-cinnamon/20 hover:border-cinnamon"
+                      className="w-full h-6 sm:h-6.5 bg-cinnamon/10 hover:bg-cinnamon text-cinnamon hover:text-white font-bold text-[10px] sm:text-[11px] rounded-md transition-all flex items-center justify-center gap-0.5 active:scale-[0.98] border border-cinnamon/20 hover:border-cinnamon"
                     >
-                      <HugeiconsIcon icon={PlusSignIcon} size={13} />
+                      <HugeiconsIcon icon={PlusSignIcon} size={11} />
                       <span>Add</span>
                     </button>
                   )}

@@ -40,8 +40,8 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
         </div>
       </div>
 
-      {/* Responsive Grid -- scrollable on mobile if many specials, grid on desktop */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-2.5">
+      {/* Responsive Grid — 8 cols laptop, 6 cols tablet, 4 cols mobile */}
+      <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-1.5 sm:gap-2 lg:gap-2">
         {specials.map((item) => {
           const qtyInCart = getItemQuantityInCart(item.id);
           const hasImage = Boolean(item.image_url);
@@ -50,73 +50,71 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
             <div
               key={item.id}
               onClick={() => addItem(item)}
-              className={`rounded-lg border bg-card p-2 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden cursor-pointer active:scale-[0.99] select-none ${
-                qtyInCart > 0 ? 'border-amber-500/50 ring-1 ring-amber-400/20' : 'border-amber-500/25 hover:border-amber-500/50'
+              className={`group/card rounded-lg border bg-card p-1 sm:p-1.5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden cursor-pointer active:scale-[0.99] select-none ${
+                qtyInCart > 0 ? 'border-amber-500/60 ring-1 ring-amber-400/20 bg-amber-500/[0.02]' : 'border-amber-500/30 hover:border-amber-500/60'
               }`}
             >
-              <div className="space-y-1.5">
+              <div>
                 {/* Item Image Container */}
-                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-secondary/30">
+                <div className="relative aspect-square w-full overflow-hidden rounded-md bg-white border border-border/40 flex items-center justify-center">
                   {hasImage ? (
                     <LazyImage
                       src={item.image_url!}
                       alt={item.name}
-                      className="h-full w-full object-cover"
+                      containerClassName="bg-white"
+                      className="h-full w-full object-contain p-1"
                     />
                   ) : (
-                    <div className="h-full w-full flex flex-col items-center justify-center bg-secondary/50 text-muted-foreground/40 gap-0.5">
-                      <HugeiconsIcon icon={Coffee02Icon} size={20} />
-                      <span className="text-[8px] font-bold uppercase tracking-wider">RadhaCafe</span>
+                    <div className="h-full w-full flex flex-col items-center justify-center bg-secondary/40 text-muted-foreground/40 gap-0.5">
+                      <HugeiconsIcon icon={Coffee02Icon} size={18} />
+                      <span className="text-[7.5px] font-bold uppercase tracking-wider">RadhaCafe</span>
                     </div>
                   )}
-                  <div className="absolute top-1 left-1">
-                    <Badge className="bg-amber-600/90 backdrop-blur-xs text-white text-[9px] px-1.5 py-0 font-bold shadow-2xs flex items-center gap-0.5">
+                  <div className="absolute top-1 left-1 max-w-[85%]">
+                    <Badge className="bg-amber-600/95 backdrop-blur-xs text-white text-[7.5px] sm:text-[8.5px] px-1 py-0 font-bold shadow-xs flex items-center gap-0.5 rounded leading-tight">
                       <HugeiconsIcon icon={StarIcon} size={8} />
-                      <span>Special</span>
+                      <span className="truncate">Special</span>
                     </Badge>
                   </div>
                   {qtyInCart > 0 && (
-                    <div className="absolute top-1 right-1 bg-amber-600 text-white text-[10px] font-bold h-5 min-w-[20px] px-1 rounded-full flex items-center justify-center shadow-xs border border-white/20">
+                    <div className="absolute top-1 right-1 bg-amber-600 text-white text-[9px] font-mono font-bold h-4.5 min-w-[18px] px-0.5 rounded-full flex items-center justify-center shadow-md border border-white/30">
                       {qtyInCart}
                     </div>
                   )}
                 </div>
 
                 {/* Category & Name */}
-                <div className="space-y-0.5">
-                  <span className="text-[9px] sm:text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+                <div className="space-y-0.5 pt-1">
+                  <span className="text-[8px] sm:text-[9px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider truncate block">
                     {item.category?.name || 'Special'}
                   </span>
-                  <h4 className="font-bold text-xs sm:text-sm text-foreground line-clamp-2 leading-tight min-h-[1.75rem] sm:min-h-[2rem]">
+                  <h4 className="font-bold text-[11px] sm:text-xs text-foreground line-clamp-1 leading-tight group-hover/card:text-cinnamon transition-colors" title={item.name}>
                     {item.name}
                   </h4>
-                  <div className="pt-0.5">
-                    <span className="font-extrabold text-xs sm:text-sm text-cinnamon font-heading">
+                  <div>
+                    <span className="font-extrabold text-[11px] sm:text-xs text-cinnamon font-heading">
                       {formatCurrency(item.price)}
                     </span>
                   </div>
-                  {item.description && (
-                    <p className="text-[10px] text-muted-foreground line-clamp-1 hidden sm:block">{item.description}</p>
-                  )}
                 </div>
               </div>
 
-              {/* Dedicated Full-Width Action Row */}
-              <div className="pt-2 mt-1.5 border-t border-border/50" onClick={(e) => e.stopPropagation()}>
+              {/* Dedicated Compact Action Row */}
+              <div className="pt-1 mt-1 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
                 {qtyInCart > 0 ? (
-                  <div className="w-full h-7 bg-cinnamon text-white rounded-lg flex items-center justify-between px-1 shadow-2xs">
+                  <div className="w-full h-6 sm:h-6.5 bg-amber-600 text-white rounded-md flex items-center justify-between px-0.5 shadow-2xs">
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         updateQuantity(item.id, qtyInCart - 1);
                       }}
-                      className="h-6 w-7 rounded flex items-center justify-center text-white hover:bg-black/15 active:scale-90 transition-all"
+                      className="h-5 w-5 sm:w-6 rounded flex items-center justify-center text-white hover:bg-black/20 active:scale-90 transition-all"
                       aria-label={`Decrease ${item.name}`}
                     >
-                      <HugeiconsIcon icon={MinusSignIcon} size={12} />
+                      <HugeiconsIcon icon={MinusSignIcon} size={11} />
                     </button>
-                    <span className="text-xs font-bold font-mono text-white select-none leading-none">
+                    <span className="text-[11px] sm:text-xs font-bold font-mono text-white select-none leading-none">
                       {qtyInCart}
                     </span>
                     <button
@@ -125,10 +123,10 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
                         e.stopPropagation();
                         updateQuantity(item.id, qtyInCart + 1);
                       }}
-                      className="h-6 w-7 rounded flex items-center justify-center text-white hover:bg-black/15 active:scale-90 transition-all"
+                      className="h-5 w-5 sm:w-6 rounded flex items-center justify-center text-white hover:bg-black/20 active:scale-90 transition-all"
                       aria-label={`Increase ${item.name}`}
                     >
-                      <HugeiconsIcon icon={PlusSignIcon} size={12} />
+                      <HugeiconsIcon icon={PlusSignIcon} size={11} />
                     </button>
                   </div>
                 ) : (
@@ -138,9 +136,9 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
                       e.stopPropagation();
                       addItem(item);
                     }}
-                    className="w-full h-7 bg-amber-600/15 hover:bg-amber-600 text-amber-700 dark:text-amber-300 hover:text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1 active:scale-[0.98] border border-amber-600/30 hover:border-amber-600"
+                    className="w-full h-6 sm:h-6.5 bg-amber-600/10 hover:bg-amber-600 text-amber-700 dark:text-amber-300 hover:text-white font-bold text-[10px] sm:text-[11px] rounded-md transition-all flex items-center justify-center gap-0.5 active:scale-[0.98] border border-amber-600/20 hover:border-amber-600"
                   >
-                    <HugeiconsIcon icon={PlusSignIcon} size={13} />
+                    <HugeiconsIcon icon={PlusSignIcon} size={11} />
                     <span>Add</span>
                   </button>
                 )}
