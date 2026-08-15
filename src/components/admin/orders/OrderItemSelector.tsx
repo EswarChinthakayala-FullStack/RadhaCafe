@@ -75,7 +75,8 @@ export function OrderItemSelector() {
   const { addItem, updateQuantity, items: cartItems } = useCart();
 
   const categoryMap = new Map(categories?.map((c) => [c.id, c]));
-  const bestSellerIdSet = new Set(bestSellers?.map((b) => b.id));
+  const topBestSellerIds = new Set((bestSellers || []).slice(0, 3).map((b) => b.id));
+  const popularSellerIds = new Set((bestSellers || []).slice(3, 8).map((b) => b.id));
   const todayStr = new Date().toISOString().split('T')[0];
 
   // Global keyboard shortcut: Press '/' to focus search input, 'Escape' to blur/clear
@@ -160,16 +161,21 @@ export function OrderItemSelector() {
       return matchesCategory && matchesSearch;
     })
     ?.sort((a, b) => {
-      // Prioritize Today's Special -> Best Seller -> Alphabetical
+      // Prioritize Today's Special -> Best Seller -> Popular -> Alphabetical
       const aIsSpecial = a.daily_special_date === todayStr;
       const bIsSpecial = b.daily_special_date === todayStr;
       if (aIsSpecial && !bIsSpecial) return -1;
       if (!aIsSpecial && bIsSpecial) return 1;
 
-      const aIsBest = bestSellerIdSet.has(a.id);
-      const bIsBest = bestSellerIdSet.has(b.id);
+      const aIsBest = topBestSellerIds.has(a.id);
+      const bIsBest = topBestSellerIds.has(b.id);
       if (aIsBest && !bIsBest) return -1;
       if (!aIsBest && bIsBest) return 1;
+
+      const aIsPop = popularSellerIds.has(a.id);
+      const bIsPop = popularSellerIds.has(b.id);
+      if (aIsPop && !bIsPop) return -1;
+      if (!aIsPop && bIsPop) return 1;
 
       return a.name.localeCompare(b.name);
     });
@@ -368,9 +374,9 @@ export function OrderItemSelector() {
             const categoryName = category?.name;
 
             const isTodaySpec = item.daily_special_date === todayStr;
-            const isBestSell = bestSellerIdSet.has(item.id);
+            const isBestSell = topBestSellerIds.has(item.id);
             const tags = item.tags || [];
-            const isPopular = !isBestSell && (tags.includes('popular') || tags.includes('trending') || tags.includes('bestseller'));
+            const isPopular = !isBestSell && (popularSellerIds.has(item.id) || tags.includes('popular') || tags.includes('trending') || tags.includes('bestseller'));
 
             return (
               <div

@@ -4,7 +4,7 @@ import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import { LazyImage } from '../../ui/lazy-image';
 import { Badge } from '../../ui/badge';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Award01Icon, PlusSignIcon, MinusSignIcon, Coffee02Icon } from '@hugeicons/core-free-icons';
+import { Award01Icon, FireIcon, PlusSignIcon, MinusSignIcon, Coffee02Icon } from '@hugeicons/core-free-icons';
 
 interface BestSellersSectionProps {
   bestSellers: MenuItem[];
@@ -61,9 +61,10 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
 
       {/* Responsive Product Grid — 8 cols laptop, 6 cols tablet, 4 cols mobile */}
       <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-1.5 sm:gap-2 lg:gap-2">
-        {bestSellers.slice(0, 8).map((item) => {
+        {bestSellers.slice(0, 8).map((item, index) => {
           const qtyInCart = getItemQuantityInCart(item.id);
           const hasImage = Boolean(item.image_url);
+          const isTopBest = index < 3;
 
           return (
             <div
@@ -91,13 +92,23 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
                   )}
                   {/* System Priority Badges — Micro icon on mobile (never blocks image), full label on tablet/desktop */}
                   <div className="absolute top-1 left-1 z-10 pointer-events-none">
-                    <div
-                      className="h-4 w-4 sm:h-auto sm:w-auto sm:px-1.5 sm:py-0.5 rounded-full sm:rounded bg-orange-600/95 text-white flex items-center justify-center gap-0.5 shadow-xs"
-                      title="Best Seller"
-                    >
-                      <HugeiconsIcon icon={Award01Icon} size={8.5} className="shrink-0" />
-                      <span className="hidden sm:inline text-[8px] font-bold truncate leading-tight">Best Seller</span>
-                    </div>
+                    {isTopBest ? (
+                      <div
+                        className="h-4 w-4 sm:h-auto sm:w-auto sm:px-1.5 sm:py-0.5 rounded-full sm:rounded bg-orange-600/95 text-white flex items-center justify-center gap-0.5 shadow-xs"
+                        title="Best Seller"
+                      >
+                        <HugeiconsIcon icon={Award01Icon} size={8.5} className="shrink-0" />
+                        <span className="hidden sm:inline text-[8px] font-bold truncate leading-tight">Best Seller</span>
+                      </div>
+                    ) : (
+                      <div
+                        className="h-4 w-4 sm:h-auto sm:w-auto sm:px-1.5 sm:py-0.5 rounded-full sm:rounded bg-cinnamon/95 text-white flex items-center justify-center gap-0.5 shadow-xs"
+                        title="Popular"
+                      >
+                        <HugeiconsIcon icon={FireIcon} size={8.5} className="shrink-0" />
+                        <span className="hidden sm:inline text-[8px] font-bold truncate leading-tight">Popular</span>
+                      </div>
+                    )}
                   </div>
                   {qtyInCart > 0 && (
                     <div className="absolute top-1 right-1 bg-cinnamon text-white text-[9px] font-mono font-bold h-4.5 min-w-[18px] px-0.5 rounded-full flex items-center justify-center shadow-md border border-white/30">
