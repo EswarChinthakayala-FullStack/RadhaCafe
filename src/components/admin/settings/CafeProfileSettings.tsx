@@ -100,10 +100,10 @@ export function CafeProfileSettings({ onDirtyChange }: CafeProfileSettingsProps)
         description: 'Business information and public details updated.',
         type: 'success',
       });
-    } catch (err: any) {
+    } catch {
       toast.add({
         title: 'Unable to Save Profile',
-        description: err.message || 'Failed to update profile details.',
+        description: 'Unable to save these settings. Your changes are still here.',
         type: 'error',
       });
     }
@@ -153,10 +153,10 @@ export function CafeProfileSettings({ onDirtyChange }: CafeProfileSettingsProps)
         description: 'New cafe logo uploaded and applied across public site and thermal receipts.',
         type: 'success',
       });
-    } catch (err: any) {
+    } catch {
       toast.add({
         title: 'Upload Failed',
-        description: err.message || 'Could not upload brand logo.',
+        description: 'Could not upload the brand logo. Your existing logo is unchanged.',
         type: 'error',
       });
     } finally {
@@ -176,10 +176,10 @@ export function CafeProfileSettings({ onDirtyChange }: CafeProfileSettingsProps)
         description: 'Brand logo cleared. Text branding will be used as default.',
         type: 'success',
       });
-    } catch (err: any) {
+    } catch {
       toast.add({
         title: 'Removal Failed',
-        description: err.message || 'Unable to remove logo.',
+        description: 'Unable to remove the logo. Please try again.',
         type: 'error',
       });
     }

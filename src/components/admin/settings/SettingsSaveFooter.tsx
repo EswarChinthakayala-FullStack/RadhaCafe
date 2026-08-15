@@ -1,4 +1,5 @@
 import { Button } from '../../ui/button';
+import { createPortal } from 'react-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { FloppyDiskIcon, Loading03Icon, AlertCircleIcon } from '@hugeicons/core-free-icons';
 
@@ -23,9 +24,10 @@ export function SettingsSaveFooter({
     return null;
   }
 
-  return (
+  return createPortal(
     <div
-      className={`sticky bottom-0 z-20 -mx-4 -mb-4 sm:-mx-6 sm:-mb-6 p-3 sm:p-4 bg-card/95 backdrop-blur-md border-t border-border/80 shadow-lg flex items-center justify-between gap-3 flex-wrap animate-in fade-in slide-in-from-bottom-2 duration-150 ${className}`}
+      className={`fixed inset-x-0 bottom-0 z-50 flex flex-wrap items-center justify-between gap-3 border-t border-border/80 bg-card/95 p-3 shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-150 md:left-[260px] md:right-5 md:p-4 lg:left-[max(calc((100vw-1120px)/2+260px),292px)] lg:right-[max(calc((100vw-1120px)/2),32px)] ${className}`}
+      style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
     >
       <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 font-semibold">
         <HugeiconsIcon icon={AlertCircleIcon} size={15} className="shrink-0" />
@@ -64,6 +66,7 @@ export function SettingsSaveFooter({
           )}
         </Button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

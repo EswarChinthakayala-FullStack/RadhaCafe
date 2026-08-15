@@ -77,10 +77,10 @@ export function OrderPaymentSettings({ onDirtyChange }: OrderPaymentSettingsProp
         description: `POS orders will now apply ${formData.tax_percentage}% tax automatically.`,
         type: 'success',
       });
-    } catch (err: any) {
+    } catch {
       toast.add({
         title: 'Unable to Save Tax Settings',
-        description: err.message || 'Failed to update tax percentage.',
+        description: 'Unable to save these settings. Your changes are still here.',
         type: 'error',
       });
     }

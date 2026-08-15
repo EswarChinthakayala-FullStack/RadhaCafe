@@ -51,7 +51,7 @@ export function AccountSecuritySettings() {
     }
   };
 
-  const adminEmail = user?.email || 'admin@radhacafe.com';
+  const adminEmail = user?.email || 'Email unavailable';
 
   return (
     <div className="space-y-6">
@@ -61,7 +61,7 @@ export function AccountSecuritySettings() {
           Account & Security
         </h3>
         <p className="text-xs text-muted-foreground">
-          Authenticated administrator credentials, session status, and access control.
+          Review the signed-in administrator and manage this session.
         </p>
       </div>
 
@@ -78,11 +78,11 @@ export function AccountSecuritySettings() {
                 {adminEmail}
               </span>
               <Badge className="bg-cinnamon text-white font-bold text-[10px] px-2 py-0 h-4">
-                Primary Administrator
+                Administrator
               </Badge>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Single-admin storeowner account with full access to POS, billing, and thermal printer controls.
+              This is the single administrator account for RadhaCafe.
             </p>
           </div>
         </div>
@@ -92,20 +92,20 @@ export function AccountSecuritySettings() {
       <SettingsSection title="Authentication & Session">
         <SettingsRow
           title="Session Status"
-          description="Encrypted cryptographic JWT session with Supabase Row Level Security."
+          description="This administrator session is currently signed in."
         >
           <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
             <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} />
-            <span>Active & Authenticated</span>
+            <span>Signed in</span>
           </div>
         </SettingsRow>
 
         <SettingsRow
           title="Account Scope"
-          description="RadhaCafe operates under a single-admin architecture for fast local counter operation."
+          description="RadhaCafe is configured for one cafe administrator."
         >
           <div className="text-xs text-muted-foreground font-mono bg-secondary/40 px-3 py-1.5 rounded-xl border border-border/60">
-            Storeowner (Unrestricted)
+            Cafe administrator
           </div>
         </SettingsRow>
       </SettingsSection>

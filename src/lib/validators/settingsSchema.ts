@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const cafeProfileSchema = z.object({
-  cafe_name: z.string().min(1, 'Cafe Name is required').max(100, 'Cafe Name must be under 100 characters'),
+  cafe_name: z.string().trim().min(1, 'Cafe Name is required').max(100, 'Cafe Name must be under 100 characters'),
   tagline: z.string().max(150, 'Tagline must be under 150 characters').nullable().optional(),
   about_text: z.string().max(1000, 'About text must be under 1000 characters').nullable().optional(),
   address: z.string().max(300, 'Address must be under 300 characters').nullable().optional(),

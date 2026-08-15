@@ -14,7 +14,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { InformationCircleIcon } from '@hugeicons/core-free-icons';
 
 const generalSchema = z.object({
-  cafe_name: z.string().min(1, 'Cafe name is required').max(100, 'Cafe name is too long'),
+  cafe_name: z.string().trim().min(1, 'Cafe name is required').max(100, 'Cafe name is too long'),
 });
 
 type GeneralFormData = z.infer<typeof generalSchema>;
@@ -62,10 +62,10 @@ export function GeneralSettings({ onDirtyChange }: GeneralSettingsProps) {
         description: 'Cafe business name updated successfully.',
         type: 'success',
       });
-    } catch (err: any) {
+    } catch {
       toast.add({
         title: 'Unable to Save Settings',
-        description: err.message || 'Failed to update cafe name. Please try again.',
+        description: 'Unable to save these settings. Your changes are still here.',
         type: 'error',
       });
     }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { SETTINGS_CATEGORIES, type SettingsSectionKey } from './SettingsSidebar';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
@@ -21,21 +21,21 @@ export function SettingsMobileTabs({
   const startXRef = useRef(0);
   const scrollLeftRef = useRef(0);
 
-  const updateScrollButtons = () => {
+  const updateScrollButtons = useCallback(() => {
     if (scrollContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-      setCanScrollLeft(scrollLeft > 5);
-      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5);
+      setCanScrollLeft(scrollLeft > 6);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 6);
     }
-  };
+  }, []);
 
   useEffect(() => {
     updateScrollButtons();
     window.addEventListener('resize', updateScrollButtons);
     return () => window.removeEventListener('resize', updateScrollButtons);
-  }, []);
+  }, [updateScrollButtons]);
 
-  // Auto-scroll active tab into view
+  // Auto-scroll active tab into view smoothly
   useEffect(() => {
     if (scrollContainerRef.current) {
       const activeEl = scrollContainerRef.current.querySelector('[data-active="true"]');
@@ -44,7 +44,7 @@ export function SettingsMobileTabs({
       }
     }
     updateScrollButtons();
-  }, [activeKey]);
+  }, [activeKey, updateScrollButtons]);
 
   const scrollByAmount = (distance: number) => {
     if (scrollContainerRef.current) {
@@ -52,7 +52,7 @@ export function SettingsMobileTabs({
     }
   };
 
-  // Drag-to-scroll for touch/mouse
+  // Drag-to-scroll for mouse and touch interactions
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!scrollContainerRef.current) return;
     isDraggingRef.current = true;
@@ -73,17 +73,25 @@ export function SettingsMobileTabs({
     isDraggingRef.current = false;
   };
 
+  // Convert vertical mouse wheel to horizontal scrolling
+  const handleWheel = (e: React.WheelEvent) => {
+    if (scrollContainerRef.current && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      scrollContainerRef.current.scrollLeft += e.deltaY;
+      updateScrollButtons();
+    }
+  };
+
   return (
-    <div className="relative w-full min-w-0 bg-secondary/30 border-b border-border/80 px-2 py-2">
+    <div className="relative w-full min-w-0 bg-secondary/40 border-b border-border/80 p-2">
       {/* Left Slider Arrow Button */}
       {canScrollLeft && (
         <button
           type="button"
           onClick={() => scrollByAmount(-180)}
-          className="absolute left-1 top-1/2 -translate-y-1/2 z-20 w-7 h-7 flex items-center justify-center rounded-full bg-card/95 backdrop-blur-md border border-border text-foreground shadow-md hover:bg-secondary active:scale-95 transition-all"
-          aria-label="Scroll Tabs Left"
+          className="absolute left-1.5 top-1/2 -translate-y-1/2 z-20 w-7 h-7 flex items-center justify-center rounded-full bg-card/95 backdrop-blur-md border border-border/90 text-foreground shadow-md hover:bg-secondary active:scale-95 transition-all"
+          aria-label="Scroll tabs left"
         >
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={13} />
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
         </button>
       )}
 
@@ -92,10 +100,10 @@ export function SettingsMobileTabs({
         <button
           type="button"
           onClick={() => scrollByAmount(180)}
-          className="absolute right-1 top-1/2 -translate-y-1/2 z-20 w-7 h-7 flex items-center justify-center rounded-full bg-card/95 backdrop-blur-md border border-border text-foreground shadow-md hover:bg-secondary active:scale-95 transition-all"
-          aria-label="Scroll Tabs Right"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 w-7 h-7 flex items-center justify-center rounded-full bg-card/95 backdrop-blur-md border border-border/90 text-foreground shadow-md hover:bg-secondary active:scale-95 transition-all"
+          aria-label="Scroll tabs right"
         >
-          <HugeiconsIcon icon={ArrowRight01Icon} size={13} />
+          <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
         </button>
       )}
 
@@ -107,46 +115,49 @@ export function SettingsMobileTabs({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
-        className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth px-6 select-none"
+        onWheel={handleWheel}
+        className="w-full overflow-x-auto touch-pan-x overscroll-x-contain scrollbar-none snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none px-5 py-0.5"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {SETTINGS_CATEGORIES.map((cat) => {
-          const isActive = activeKey === cat.key;
-          return (
-            <button
-              key={cat.key}
-              type="button"
-              data-active={isActive}
-              onClick={() => onSelectKey(cat.key)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap shrink-0 transition-all ${
-                isActive
-                  ? 'bg-cinnamon text-white font-bold shadow-xs'
-                  : 'bg-card text-muted-foreground hover:text-foreground hover:bg-secondary/80 border border-border/60'
-              }`}
-            >
-              <HugeiconsIcon
-                icon={cat.icon}
-                size={14}
-                className={isActive ? 'text-white' : 'text-muted-foreground'}
-              />
-              <span>{cat.label}</span>
-
-              {cat.key === 'printer' && printerConnected !== undefined && (
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    printerConnected
-                      ? isActive
-                        ? 'bg-white'
-                        : 'bg-emerald-500'
-                      : isActive
-                      ? 'bg-white/60'
-                      : 'bg-muted-foreground/40'
-                  }`}
+        <div className="flex items-center gap-1.5 min-w-max">
+          {SETTINGS_CATEGORIES.map((cat) => {
+            const isActive = activeKey === cat.key;
+            return (
+              <button
+                key={cat.key}
+                type="button"
+                data-active={isActive ? 'true' : 'false'}
+                onClick={() => onSelectKey(cat.key)}
+                className={`snap-start shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border shadow-2xs active:scale-95 ${
+                  isActive
+                    ? 'bg-cinnamon text-white border-cinnamon shadow-sm font-bold'
+                    : 'bg-card text-muted-foreground border-border/70 hover:text-foreground hover:bg-secondary/60'
+                }`}
+              >
+                <HugeiconsIcon
+                  icon={cat.icon}
+                  size={14}
+                  className={isActive ? 'text-white' : 'text-muted-foreground'}
                 />
-              )}
-            </button>
-          );
-        })}
+                <span>{cat.label}</span>
+
+                {cat.key === 'printer' && printerConnected !== undefined && (
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      printerConnected
+                        ? isActive
+                          ? 'bg-white'
+                          : 'bg-emerald-500'
+                        : isActive
+                        ? 'bg-white/60'
+                        : 'bg-muted-foreground/40'
+                    }`}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

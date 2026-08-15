@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useReceiptTemplates } from '../../../hooks/useReceiptTemplates';
-import { BUILT_IN_PRESETS, presetToReceiptTemplate } from '../../../lib/printer/presetTemplates';
+import { useActiveReceiptTemplate } from '../../../hooks/useReceiptTemplates';
 import { SettingsSection } from './SettingsSection';
 import { SettingsRow } from './SettingsRow';
 import { Button } from '../../ui/button';
@@ -18,16 +17,7 @@ import {
 
 export function ReceiptSettingsSummary() {
   const navigate = useNavigate();
-  const { data: dbTemplates, isLoading } = useReceiptTemplates();
-
-  // Find active template from DB, or fallback to default preset
-  const activeTemplate =
-    dbTemplates?.find((t) => t.is_active) ||
-    presetToReceiptTemplate(BUILT_IN_PRESETS[0], true);
-
-  const config = activeTemplate.template_config;
-  const paperCols = activeTemplate.paper_width || config?.paperWidth || 32;
-  const is80mm = paperCols >= 42;
+  const { data: activeTemplate, isLoading } = useActiveReceiptTemplate();
 
   if (isLoading) {
     return (
@@ -40,6 +30,42 @@ export function ReceiptSettingsSummary() {
       </div>
     );
   }
+
+  if (!activeTemplate) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-3 border-b border-border/60 pb-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-0.5">
+            <h3 className="text-lg font-bold text-foreground">Receipts</h3>
+            <p className="text-xs text-muted-foreground">
+              Manage the receipt design used for cafe orders and reprints.
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => navigate(ROUTES.ADMIN.RECEIPTS)}
+            className="h-9 gap-1.5 self-start rounded-xl bg-cinnamon text-xs font-bold text-white hover:bg-cinnamon/90 sm:self-auto"
+          >
+            <HugeiconsIcon icon={Layout01Icon} size={14} />
+            <span>Manage Templates</span>
+          </Button>
+        </div>
+
+        <div className="rounded-2xl border border-dashed border-border bg-secondary/20 p-8 text-center">
+          <HugeiconsIcon icon={InvoiceIcon} size={26} className="mx-auto text-muted-foreground" />
+          <p className="mt-3 text-sm font-bold text-foreground">No active receipt template</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Choose a template in the receipt gallery before printing.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const config = activeTemplate.template_config;
+  const paperCols = activeTemplate.paper_width || config?.paperWidth || 32;
+  const is80mm = paperCols >= 42;
 
   return (
     <div className="space-y-6">
@@ -92,17 +118,18 @@ export function ReceiptSettingsSummary() {
               </p>
 
               {/* Quick Feature Checklist */}
-              <div className="flex items-center gap-2 flex-wrap pt-1 text-[11px] text-muted-foreground font-mono">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[11px] text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  ✓ {config?.header?.logoVisible ? 'Logo' : 'Text Branding'}
+                  <HugeiconsIcon icon={CheckmarkCircle02Icon} size={12} className="text-cinnamon" />
+                  {config?.header?.logoVisible ? 'Logo' : 'Text branding'}
                 </span>
-                <span>•</span>
                 <span className="flex items-center gap-1">
-                  ✓ {config?.summary?.taxVisible ? 'Tax Line' : 'Flat Total'}
+                  <HugeiconsIcon icon={CheckmarkCircle02Icon} size={12} className="text-cinnamon" />
+                  {config?.summary?.taxVisible ? 'Tax line' : 'Flat total'}
                 </span>
-                <span>•</span>
                 <span className="flex items-center gap-1">
-                  ✓ {config?.payment?.payLaterIndicator ? 'Pay Later Dues' : 'Instant UPI'}
+                  <HugeiconsIcon icon={CheckmarkCircle02Icon} size={12} className="text-cinnamon" />
+                  {config?.payment?.payLaterIndicator ? 'Pay later status' : 'Payment status'}
                 </span>
               </div>
             </div>

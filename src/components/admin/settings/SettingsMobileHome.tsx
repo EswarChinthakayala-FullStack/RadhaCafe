@@ -35,7 +35,7 @@ export function SettingsMobileHome({
   }, [searchQuery]);
 
   return (
-    <div className="flex flex-col min-h-[85svh] p-4 space-y-4">
+    <div className="flex h-full flex-col overflow-y-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-4">
       {/* Mobile Top Bar */}
       <div className="flex items-center justify-between pb-3 border-b border-border/70">
         <div>
@@ -86,6 +86,7 @@ export function SettingsMobileHome({
               key={cat.key}
               type="button"
               onClick={() => onSelectCategory(cat.key)}
+              aria-label={`Open ${cat.label} settings`}
               className="w-full text-left p-3.5 flex items-center justify-between gap-3 hover:bg-secondary/40 active:bg-secondary transition-colors"
             >
               <div className="flex items-center gap-3 min-w-0">

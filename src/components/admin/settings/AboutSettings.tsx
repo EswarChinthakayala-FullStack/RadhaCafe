@@ -1,7 +1,6 @@
 import { SettingsSection } from './SettingsSection';
 import { SettingsRow } from './SettingsRow';
 import { Button } from '../../ui/button';
-import { Badge } from '../../ui/badge';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Coffee01Icon, LinkSquare01Icon } from '@hugeicons/core-free-icons';
 
@@ -14,7 +13,7 @@ export function AboutSettings() {
           About RadhaCafe
         </h3>
         <p className="text-xs text-muted-foreground">
-          System build specifications, application environment, and public links.
+          Application information and public links.
         </p>
       </div>
 
@@ -25,16 +24,11 @@ export function AboutSettings() {
         </div>
 
         <div className="space-y-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-base font-heading text-foreground">
-              RadhaCafe Suite
-            </span>
-            <Badge className="bg-cinnamon text-white font-mono text-[10px] font-bold px-2 py-0 h-4">
-              v2.0
-            </Badge>
-          </div>
+          <span className="font-bold text-base font-heading text-foreground">
+            RadhaCafe Admin
+          </span>
           <p className="text-xs text-muted-foreground">
-            Artisanal cafe Point-of-Sale, real-time kitchen billing, and Web Bluetooth thermal printing platform.
+            Cafe ordering, customer management, reporting, and thermal receipt tools.
           </p>
         </div>
       </div>
@@ -42,20 +36,11 @@ export function AboutSettings() {
       {/* Section: Application Specs */}
       <SettingsSection title="System Information" showSeparator={false}>
         <SettingsRow
-          title="Software Release"
-          description="Current client bundle version and engine release."
+          title="Application"
+          description="The administration workspace currently in use."
         >
-          <span className="text-xs font-mono font-bold text-foreground bg-secondary/40 px-2.5 py-1 rounded-lg border border-border/60">
-            v2.0-prod (Build 20260814)
-          </span>
-        </SettingsRow>
-
-        <SettingsRow
-          title="Core Architecture"
-          description="Technology foundation powering the cafe register and print engine."
-        >
-          <span className="text-xs text-muted-foreground font-medium">
-            React 18 • TypeScript • Tailwind CSS • Web Bluetooth ESC/POS
+          <span className="text-xs text-foreground font-medium">
+            RadhaCafe Admin
           </span>
         </SettingsRow>
 

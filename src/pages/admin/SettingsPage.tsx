@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { useBluetoothPrinter } from '../../hooks/useBluetoothPrinter';
-import { useReceiptTemplates } from '../../hooks/useReceiptTemplates';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { usePrinterStore } from '../../store/printerStore';
 import {
   SettingsSidebar,
   SETTINGS_CATEGORIES,
@@ -13,8 +12,6 @@ import { CafeProfileSettings } from '../../components/admin/settings/CafeProfile
 import { OrderPaymentSettings } from '../../components/admin/settings/OrderPaymentSettings';
 import { PrinterSettingsSummary } from '../../components/admin/settings/PrinterSettingsSummary';
 import { ReceiptSettingsSummary } from '../../components/admin/settings/ReceiptSettingsSummary';
-import { AppearanceSettings } from '../../components/admin/settings/AppearanceSettings';
-import { PreferencesSettings } from '../../components/admin/settings/PreferencesSettings';
 import { AccountSecuritySettings } from '../../components/admin/settings/AccountSecuritySettings';
 import { AboutSettings } from '../../components/admin/settings/AboutSettings';
 import { Button } from '../../components/ui/button';
@@ -32,169 +29,182 @@ import { ROUTES } from '../../constants/routes';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
 
-const VALID_SECTIONS: SettingsSectionKey[] = [
-  'general',
-  'profile',
-  'orders',
-  'printer',
-  'receipts',
-  'appearance',
-  'preferences',
-  'account',
-  'about',
-];
+const VALID_SECTIONS = SETTINGS_CATEGORIES.map((category) => category.key);
+
+type PendingNavigation =
+  | { type: 'close' }
+  | { type: 'section'; section: SettingsSectionKey }
+  | null;
+
+interface SettingsLocationState {
+  from?: string;
+}
+
+function isSettingsSection(value: string | null): value is SettingsSectionKey {
+  return value !== null && VALID_SECTIONS.includes(value as SettingsSectionKey);
+}
+
+interface SettingsContentProps {
+  section: SettingsSectionKey;
+  onDirtyChange: (isDirty: boolean) => void;
+}
+
+function SettingsContent({ section, onDirtyChange }: SettingsContentProps) {
+  if (section === 'general') return <GeneralSettings onDirtyChange={onDirtyChange} />;
+  if (section === 'profile') return <CafeProfileSettings onDirtyChange={onDirtyChange} />;
+  if (section === 'orders') return <OrderPaymentSettings onDirtyChange={onDirtyChange} />;
+  if (section === 'printer') return <PrinterSettingsSummary />;
+  if (section === 'receipts') return <ReceiptSettingsSummary />;
+  if (section === 'account') return <AccountSecuritySettings />;
+  return <AboutSettings />;
+}
 
 export function SettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const printerConnected = usePrinterStore((state) => state.status === 'connected');
+  const contentHeadingRef = useRef<HTMLDivElement>(null);
 
-  const { isConnected: printerConnected } = useBluetoothPrinter();
-  const { data: dbTemplates } = useReceiptTemplates();
+  const initialLocationState = location.state as SettingsLocationState | null;
+  const initialReturnPath = initialLocationState?.from;
+  const returnPathRef = useRef<string | null>(
+    typeof initialReturnPath === 'string' &&
+      initialReturnPath.startsWith('/admin/') &&
+      !initialReturnPath.startsWith('/admin/settings')
+      ? initialReturnPath
+      : null,
+  );
 
-  // Find active template name for sidebar status pill
-  const activeTemplateName = useMemo(() => {
-    return dbTemplates?.find((t) => t.is_active)?.name || 'Classic';
-  }, [dbTemplates]);
+  const requestedSection = searchParams.get('section') ?? searchParams.get('tab');
+  const activeSection: SettingsSectionKey = isSettingsSection(requestedSection)
+    ? requestedSection
+    : 'general';
 
-  // Read section param from URL (?section=profile or legacy ?tab=...)
-  const rawSection = (searchParams.get('section') || searchParams.get('tab')) as SettingsSectionKey | null;
-  const activeSection: SettingsSectionKey = useMemo(() => {
-    if (rawSection && VALID_SECTIONS.includes(rawSection)) {
-      return rawSection;
-    }
-    return 'general';
-  }, [rawSection]);
+  const [isCurrentCategoryDirty, setIsCurrentCategoryDirty] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation>(null);
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
-  // Dirty tracking for active category
-  const [isCurrentCategoryDirty, setIsCurrentCategoryDirty] = useState<boolean>(false);
-  const [pendingTargetSection, setPendingTargetSection] = useState<SettingsSectionKey | null>(null);
-  const [isPendingClose, setIsPendingClose] = useState<boolean>(false);
-  const [showDiscardDialog, setShowDiscardDialog] = useState<boolean>(false);
+  const currentCategory = useMemo(
+    () => SETTINGS_CATEGORIES.find((category) => category.key === activeSection) ?? SETTINGS_CATEGORIES[0],
+    [activeSection],
+  );
 
-  // Close Settings safely
-  const handleClose = useCallback(() => {
-    if (isCurrentCategoryDirty) {
-      setIsPendingClose(true);
-      setShowDiscardDialog(true);
-      return;
-    }
+  const returnToAdmin = useCallback(() => {
+    navigate(returnPathRef.current ?? ROUTES.ADMIN.DASHBOARD, { replace: true });
+  }, [navigate]);
 
-    // Navigate back to previous route if from admin, otherwise fallback to dashboard
-    if (location.key !== 'default' && window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate(ROUTES.ADMIN.DASHBOARD);
-    }
-  }, [isCurrentCategoryDirty, location.key, navigate]);
-
-  // Handle section switching with unsaved changes guard
-  const handleSelectSection = (key: SettingsSectionKey) => {
-    if (key === activeSection) {
-      return;
-    }
-
-    if (isCurrentCategoryDirty) {
-      setPendingTargetSection(key);
-      setShowDiscardDialog(true);
-      return;
-    }
-
+  const completeNavigation = useCallback((target: Exclude<PendingNavigation, null>) => {
     setIsCurrentCategoryDirty(false);
-    setSearchParams({ section: key }, { replace: true });
-  };
 
-  // Confirm discarding changes
+    if (target.type === 'close') {
+      returnToAdmin();
+      return;
+    }
+
+    setSearchParams({ section: target.section }, { replace: true });
+  }, [returnToAdmin, setSearchParams]);
+
+  const requestNavigation = useCallback((target: Exclude<PendingNavigation, null>) => {
+    if (target.type === 'section' && target.section === activeSection) return;
+
+    if (isCurrentCategoryDirty) {
+      setPendingNavigation(target);
+      setShowDiscardDialog(true);
+      return;
+    }
+
+    completeNavigation(target);
+  }, [activeSection, completeNavigation, isCurrentCategoryDirty]);
+
   const handleConfirmDiscard = () => {
-    setIsCurrentCategoryDirty(false);
+    const target = pendingNavigation;
     setShowDiscardDialog(false);
-
-    if (isPendingClose) {
-      setIsPendingClose(false);
-      if (location.key !== 'default' && window.history.length > 1) {
-        navigate(-1);
-      } else {
-        navigate(ROUTES.ADMIN.DASHBOARD);
-      }
-      return;
-    }
-
-    if (pendingTargetSection) {
-      setSearchParams({ section: pendingTargetSection }, { replace: true });
-      setPendingTargetSection(null);
-    }
+    setPendingNavigation(null);
+    if (target) completeNavigation(target);
   };
 
-  // Desktop Escape key handler
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !showDiscardDialog) {
-        handleClose();
+    window.requestAnimationFrame(() => contentHeadingRef.current?.focus());
+  }, [activeSection]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key !== 'Escape' ||
+        document.querySelector('[role="dialog"]')
+      ) {
+        return;
       }
+      requestNavigation({ type: 'close' });
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleClose, showDiscardDialog]);
+  }, [requestNavigation]);
 
-  // Find active category label for headers
-  const currentCategoryDef = SETTINGS_CATEGORIES.find((c) => c.key === activeSection) || SETTINGS_CATEGORIES[0];
+  useEffect(() => {
+    if (!isCurrentCategoryDirty) return;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isCurrentCategoryDirty]);
 
   return (
-    <div className="w-full h-[calc(100svh-4rem)] md:h-[calc(100svh-4.5rem)] flex items-center justify-center p-0 sm:p-3 md:p-4 overflow-hidden">
-      {/* Centered Large Settings Dialog Surface (Desktop & Tablet) */}
-      <div className="w-full max-w-5xl h-full max-h-full md:max-h-[820px] bg-card border-0 sm:border border-border/80 rounded-none sm:rounded-3xl shadow-xl overflow-hidden flex flex-col relative animate-in fade-in zoom-in-[0.99] duration-150">
-        
-        {/* Desktop Top Close Floating Button */}
-        <button
-          type="button"
-          onClick={handleClose}
-          className="absolute top-4 right-4 z-30 hidden md:flex h-8.5 w-8.5 items-center justify-center rounded-full bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors border border-border/60 shadow-2xs"
-          aria-label="Close Settings"
-          title="Close Settings (Esc)"
-        >
-          <HugeiconsIcon icon={Cancel01Icon} size={16} />
-        </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/25 backdrop-blur-[2px] p-0 sm:p-4 md:p-6 lg:p-8 overflow-hidden select-none">
+      {/* Centered Large Settings Dialog Shell (Strictly non-scrollable container) */}
+      <section
+        aria-label="RadhaCafe Settings Center"
+        className="relative flex flex-col h-full w-full max-w-[1100px] overflow-hidden bg-card shadow-2xl rounded-none sm:rounded-3xl border-0 sm:border sm:border-border/80 md:h-[88svh] md:max-h-[850px] animate-in fade-in zoom-in-[0.99] duration-150"
+      >
+        {/* ========================================================================= */}
+        {/* DESKTOP & TABLET VIEW (>= 768px)                                           */}
+        {/* ========================================================================= */}
+        <div className="hidden md:grid md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[260px_minmax(0,1fr)] h-full w-full min-w-0 overflow-hidden">
+          {/* Top Right Floating Close Button */}
+          <button
+            type="button"
+            onClick={() => requestNavigation({ type: 'close' })}
+            className="absolute right-4 top-4 z-30 flex h-8.5 w-8.5 items-center justify-center rounded-full border border-border/60 bg-secondary/80 text-muted-foreground shadow-2xs transition-colors hover:bg-secondary hover:text-foreground"
+            aria-label="Close Settings"
+            title="Close Settings (Esc)"
+          >
+            <HugeiconsIcon icon={Cancel01Icon} size={16} />
+          </button>
 
-        {/* 1. DESKTOP & TABLET TWO-COLUMN WORKSPACE (>= 768px) */}
-        <div className="hidden md:grid md:grid-cols-12 h-full w-full min-w-0 overflow-hidden">
-          {/* Left Column (Sidebar ~28%): Category Navigation */}
-          <div className="md:col-span-4 lg:col-span-3 h-full overflow-hidden">
+          {/* Left Column: Fixed Sidebar Navigation */}
+          <div className="h-full overflow-hidden border-r border-border/80 bg-secondary/20">
             <SettingsSidebar
               activeKey={activeSection}
-              onSelectKey={handleSelectSection}
+              onSelectKey={(section) => requestNavigation({ type: 'section', section })}
               printerConnected={printerConnected}
-              activeTemplateName={activeTemplateName}
             />
           </div>
 
-          {/* Right Column (Content ~72%): Active Category Settings Content */}
-          <div className="md:col-span-8 lg:col-span-9 h-full overflow-y-auto p-6 lg:p-8 bg-card flex flex-col justify-between">
-            <div className="space-y-6 w-full max-w-3xl min-w-0 pb-8">
-              {activeSection === 'general' && (
-                <GeneralSettings onDirtyChange={setIsCurrentCategoryDirty} />
-              )}
-              {activeSection === 'profile' && (
-                <CafeProfileSettings onDirtyChange={setIsCurrentCategoryDirty} />
-              )}
-              {activeSection === 'orders' && (
-                <OrderPaymentSettings onDirtyChange={setIsCurrentCategoryDirty} />
-              )}
-              {activeSection === 'printer' && <PrinterSettingsSummary />}
-              {activeSection === 'receipts' && <ReceiptSettingsSummary />}
-              {activeSection === 'appearance' && <AppearanceSettings />}
-              {activeSection === 'preferences' && <PreferencesSettings />}
-              {activeSection === 'account' && <AccountSecuritySettings />}
-              {activeSection === 'about' && <AboutSettings />}
+          {/* Right Column: Scrollable Settings Content */}
+          <div className="h-full min-w-0 overflow-y-auto bg-card px-6 py-7 lg:px-10 lg:py-8">
+            <div
+              ref={contentHeadingRef}
+              tabIndex={-1}
+              className="mx-auto w-full max-w-3xl pb-16 outline-none"
+            >
+              <SettingsContent section={activeSection} onDirtyChange={setIsCurrentCategoryDirty} />
             </div>
           </div>
         </div>
 
-        {/* 2. MOBILE SCROLLABLE TABS LAYOUT (< 768px) */}
+        {/* ========================================================================= */}
+        {/* MOBILE VIEW (< 768px): Header + Horizontal Tabs Slider + Content          */}
+        {/* ========================================================================= */}
         <div className="md:hidden flex flex-col h-full w-full bg-card overflow-hidden">
-          {/* Mobile Top Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border/80 bg-card shrink-0">
-            <div>
-              <h2 className="text-base font-bold font-heading text-foreground">
+          {/* Mobile Fixed Header */}
+          <header className="flex shrink-0 items-center justify-between border-b border-border/80 bg-card px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+            <div className="min-w-0">
+              <h2 className="text-base font-bold font-heading text-foreground truncate">
                 Settings
               </h2>
               <p className="text-[11px] text-muted-foreground">
@@ -206,45 +216,33 @@ export function SettingsPage() {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={handleClose}
-              className="h-8.5 w-8.5 p-0 rounded-full hover:bg-secondary text-muted-foreground"
+              onClick={() => requestNavigation({ type: 'close' })}
+              className="h-8.5 w-8.5 rounded-full p-0 text-muted-foreground hover:bg-secondary"
               aria-label="Close Settings"
             >
               <HugeiconsIcon icon={Cancel01Icon} size={17} />
             </Button>
-          </div>
+          </header>
 
-          {/* Horizontal Scroll Tabs with Slider Buttons */}
+          {/* Mobile Horizontal Tabs with Slider Buttons and Smooth Drag/Wheel Scroll */}
           <div className="shrink-0">
             <SettingsMobileTabs
               activeKey={activeSection}
-              onSelectKey={handleSelectSection}
+              onSelectKey={(section) => requestNavigation({ type: 'section', section })}
               printerConnected={printerConnected}
             />
           </div>
 
-          {/* Scrollable Content for Selected Category */}
-          <div className="flex-1 overflow-y-auto p-4 pb-20">
-            {activeSection === 'general' && (
-              <GeneralSettings onDirtyChange={setIsCurrentCategoryDirty} />
-            )}
-            {activeSection === 'profile' && (
-              <CafeProfileSettings onDirtyChange={setIsCurrentCategoryDirty} />
-            )}
-            {activeSection === 'orders' && (
-              <OrderPaymentSettings onDirtyChange={setIsCurrentCategoryDirty} />
-            )}
-            {activeSection === 'printer' && <PrinterSettingsSummary />}
-            {activeSection === 'receipts' && <ReceiptSettingsSummary />}
-            {activeSection === 'appearance' && <AppearanceSettings />}
-            {activeSection === 'preferences' && <PreferencesSettings />}
-            {activeSection === 'account' && <AccountSecuritySettings />}
-            {activeSection === 'about' && <AboutSettings />}
+          {/* Mobile Scrollable Form Area */}
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-5 pb-24">
+            <div ref={contentHeadingRef} tabIndex={-1} className="outline-none">
+              <SettingsContent section={activeSection} onDirtyChange={setIsCurrentCategoryDirty} />
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Unsaved Changes Confirmation Alert Dialog */}
+      {/* Unsaved Changes Confirmation Modal */}
       <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
         <AlertDialogContent className="bg-card border-border/90 rounded-2xl shadow-xl max-w-md">
           <AlertDialogHeader>
@@ -252,15 +250,14 @@ export function SettingsPage() {
               Discard unsaved changes?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed">
-              You have unsaved changes in <strong>{currentCategoryDef.label}</strong>. Leaving this section will discard your modifications.
+              You have unsaved changes in <strong>{currentCategory.label}</strong>. Leaving this section will discard your modifications.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 pt-2">
             <AlertDialogCancel
               onClick={() => {
                 setShowDiscardDialog(false);
-                setPendingTargetSection(null);
-                setIsPendingClose(false);
+                setPendingNavigation(null);
               }}
               className="text-xs rounded-lg h-9"
             >

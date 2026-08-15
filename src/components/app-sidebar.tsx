@@ -162,6 +162,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       render={
                         <Link
                           to={item.url}
+                          state={item.url === ROUTES.ADMIN.SETTINGS ? {
+                            from: `${location.pathname}${location.search}`,
+                          } : undefined}
                           onClick={handleNavClick}
                           className={
                             isActive

@@ -2,14 +2,13 @@ import { useState, useMemo } from 'react';
 import { Input } from '../../ui/input';
 import { Badge } from '../../ui/badge';
 import { HugeiconsIcon } from '@hugeicons/react';
+import type { IconSvgElement } from '@hugeicons/react';
 import {
   Settings01Icon,
   Store01Icon,
   MoneyBag02Icon,
   PrinterIcon,
   InvoiceIcon,
-  PaintBoardIcon,
-  SlidersHorizontalIcon,
   UserIcon,
   InformationCircleIcon,
   Search01Icon,
@@ -21,8 +20,6 @@ export type SettingsSectionKey =
   | 'orders'
   | 'printer'
   | 'receipts'
-  | 'appearance'
-  | 'preferences'
   | 'account'
   | 'about';
 
@@ -30,7 +27,7 @@ export interface SettingsCategoryDef {
   key: SettingsSectionKey;
   label: string;
   description: string;
-  icon: any;
+  icon: IconSvgElement;
   keywords: string[];
 }
 
@@ -71,20 +68,6 @@ export const SETTINGS_CATEGORIES: SettingsCategoryDef[] = [
     keywords: ['receipt', 'template', 'preview', 'slip', 'layout', 'design', 'printout'],
   },
   {
-    key: 'appearance',
-    label: 'Appearance',
-    description: 'POS layout density & motion preferences',
-    icon: PaintBoardIcon,
-    keywords: ['density', 'compact', 'motion', 'theme', 'roast', 'cinnamon', 'dark', 'light'],
-  },
-  {
-    key: 'preferences',
-    label: 'Preferences',
-    description: 'Order audio chime alerts & register presets',
-    icon: SlidersHorizontalIcon,
-    keywords: ['sound', 'audio', 'chime', 'notification', 'analytics', 'menu', 'register'],
-  },
-  {
     key: 'account',
     label: 'Account & Security',
     description: 'Administrator credentials & sign out',
@@ -104,14 +87,12 @@ interface SettingsSidebarProps {
   activeKey: SettingsSectionKey;
   onSelectKey: (key: SettingsSectionKey) => void;
   printerConnected?: boolean;
-  activeTemplateName?: string;
 }
 
 export function SettingsSidebar({
   activeKey,
   onSelectKey,
   printerConnected,
-  activeTemplateName,
 }: SettingsSidebarProps) {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -168,6 +149,7 @@ export function SettingsSidebar({
                 key={cat.key}
                 type="button"
                 onClick={() => onSelectKey(cat.key)}
+                aria-current={isActive ? 'page' : undefined}
                 className={`w-full text-left px-3 py-2 rounded-xl transition-all text-xs font-semibold flex items-center justify-between gap-2.5 ${
                   isActive
                     ? 'bg-card text-foreground border border-border/90 shadow-2xs font-bold'
@@ -198,15 +180,6 @@ export function SettingsSidebar({
                     }`}
                   >
                     {printerConnected ? 'Online' : 'Offline'}
-                  </Badge>
-                )}
-
-                {cat.key === 'receipts' && activeTemplateName && (
-                  <Badge
-                    variant="outline"
-                    className="text-[9px] font-mono text-muted-foreground border-border/80 px-1.5 py-0 h-4 shrink-0 max-w-[80px] truncate hidden xl:inline"
-                  >
-                    {activeTemplateName}
                   </Badge>
                 )}
               </button>

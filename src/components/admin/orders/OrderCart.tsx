@@ -61,7 +61,12 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
   const { status: printerStatus, connect, printOrder } = useBluetoothPrinter();
 
   const [customerName, setCustomerName] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(() => {
+    const savedMethod = localStorage.getItem('radhacafe_default_payment_method');
+    return savedMethod === 'cash' || savedMethod === 'upi' || savedMethod === 'card'
+      ? savedMethod
+      : 'cash';
+  });
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
   const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
@@ -83,11 +88,10 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Tax set to 0 as configured
-  const taxRate = 0;
+  const taxRate = Math.max(0, Number(settings?.tax_percentage) || 0);
   const taxableAmount = Math.max(0, subtotal - discount);
-  const calculatedTax = 0;
-  const grandTotal = taxableAmount;
+  const calculatedTax = Math.round(taxableAmount * (taxRate / 100) * 100) / 100;
+  const grandTotal = taxableAmount + calculatedTax;
 
   const toggleAutoPrint = () => {
     const nextState = !autoPrint;
