@@ -3,15 +3,15 @@ import { fetchCafeSettings, updateCafeSettings, type CafeSettings } from '../lib
 import { fetchPrinterSettings, updatePrinterSettings, type PrinterSettings } from '../lib/supabase/queries/printer';
 
 export const SETTINGS_QUERY_KEYS = {
-  cafe: ['settings', 'cafe'] as const,
-  printer: ['settings', 'printer'] as const,
+  cafe: ['cafeSettings'] as const,
+  printer: ['printerSettings'] as const,
 };
 
 export function useCafeSettings() {
   return useQuery({
     queryKey: SETTINGS_QUERY_KEYS.cafe,
     queryFn: fetchCafeSettings,
-    staleTime: 300000,
+    staleTime: 60000,
   });
 }
 
@@ -21,7 +21,7 @@ export function useUpdateCafeSettings() {
     mutationFn: (input: Partial<CafeSettings>) => updateCafeSettings(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SETTINGS_QUERY_KEYS.cafe });
-      queryClient.invalidateQueries({ queryKey: ['cafeSettings'] });
+      queryClient.invalidateQueries({ queryKey: ['settings', 'cafe'] });
     },
   });
 }
@@ -30,7 +30,7 @@ export function usePrinterSettings() {
   return useQuery({
     queryKey: SETTINGS_QUERY_KEYS.printer,
     queryFn: fetchPrinterSettings,
-    staleTime: 300000,
+    staleTime: 60000,
   });
 }
 

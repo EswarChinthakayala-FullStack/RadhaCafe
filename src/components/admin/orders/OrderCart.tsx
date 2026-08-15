@@ -88,9 +88,12 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  const taxRate = Math.max(0, Number(settings?.tax_percentage) || 0);
+  const taxRate =
+    settings?.tax_percentage !== undefined && settings?.tax_percentage !== null
+      ? Math.max(0, Number(settings.tax_percentage))
+      : 0;
   const taxableAmount = Math.max(0, subtotal - discount);
-  const calculatedTax = Math.round(taxableAmount * (taxRate / 100) * 100) / 100;
+  const calculatedTax = taxRate > 0 ? Math.round(taxableAmount * (taxRate / 100) * 100) / 100 : 0;
   const grandTotal = taxableAmount + calculatedTax;
 
   const toggleAutoPrint = () => {
