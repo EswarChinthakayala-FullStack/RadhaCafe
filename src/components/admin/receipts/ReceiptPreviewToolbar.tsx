@@ -39,23 +39,25 @@ export function ReceiptPreviewToolbar({
   onToggleFitWidth,
 }: ReceiptPreviewToolbarProps) {
   const handleZoomIn = () => {
+    if (isFitWidth) onToggleFitWidth();
     onZoomChange(Math.min(1.5, Math.round((zoomLevel + 0.15) * 100) / 100));
   };
 
   const handleZoomOut = () => {
+    if (isFitWidth) onToggleFitWidth();
     onZoomChange(Math.max(0.65, Math.round((zoomLevel - 0.15) * 100) / 100));
   };
 
   return (
-    <div className="p-2 sm:p-2.5 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-wrap items-center justify-between gap-2.5 w-full min-w-0 text-xs">
+    <div className="rounded-2xl border border-border/80 bg-card p-2.5 shadow-sm sm:p-3 flex flex-wrap items-center justify-between gap-3 w-full min-w-0 text-xs">
       {/* Group 1: Dataset / Order Mode */}
       <div className="flex items-center gap-1.5 flex-wrap">
-        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider hidden sm:inline mr-1">
-          Sample:
+        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.14em] hidden sm:inline mr-1">
+          Preview data
         </span>
 
         {/* Dataset Segmented Buttons */}
-        <div className="flex items-center bg-secondary/50 p-0.5 rounded-xl border border-border/60">
+        <div role="group" aria-label="Sample order type" className="flex items-center bg-secondary/60 p-1 rounded-xl border border-border/60">
           <Button
             type="button"
             variant="ghost"
@@ -64,7 +66,8 @@ export function ReceiptPreviewToolbar({
               onSelectOrder(null);
               onDatasetModeChange('paid');
             }}
-            className={`h-7 px-2.5 text-[11px] font-bold rounded-lg gap-1 transition-all ${
+            aria-pressed={!selectedOrder && datasetMode === 'paid'}
+            className={`h-8 px-2.5 text-[11px] font-bold rounded-lg gap-1 transition-all ${
               !selectedOrder && datasetMode === 'paid'
                 ? 'bg-cinnamon text-white shadow-2xs'
                 : 'text-muted-foreground hover:text-foreground'
@@ -82,7 +85,8 @@ export function ReceiptPreviewToolbar({
               onSelectOrder(null);
               onDatasetModeChange('payLater');
             }}
-            className={`h-7 px-2.5 text-[11px] font-bold rounded-lg gap-1 transition-all ${
+            aria-pressed={!selectedOrder && datasetMode === 'payLater'}
+            className={`h-8 px-2.5 text-[11px] font-bold rounded-lg gap-1 transition-all ${
               !selectedOrder && datasetMode === 'payLater'
                 ? 'bg-cinnamon text-white shadow-2xs'
                 : 'text-muted-foreground hover:text-foreground'
@@ -100,7 +104,8 @@ export function ReceiptPreviewToolbar({
               onSelectOrder(null);
               onDatasetModeChange('walkIn');
             }}
-            className={`h-7 px-2.5 text-[11px] font-bold rounded-lg gap-1 transition-all ${
+            aria-pressed={!selectedOrder && datasetMode === 'walkIn'}
+            className={`h-8 px-2.5 text-[11px] font-bold rounded-lg gap-1 transition-all ${
               !selectedOrder && datasetMode === 'walkIn'
                 ? 'bg-cinnamon text-white shadow-2xs'
                 : 'text-muted-foreground hover:text-foreground'
@@ -119,15 +124,16 @@ export function ReceiptPreviewToolbar({
       </div>
 
       {/* Group 2: Paper Width Simulation + Zoom Controls */}
-      <div className="flex items-center gap-2 flex-wrap ml-auto">
+        <div className="flex items-center gap-2 flex-wrap ml-auto">
         {/* Paper Width Simulation Toggle */}
-        <div className="flex items-center bg-secondary/50 p-0.5 rounded-xl border border-border/60">
+        <div role="group" aria-label="Simulated paper width" className="flex items-center bg-secondary/60 p-1 rounded-xl border border-border/60">
           <Button
             type="button"
             variant="ghost"
             size="xs"
             onClick={() => onSimulatedWidthChange(32)}
-            className={`h-7 px-2.5 text-[11px] font-mono font-bold rounded-lg transition-all ${
+            aria-pressed={simulatedWidth === 32}
+            className={`h-8 px-2.5 text-[11px] font-mono font-bold rounded-lg transition-all ${
               simulatedWidth === 32
                 ? 'bg-cinnamon text-white shadow-2xs'
                 : 'text-muted-foreground hover:text-foreground'
@@ -142,7 +148,8 @@ export function ReceiptPreviewToolbar({
             variant="ghost"
             size="xs"
             onClick={() => onSimulatedWidthChange(48)}
-            className={`h-7 px-2.5 text-[11px] font-mono font-bold rounded-lg transition-all ${
+            aria-pressed={simulatedWidth === 48}
+            className={`h-8 px-2.5 text-[11px] font-mono font-bold rounded-lg transition-all ${
               simulatedWidth === 48
                 ? 'bg-cinnamon text-white shadow-2xs'
                 : 'text-muted-foreground hover:text-foreground'
@@ -154,19 +161,20 @@ export function ReceiptPreviewToolbar({
         </div>
 
         {/* Zoom Controls */}
-        <div className="flex items-center bg-secondary/50 p-0.5 rounded-xl border border-border/60 gap-0.5">
+        <div role="group" aria-label="Receipt zoom" className="flex items-center bg-secondary/60 p-1 rounded-xl border border-border/60 gap-0.5">
           <Button
             type="button"
             variant="ghost"
             size="xs"
             onClick={onToggleFitWidth}
-            className={`h-7 px-2 text-[11px] font-bold rounded-lg gap-1 ${
+            aria-pressed={isFitWidth}
+            className={`h-8 px-2 text-[11px] font-bold rounded-lg gap-1 ${
               isFitWidth ? 'bg-card text-foreground shadow-2xs' : 'text-muted-foreground hover:text-foreground'
             }`}
             title="Fit Width"
           >
             <HugeiconsIcon icon={MaximizeIcon} size={12} />
-            <span className="hidden xs:inline">Fit</span>
+            <span>Fit</span>
           </Button>
 
           <Button
@@ -175,7 +183,8 @@ export function ReceiptPreviewToolbar({
             size="xs"
             onClick={handleZoomOut}
             disabled={zoomLevel <= 0.65}
-            className="h-7 w-7 p-0 rounded-lg text-muted-foreground hover:text-foreground"
+            aria-label="Zoom out"
+            className="h-8 w-8 p-0 rounded-lg text-muted-foreground hover:text-foreground"
             title="Zoom Out"
           >
             <HugeiconsIcon icon={MinusSignIcon} size={13} />
@@ -191,7 +200,8 @@ export function ReceiptPreviewToolbar({
             size="xs"
             onClick={handleZoomIn}
             disabled={zoomLevel >= 1.5}
-            className="h-7 w-7 p-0 rounded-lg text-muted-foreground hover:text-foreground"
+            aria-label="Zoom in"
+            className="h-8 w-8 p-0 rounded-lg text-muted-foreground hover:text-foreground"
             title="Zoom In"
           >
             <HugeiconsIcon icon={Add01Icon} size={13} />

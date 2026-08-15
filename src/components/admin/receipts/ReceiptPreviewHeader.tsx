@@ -57,7 +57,7 @@ export function ReceiptPreviewHeader({
   const is80mm = paperCols >= 42;
 
   return (
-    <div className="sticky top-0 z-20 -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 px-4 py-3 sm:px-6 bg-card/95 backdrop-blur-md border-b border-border/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="sticky top-2 z-20 mt-2 rounded-2xl border border-border/80 bg-card/95 px-4 py-3 shadow-sm backdrop-blur-md sm:px-5 flex items-center justify-between gap-3">
       {/* Left: Back Navigation + Template Title + Status Pills */}
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <Button
@@ -72,6 +72,7 @@ export function ReceiptPreviewHeader({
         </Button>
 
         <div className="space-y-0.5 min-w-0 flex-1">
+          <p className="hidden sm:block text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Receipt template preview</p>
           <div className="flex items-center gap-2 flex-wrap min-w-0">
             <h1 className="font-bold text-base sm:text-lg font-heading text-foreground tracking-tight break-words">
               {template.name}
@@ -93,7 +94,7 @@ export function ReceiptPreviewHeader({
               </Badge>
             )}
 
-            <Badge variant="outline" className="text-[10px] font-mono bg-secondary/40 shrink-0">
+            <Badge variant="outline" className="hidden sm:inline-flex text-[10px] font-mono bg-secondary/40 shrink-0">
               {is80mm ? '80 mm' : '58 mm'}
             </Badge>
           </div>
@@ -101,7 +102,7 @@ export function ReceiptPreviewHeader({
       </div>
 
       {/* Right: Operational Actions */}
-      <div className="flex items-center gap-2 flex-wrap shrink-0 w-full sm:w-auto justify-end">
+      <div className="flex items-center gap-2 shrink-0 justify-end">
         {/* Test Print Button */}
         <Button
           type="button"
@@ -109,7 +110,7 @@ export function ReceiptPreviewHeader({
           size="sm"
           onClick={onTestPrint}
           disabled={isTestPrinting}
-          className="h-8.5 text-xs font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-1.5 shadow-2xs flex-1 sm:flex-none justify-center"
+          className="hidden md:flex h-8.5 text-xs font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-1.5 shadow-2xs justify-center"
           title={printerConnected ? 'Send test receipt to connected printer' : 'Test thermal print byte stream'}
         >
           {isTestPrinting ? (
@@ -131,7 +132,7 @@ export function ReceiptPreviewHeader({
           variant="outline"
           size="sm"
           onClick={onCustomize}
-          className="h-8.5 text-xs font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-1.5 shadow-2xs flex-1 sm:flex-none justify-center"
+          className="hidden md:flex h-8.5 text-xs font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-1.5 shadow-2xs justify-center"
         >
           <HugeiconsIcon icon={Edit02Icon} size={14} className="text-cinnamon" />
           <span>Customize</span>
@@ -143,7 +144,7 @@ export function ReceiptPreviewHeader({
             type="button"
             disabled
             size="sm"
-            className="h-8.5 text-xs font-bold rounded-xl bg-emerald-600/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 gap-1.5 opacity-100 flex-1 sm:flex-none justify-center"
+            className="hidden md:flex h-8.5 text-xs font-bold rounded-xl bg-emerald-600/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 gap-1.5 opacity-100 justify-center"
           >
             <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} />
             <span>Active</span>
@@ -154,7 +155,7 @@ export function ReceiptPreviewHeader({
             size="sm"
             onClick={onActivate}
             disabled={isActivating}
-            className="h-8.5 text-xs font-bold rounded-xl bg-cinnamon hover:bg-cinnamon/90 text-white gap-1.5 shadow-2xs flex-1 sm:flex-none justify-center"
+            className="hidden md:flex h-8.5 text-xs font-bold rounded-xl bg-cinnamon hover:bg-cinnamon/90 text-white gap-1.5 shadow-2xs justify-center"
           >
             {isActivating ? (
               <>
@@ -185,6 +186,21 @@ export function ReceiptPreviewHeader({
             <HugeiconsIcon icon={MoreVerticalIcon} size={16} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44 rounded-xl p-1 text-xs">
+            <DropdownMenuItem onClick={onCustomize} className="md:hidden cursor-pointer gap-2 font-medium">
+              <HugeiconsIcon icon={Edit02Icon} size={13} />
+              <span>Customize</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onTestPrint} className="md:hidden cursor-pointer gap-2 font-medium">
+              <HugeiconsIcon icon={PrinterIcon} size={13} />
+              <span>Test Print</span>
+            </DropdownMenuItem>
+            {!isActive && (
+              <DropdownMenuItem onClick={onActivate} className="md:hidden cursor-pointer gap-2 font-medium text-cinnamon">
+                <HugeiconsIcon icon={StarIcon} size={13} />
+                <span>Use Template</span>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator className="md:hidden" />
             {onDuplicate && (
               <DropdownMenuItem
                 onClick={onDuplicate}

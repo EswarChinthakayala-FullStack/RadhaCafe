@@ -49,6 +49,7 @@ export function ReceiptTemplatePreviewPage() {
   const { data: cafeSettings } = useCafeSettings();
   const {
     isConnected: printerConnected,
+    connect: connectPrinter,
     printCustomReceipt,
   } = useBluetoothPrinter();
 
@@ -97,6 +98,7 @@ export function ReceiptTemplatePreviewPage() {
   const [isTestPrinting, setIsTestPrinting] = useState<boolean>(false);
   const [isActivating, setIsActivating] = useState<boolean>(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState<boolean>(false);
+  const [showPrinterPrompt, setShowPrinterPrompt] = useState<boolean>(false);
 
   // Sync initial simulated width with template definition
   useEffect(() => {
@@ -122,7 +124,7 @@ export function ReceiptTemplatePreviewPage() {
   }, [template, simulatedWidth]);
 
   // Handler: Test Print via connected Bluetooth printer
-  const handleTestPrint = async () => {
+  const transmitTestPrint = async () => {
     if (!template || !effectiveTemplateConfig) return;
     setIsTestPrinting(true);
     try {
@@ -153,6 +155,23 @@ export function ReceiptTemplatePreviewPage() {
     } finally {
       setIsTestPrinting(false);
     }
+  };
+
+  const handleTestPrint = async () => {
+    if (!printerConnected) {
+      setShowPrinterPrompt(true);
+      return;
+    }
+    await transmitTestPrint();
+  };
+
+  const handleConnectAndPrint = async () => {
+    setIsTestPrinting(true);
+    const connected = await connectPrinter();
+    setIsTestPrinting(false);
+    if (!connected) return;
+    setShowPrinterPrompt(false);
+    await transmitTestPrint();
   };
 
   // Handler: Activate Template
@@ -327,9 +346,9 @@ export function ReceiptTemplatePreviewPage() {
       />
 
       {/* 2. MAIN PREVIEW WORKSPACE (68% Left Central Canvas / 32% Right Info Panel) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full min-w-0">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start w-full min-w-0">
         {/* Left Column (~68%): Toolbar + Central Realistic Slip Workspace */}
-        <div className="lg:col-span-8 space-y-4 w-full min-w-0">
+        <div className="space-y-4 w-full min-w-0">
           {/* Interactive Preview Toolbar */}
           <ReceiptPreviewToolbar
             datasetMode={datasetMode}
@@ -348,10 +367,23 @@ export function ReceiptTemplatePreviewPage() {
           />
 
           {/* Neutral Background Canvas Container */}
-          <div className="rounded-3xl border border-border/80 bg-neutral-900/5 dark:bg-black/30 p-4 sm:p-8 min-h-[560px] flex flex-col items-center justify-start shadow-inner overflow-x-auto relative">
+          <section className="overflow-hidden rounded-2xl border border-border/80 bg-[#eee9e1] shadow-inner dark:bg-[#171512]">
+            <div className="flex min-h-11 items-center justify-between gap-3 border-b border-black/10 bg-white/55 px-3.5 py-2 text-[10px] font-semibold text-neutral-600 backdrop-blur-sm dark:border-white/10 dark:bg-white/5 dark:text-neutral-300 sm:px-5">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="inline-flex h-2 w-2 rounded-full bg-cinnamon" />
+                <span className="truncate">{selectedRealOrder ? `Order ${selectedRealOrder.order_number}` : 'Sample receipt data'}</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span>Configured: {(template.paper_width || template.template_config.paperWidth) >= 42 ? '80 mm' : '58 mm'}</span>
+                <span className="text-neutral-400">/</span>
+                <span>Viewing: {simulatedWidth === 48 ? '80 mm' : '58 mm'}</span>
+              </div>
+            </div>
+
+            <div className="relative flex min-h-[600px] flex-col items-center justify-start overflow-x-auto p-4 sm:p-8 lg:p-10 bg-[radial-gradient(circle_at_1px_1px,rgba(91,72,52,0.12)_1px,transparent_0)] bg-size-[22px_22px]">
             {/* Real Order Banner (When Active) */}
             {selectedRealOrder && (
-              <div className="w-full max-w-md mb-4 p-2.5 rounded-xl bg-cinnamon/10 border border-cinnamon/30 text-cinnamon text-xs flex items-center justify-between gap-2 shadow-2xs">
+              <div className="w-full max-w-md mb-5 p-2.5 rounded-xl bg-white/85 border border-cinnamon/30 text-cinnamon text-xs flex items-center justify-between gap-2 shadow-sm dark:bg-neutral-900/90">
                 <span className="font-semibold text-[11px] truncate">
                   Previewing Real Order: <strong>{selectedRealOrder.order_number}</strong>
                 </span>
@@ -368,10 +400,9 @@ export function ReceiptTemplatePreviewPage() {
             {/* Scaled Receipt Slip */}
             <div
               style={{
-                transform: !isFitWidth && zoomLevel !== 1 ? `scale(${zoomLevel})` : undefined,
-                transformOrigin: 'top center',
-                transition: 'transform 0.15s ease-out',
-                maxWidth: simulatedWidth === 48 ? '460px' : '380px',
+                zoom: !isFitWidth ? zoomLevel : undefined,
+                transition: 'zoom 0.15s ease-out',
+                maxWidth: simulatedWidth === 48 ? '420px' : '320px',
                 width: '100%',
               }}
               className="flex justify-center min-w-0"
@@ -382,10 +413,11 @@ export function ReceiptTemplatePreviewPage() {
                 cafeSettings={cafeSettings}
               />
             </div>
-          </div>
+            </div>
+          </section>
 
           {/* Mobile Collapsible Specifications Accordion */}
-          <div className="block lg:hidden">
+          <div className="block xl:hidden">
             <ReceiptPreviewMobileInfo
               template={template}
               isPreset={isPreset}
@@ -395,7 +427,7 @@ export function ReceiptTemplatePreviewPage() {
         </div>
 
         {/* Right Column (~32%): Sticky Read-Only Specifications & Action Cards (Desktop Only) */}
-        <div className="hidden lg:block lg:col-span-4 lg:sticky lg:top-20 space-y-4 w-full min-w-0">
+        <div className="hidden xl:block xl:sticky xl:top-20 space-y-4 w-full min-w-0">
           <ReceiptTemplateInfoPanel
             template={template}
             isPreset={isPreset}
@@ -410,7 +442,7 @@ export function ReceiptTemplatePreviewPage() {
       </div>
 
       {/* 3. MOBILE STICKY BOTTOM ACTION BAR */}
-      <div className="fixed bottom-0 inset-x-0 z-30 p-3 bg-card/95 backdrop-blur-md border-t border-border/80 lg:hidden shadow-lg flex items-center gap-2">
+      <div className="fixed bottom-0 inset-x-0 z-30 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-card/95 backdrop-blur-md border-t border-border/80 xl:hidden shadow-lg flex items-center gap-2">
         <Button
           type="button"
           variant="outline"
@@ -431,7 +463,7 @@ export function ReceiptTemplatePreviewPage() {
           className="h-9 px-3 text-xs font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-1.5 shadow-2xs justify-center shrink-0"
         >
           <HugeiconsIcon icon={PrinterIcon} size={14} className="text-cinnamon" />
-          <span className="hidden xs:inline">Test Print</span>
+          <span className="hidden sm:inline">Test Print</span>
         </Button>
 
         {isActive ? (
@@ -478,6 +510,33 @@ export function ReceiptTemplatePreviewPage() {
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-bold rounded-lg h-9"
             >
               Delete Template
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showPrinterPrompt} onOpenChange={setShowPrinterPrompt}>
+        <AlertDialogContent className="bg-card border-border/90 rounded-2xl shadow-xl max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-heading font-bold text-base text-foreground">
+              Connect a thermal printer
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed">
+              Connect your Bluetooth thermal printer to send this exact preview as an ESC/POS test receipt. Testing does not activate the template.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 pt-2">
+            <AlertDialogCancel className="text-xs rounded-lg h-9">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                void handleConnectAndPrint();
+              }}
+              disabled={isTestPrinting}
+              className="bg-cinnamon hover:bg-cinnamon/90 text-white text-xs font-bold rounded-lg h-9 gap-2"
+            >
+              <HugeiconsIcon icon={PrinterIcon} size={14} />
+              {isTestPrinting ? 'Connecting...' : 'Connect & Test Print'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

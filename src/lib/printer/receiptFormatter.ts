@@ -77,6 +77,17 @@ export function formatItemRow(
   return lines;
 }
 
+/** Builds an item-table heading using the same fixed columns as formatItemRow. */
+export function formatItemHeader(showUnitPrice: boolean, width = 32): string {
+  if (width >= 48) {
+    return 'ITEM'.padEnd(23)
+      + 'QTY'.padStart(4)
+      + (showUnitPrice ? 'PRICE' : '').padStart(10)
+      + 'AMOUNT'.padStart(11);
+  }
+  return formatTwoColumnLine('ITEM (QTY)', 'AMOUNT', width);
+}
+
 /**
  * Main Template Receipt Formatter
  * Takes raw/normalized order data + template config -> returns formatted lines & data model

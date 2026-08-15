@@ -1,6 +1,6 @@
 import { ESC_POS_COMMANDS } from '../../constants/printerCommands';
 import type { FormattedReceiptData, NormalizedReceiptItem } from '../../types';
-import { formatReceiptFromTemplate, formatItemRow } from './receiptFormatter';
+import { formatReceiptFromTemplate, formatItemHeader, formatItemRow } from './receiptFormatter';
 
 /**
  * Low-level ESC/POS byte generator functions operating on Uint8Array
@@ -320,11 +320,7 @@ export function encodeTemplateReceiptToEscPos(
 
       if (config.items.showHeaders) {
         addBytes(ESC_POS_COMMANDS.TEXT_BOLD_ON);
-        if (width >= 48) {
-          addText(formatLine('Item Description (Qty)', 'Amount', width) + '\n');
-        } else {
-          addText(formatLine('Item (Qty)', 'Amount', width) + '\n');
-        }
+        addText(formatItemHeader(config.items.showUnitPrice, width) + '\n');
         resetEmphasis();
       }
 

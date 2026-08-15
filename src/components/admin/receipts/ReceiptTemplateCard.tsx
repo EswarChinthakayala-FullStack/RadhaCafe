@@ -163,6 +163,15 @@ export function ReceiptTemplateCard({
 
           {/* Card Button Actions */}
           <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => onPreview(template)}
+              className="col-span-2 h-9 text-xs font-bold rounded-xl bg-cinnamon hover:bg-cinnamon/90 text-white gap-1.5 shadow-2xs justify-center"
+            >
+              <HugeiconsIcon icon={ViewIcon} size={14} />
+              <span>Open Full Preview</span>
+            </Button>
             {isActive ? (
               <Button
                 type="button"

@@ -1,17 +1,16 @@
-import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Card, CardContent } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
+import { Separator } from '../../ui/separator';
 import type { ReceiptTemplate } from '../../../types';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  InvoiceIcon,
   CheckmarkCircle02Icon,
   Cancel01Icon,
   Edit02Icon,
   PrinterIcon,
   StarIcon,
-  Settings01Icon,
-  AlignLeftIcon,
+  InvoiceIcon,
   InformationCircleIcon,
 } from '@hugeicons/core-free-icons';
 
@@ -26,6 +25,13 @@ interface ReceiptTemplateInfoPanelProps {
   isTestPrinting?: boolean;
 }
 
+const SummaryRow = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex items-center justify-between gap-4 py-1.5 text-[11px]">
+    <span className="text-muted-foreground">{label}</span>
+    <span className="text-right font-semibold text-foreground">{value}</span>
+  </div>
+);
+
 export function ReceiptTemplateInfoPanel({
   template,
   isPreset,
@@ -39,191 +45,101 @@ export function ReceiptTemplateInfoPanel({
   const config = template.template_config;
   const paperCols = template.paper_width || config?.paperWidth || 32;
   const is80mm = paperCols >= 42;
-
-  const sectionsList = [
-    { name: 'Cafe Logo', enabled: config?.header?.logoVisible ?? true },
-    { name: 'Cafe Name & Branding', enabled: config?.header?.cafeNameVisible ?? true },
-    { name: 'Address & Contact', enabled: (config?.header?.addressVisible || config?.header?.phoneVisible) ?? true },
-    { name: 'Order # & Timestamp', enabled: config?.orderInfo?.orderNumberVisible ?? true },
-    { name: 'Cashier Identifier', enabled: config?.orderInfo?.cashierVisible ?? true },
-    { name: 'Customer Name & Phone', enabled: config?.customerInfo?.customerNameVisible ?? true },
-    { name: 'Item Table Headers', enabled: config?.items?.showHeaders ?? true },
-    { name: 'Unit Pricing Column', enabled: config?.items?.showUnitPrice ?? true },
-    { name: 'Long Text Wrapping', enabled: config?.items?.itemWrapping ?? true },
-    { name: 'Tax & GST Lines', enabled: config?.summary?.taxVisible ?? true },
-    { name: 'Discounts Line', enabled: config?.summary?.discountVisible ?? true },
-    { name: 'Payment Method', enabled: config?.payment?.paymentMethodVisible ?? true },
-    { name: 'Pay Later & Due Balance', enabled: config?.payment?.payLaterIndicator ?? true },
-    { name: 'Footer Thank You', enabled: Boolean(config?.footer?.thankYouMessage) },
+  const sections = [
+    { name: 'Cafe branding', enabled: config.header.cafeNameVisible },
+    { name: 'Customer details', enabled: config.customerInfo.customerNameVisible || config.customerInfo.phoneVisible },
+    { name: 'Item breakdown', enabled: config.items.showHeaders || config.items.showUnitPrice },
+    { name: 'Totals & tax', enabled: config.summary.subtotalVisible || config.summary.taxVisible },
+    { name: 'Payment breakdown', enabled: config.payment.paymentMethodVisible || config.payment.amountPaidVisible },
+    { name: 'Footer message', enabled: Boolean(config.footer.thankYouMessage) },
   ];
 
   return (
-    <div className="space-y-4 w-full min-w-0">
-      {/* 1. Template Overview Card */}
-      <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
-        <CardHeader className="p-4 sm:p-5 pb-3 border-b border-border/60">
-          <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-            <div className="p-1.5 rounded-lg bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs">
-              <HugeiconsIcon icon={InvoiceIcon} size={15} />
+    <aside aria-label="Template information" className="space-y-3">
+      <Card className="overflow-hidden rounded-2xl border-border/80 bg-card shadow-sm">
+        <CardContent className="p-0">
+          <div className="border-b border-border/70 bg-secondary/20 p-4">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-cinnamon/20 bg-cinnamon/10 text-cinnamon">
+                <HugeiconsIcon icon={InvoiceIcon} size={19} />
+              </div>
+              <Badge
+                variant="outline"
+                className={isActive
+                  ? 'border-emerald-500/30 bg-emerald-500/10 text-[10px] font-bold text-emerald-700 dark:text-emerald-300'
+                  : 'bg-card text-[10px] font-semibold text-muted-foreground'}
+              >
+                {isActive ? 'Active template' : 'Available template'}
+              </Badge>
             </div>
-            <CardTitle className="text-sm font-bold font-heading">Template Overview</CardTitle>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-4 sm:p-5 space-y-3.5 text-xs">
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground font-medium text-[11px]">Template Name:</span>
-              <span className="font-bold text-foreground">{template.name}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground font-medium text-[11px]">Classification:</span>
-              {isPreset ? (
-                <Badge variant="outline" className="text-[10px] font-semibold bg-secondary/60">
-                  Built-in Preset
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="text-[10px] font-semibold text-cinnamon border-cinnamon/30 bg-cinnamon/5">
-                  Custom Template
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground font-medium text-[11px]">Active Status:</span>
-              {isActive ? (
-                <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-1">
-                  <HugeiconsIcon icon={CheckmarkCircle02Icon} size={12} />
-                  <span>Active Default</span>
-                </span>
-              ) : (
-                <span className="text-muted-foreground text-xs">Inactive</span>
-              )}
-            </div>
+            <h2 className="font-heading text-base font-bold text-foreground">{template.name}</h2>
+            <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+              {template.description || 'A saved thermal receipt layout for RadhaCafe orders.'}
+            </p>
           </div>
 
-          <p className="text-[11px] text-muted-foreground leading-relaxed p-2.5 rounded-xl bg-secondary/30 border border-border/60">
-            {isActive
-              ? 'Used by default for all counter orders, takeaway tickets, and reprints.'
-              : 'Preview and test this design before making it the default active layout.'}
+          <div className="space-y-3 p-4">
+            <section aria-labelledby="template-details-heading">
+              <div className="mb-2 flex items-center gap-2">
+                <h3 id="template-details-heading" className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Template details</h3>
+              </div>
+              <SummaryRow label="Type" value={isPreset ? 'Built-in preset' : 'Custom template'} />
+              <SummaryRow label="Paper" value={is80mm ? '80 mm · 48 columns' : '58 mm · 32 columns'} />
+              <SummaryRow label="Header" value={`${config.header.alignment} aligned`} />
+              <SummaryRow label="Divider" value={config.dividerStyle} />
+              <SummaryRow label="Feed after print" value={`${config.feedLines || 3} lines`} />
+            </section>
+
+            <Separator />
+
+            <section aria-labelledby="included-content-heading">
+              <div className="mb-3 flex items-center gap-2">
+                <HugeiconsIcon icon={InformationCircleIcon} size={14} className="text-cinnamon" />
+                <h3 id="included-content-heading" className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Included content</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                {sections.map((item) => (
+                  <div key={item.name} className="flex items-center gap-1.5 text-[10px]">
+                    <span className={`flex shrink-0 items-center ${item.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground/70'}`}>
+                      <HugeiconsIcon icon={item.enabled ? CheckmarkCircle02Icon : Cancel01Icon} size={13} />
+                    </span>
+                    <span className={item.enabled ? 'font-medium text-foreground' : 'text-muted-foreground'}>{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl border-border/80 bg-card shadow-sm">
+        <CardContent className="space-y-2.5 p-4">
+          <Button type="button" onClick={onCustomize} className="h-10 w-full justify-center gap-2 rounded-xl bg-cinnamon text-xs font-bold text-white hover:bg-cinnamon/90">
+            <HugeiconsIcon icon={Edit02Icon} size={15} />
+            Customize in editor
+          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button type="button" variant="outline" onClick={onTestPrint} disabled={isTestPrinting} className="h-9 justify-center gap-1.5 rounded-xl text-xs font-semibold">
+              <HugeiconsIcon icon={PrinterIcon} size={14} className="text-cinnamon" />
+              {isTestPrinting ? 'Printing...' : 'Test print'}
+            </Button>
+            {isActive ? (
+              <Button type="button" variant="outline" disabled className="h-9 justify-center gap-1.5 rounded-xl border-emerald-500/30 bg-emerald-500/10 text-xs font-bold text-emerald-700 opacity-100 dark:text-emerald-300">
+                <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} />
+                Active
+              </Button>
+            ) : (
+              <Button type="button" variant="outline" onClick={onActivate} disabled={isActivating} className="h-9 justify-center gap-1.5 rounded-xl border-cinnamon/40 text-xs font-bold text-cinnamon hover:bg-cinnamon/10">
+                <HugeiconsIcon icon={StarIcon} size={14} />
+                {isActivating ? 'Activating...' : 'Use template'}
+              </Button>
+            )}
+          </div>
+          <p className="px-1 text-[10px] leading-relaxed text-muted-foreground">
+            Test printing uses the current preview data and never changes the active template.
           </p>
         </CardContent>
       </Card>
-
-      {/* 2. Paper & Typography Specs Card */}
-      <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
-        <CardHeader className="p-4 sm:p-5 pb-3 border-b border-border/60">
-          <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-            <div className="p-1.5 rounded-lg bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs">
-              <HugeiconsIcon icon={Settings01Icon} size={15} />
-            </div>
-            <CardTitle className="text-sm font-bold font-heading">Paper & Layout Specs</CardTitle>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-4 sm:p-5 space-y-2.5 text-xs divide-y divide-border/40">
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-muted-foreground text-[11px]">Paper Width</span>
-            <span className="font-mono font-bold text-foreground">
-              {is80mm ? '80 mm (48 Columns)' : '58 mm (32 Columns)'}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-muted-foreground text-[11px]">Divider Style</span>
-            <span className="font-mono font-semibold capitalize text-foreground">
-              {config?.dividerStyle || 'Dashed'}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-muted-foreground text-[11px]">Header Alignment</span>
-            <span className="font-semibold capitalize text-foreground flex items-center gap-1">
-              <HugeiconsIcon icon={AlignLeftIcon} size={12} className="text-muted-foreground" />
-              <span>{config?.header?.alignment || 'Center'}</span>
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-muted-foreground text-[11px]">Preview Font</span>
-            <span className="font-mono text-foreground">{config?.previewFont || 'JetBrains Mono'}</span>
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-muted-foreground text-[11px]">Feed Spacing</span>
-            <span className="font-mono text-foreground">{config?.feedLines || 3} blank lines</span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 3. Section Visibility Checklist */}
-      <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
-        <CardHeader className="p-4 sm:p-5 pb-3 border-b border-border/60">
-          <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-            <div className="p-1.5 rounded-lg bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs">
-              <HugeiconsIcon icon={InformationCircleIcon} size={15} />
-            </div>
-            <CardTitle className="text-sm font-bold font-heading">Included Content</CardTitle>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-4 sm:p-5 text-xs">
-          <div className="grid grid-cols-2 gap-2">
-            {sectionsList.map((item, idx) => (
-              <div
-                key={idx}
-                className="flex items-center gap-1.5 text-[11px] p-1.5 rounded-lg bg-secondary/30 border border-border/50"
-              >
-                {item.enabled ? (
-                  <HugeiconsIcon icon={CheckmarkCircle02Icon} size={12} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                ) : (
-                  <HugeiconsIcon icon={Cancel01Icon} size={12} className="text-muted-foreground/60 shrink-0" />
-                )}
-                <span className={`truncate ${item.enabled ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                  {item.name}
-                </span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 4. Action Card */}
-      <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
-        <CardContent className="p-4 sm:p-5 space-y-2.5 text-xs">
-          <Button
-            type="button"
-            onClick={onCustomize}
-            className="w-full h-9 text-xs font-bold rounded-xl bg-cinnamon hover:bg-cinnamon/90 text-white gap-2 shadow-2xs justify-center"
-          >
-            <HugeiconsIcon icon={Edit02Icon} size={14} />
-            <span>Customize in Full Editor</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onTestPrint}
-            disabled={isTestPrinting}
-            className="w-full h-9 text-xs font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-2 shadow-2xs justify-center"
-          >
-            <HugeiconsIcon icon={PrinterIcon} size={14} className="text-cinnamon" />
-            <span>{isTestPrinting ? 'Transmitting...' : 'Test Print Receipt'}</span>
-          </Button>
-
-          {!isActive && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onActivate}
-              disabled={isActivating}
-              className="w-full h-9 text-xs font-bold rounded-xl border-cinnamon/40 text-cinnamon hover:bg-cinnamon/10 gap-2 shadow-2xs justify-center"
-            >
-              <HugeiconsIcon icon={StarIcon} size={14} />
-              <span>{isActivating ? 'Activating...' : 'Use This Template'}</span>
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    </aside>
   );
 }

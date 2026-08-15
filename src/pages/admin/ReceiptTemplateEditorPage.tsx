@@ -23,6 +23,7 @@ import { ReceiptPreview } from '../../components/admin/printer/ReceiptPreview';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import { Textarea } from '../../components/ui/textarea';
 import { Label } from '../../components/ui/label';
 import { Badge } from '../../components/ui/badge';
 import { Switch } from '../../components/ui/switch';
@@ -98,6 +99,8 @@ export function ReceiptTemplateEditorPage() {
   const [templateDescription, setTemplateDescription] = useState<string>('');
   const [draftConfig, setDraftConfig] = useState<ReceiptTemplateConfig | null>(null);
   const [initialConfig, setInitialConfig] = useState<string>('');
+  const [initialName, setInitialName] = useState<string>('');
+  const [initialDescription, setInitialDescription] = useState<string>('');
   const [isPresetBase, setIsPresetBase] = useState<boolean>(false);
   const [loadedTemplateId, setLoadedTemplateId] = useState<string | null>(null);
 
@@ -127,6 +130,8 @@ export function ReceiptTemplateEditorPage() {
       const synthetic = presetToReceiptTemplate(matchedPreset);
       setTemplateName(`${matchedPreset.name} (Custom)`);
       setTemplateDescription(`Custom template derived from ${matchedPreset.name}`);
+      setInitialName(`${matchedPreset.name} (Custom)`);
+      setInitialDescription(`Custom template derived from ${matchedPreset.name}`);
       setDraftConfig(JSON.parse(JSON.stringify(synthetic.template_config)));
       setInitialConfig(JSON.stringify(synthetic.template_config));
       setIsPresetBase(true);
@@ -141,6 +146,8 @@ export function ReceiptTemplateEditorPage() {
         BUILT_IN_PRESETS.find((p) => p.presetKey === sourcePresetKey) || BUILT_IN_PRESETS[1];
       setTemplateName('New Custom Template');
       setTemplateDescription('Custom configured receipt format');
+      setInitialName('New Custom Template');
+      setInitialDescription('Custom configured receipt format');
       setDraftConfig(JSON.parse(JSON.stringify(sourcePreset.config)));
       setInitialConfig(JSON.stringify(sourcePreset.config));
       setIsPresetBase(true);
@@ -154,6 +161,8 @@ export function ReceiptTemplateEditorPage() {
       if (found) {
         setTemplateName(found.name);
         setTemplateDescription(found.description || '');
+        setInitialName(found.name);
+        setInitialDescription(found.description || '');
         setDraftConfig(JSON.parse(JSON.stringify(found.template_config)));
         setInitialConfig(JSON.stringify(found.template_config));
         setIsPresetBase(false);
@@ -163,6 +172,8 @@ export function ReceiptTemplateEditorPage() {
         const fallback = templates[0] || presetToReceiptTemplate(BUILT_IN_PRESETS[1]);
         setTemplateName(fallback.name);
         setTemplateDescription(fallback.description || '');
+        setInitialName(fallback.name);
+        setInitialDescription(fallback.description || '');
         setDraftConfig(JSON.parse(JSON.stringify(fallback.template_config)));
         setInitialConfig(JSON.stringify(fallback.template_config));
         setLoadedTemplateId(fallback.id);
@@ -173,8 +184,19 @@ export function ReceiptTemplateEditorPage() {
   // Dirty tracking for unsaved changes
   const hasUnsavedChanges = useMemo(() => {
     if (!draftConfig || !initialConfig) return false;
-    return JSON.stringify(draftConfig) !== initialConfig;
-  }, [draftConfig, initialConfig]);
+    return JSON.stringify(draftConfig) !== initialConfig
+      || templateName !== initialName
+      || templateDescription !== initialDescription;
+  }, [draftConfig, initialConfig, templateName, initialName, templateDescription, initialDescription]);
+
+  useEffect(() => {
+    const protectDraft = (event: BeforeUnloadEvent) => {
+      if (!hasUnsavedChanges) return;
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', protectDraft);
+    return () => window.removeEventListener('beforeunload', protectDraft);
+  }, [hasUnsavedChanges]);
 
   // Safe navigation with unsaved changes prompt
   const handleSafeBack = () => {
@@ -214,6 +236,8 @@ export function ReceiptTemplateEditorPage() {
   const handleResetDraft = () => {
     if (initialConfig) {
       setDraftConfig(JSON.parse(initialConfig));
+      setTemplateName(initialName);
+      setTemplateDescription(initialDescription);
       toast.add({
         title: 'Changes Reset',
         description: 'Receipt settings restored to last saved state.',
@@ -251,6 +275,8 @@ export function ReceiptTemplateEditorPage() {
         setIsPresetBase(false);
         setLoadedTemplateId(savedResult.id);
         setInitialConfig(JSON.stringify(savedResult.template_config));
+        setInitialName(savedResult.name);
+        setInitialDescription(savedResult.description || '');
         navigate(`/admin/settings/receipts/${savedResult.id}/edit`, { replace: true });
       } else {
         // Update existing template
@@ -269,6 +295,8 @@ export function ReceiptTemplateEditorPage() {
         }
 
         setInitialConfig(JSON.stringify(savedResult.template_config));
+        setInitialName(savedResult.name);
+        setInitialDescription(savedResult.description || '');
       }
 
       toast.add({
@@ -395,11 +423,11 @@ export function ReceiptTemplateEditorPage() {
       : SAMPLE_DATASETS.paid;
 
   return (
-    <div className="space-y-5 pb-16 w-full min-w-0">
+    <div className="space-y-5 pb-20 w-full min-w-0">
       {/* 1. STICKY TOP BAR */}
-      <div className="sticky top-0 z-20 -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 px-4 py-3 sm:px-6 bg-card/95 backdrop-blur-md border-b border-border/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="sticky top-2 z-20 mt-2 rounded-2xl border border-border/80 bg-card/95 px-3 py-3 shadow-sm backdrop-blur-md sm:px-5 flex items-center justify-between gap-3">
         {/* Left: Back Navigation + Template Identity */}
-        <div className="flex items-center gap-2.5 min-w-0 w-full sm:w-auto">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <Button
             type="button"
             variant="ghost"
@@ -413,34 +441,34 @@ export function ReceiptTemplateEditorPage() {
 
           <div className="space-y-0.5 min-w-0 flex-1">
             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
-              <Input
-                value={templateName}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setTemplateName(e.target.value)}
-                className="h-8 font-bold text-sm sm:text-base font-heading bg-transparent border-transparent hover:border-border focus:border-cinnamon focus:bg-card px-1.5 py-0 max-w-[180px] sm:max-w-xs transition-colors"
-                placeholder="Template Name"
-              />
+              <div className="min-w-0">
+                <p className="hidden sm:block text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Receipt template editor</p>
+                <h1 className="max-w-[130px] truncate font-heading text-sm font-bold text-foreground sm:max-w-xs sm:text-base lg:max-w-sm">
+                  {templateName || 'Untitled template'}
+                </h1>
+              </div>
 
               {isActive ? (
-                <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white font-bold text-[10px] gap-1 px-2 py-0.5 shrink-0">
+                <Badge className="hidden sm:inline-flex bg-emerald-600 hover:bg-emerald-600 text-white font-bold text-[10px] gap-1 px-2 py-0.5 shrink-0">
                   <HugeiconsIcon icon={CheckmarkCircle02Icon} size={11} />
                   <span>Active</span>
                 </Badge>
               ) : isPresetBase ? (
-                <Badge variant="outline" className="text-[10px] bg-secondary/60 shrink-0">
+                <Badge variant="outline" className="hidden sm:inline-flex text-[10px] bg-secondary/60 shrink-0">
                   Preset Draft
                 </Badge>
               ) : (
-                <Badge variant="outline" className="text-[10px] text-cinnamon border-cinnamon/30 shrink-0">
+                <Badge variant="outline" className="hidden sm:inline-flex text-[10px] text-cinnamon border-cinnamon/30 shrink-0">
                   Custom
                 </Badge>
               )}
 
               {hasUnsavedChanges ? (
-                <Badge variant="outline" className="border-amber-500/50 text-amber-600 dark:text-amber-400 bg-amber-500/10 text-[10px] shrink-0">
+                <Badge variant="outline" className="hidden md:inline-flex border-amber-500/50 text-amber-600 dark:text-amber-400 bg-amber-500/10 text-[10px] shrink-0">
                   Unsaved Changes
                 </Badge>
               ) : (
-                <Badge variant="outline" className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[10px] shrink-0">
+                <Badge variant="outline" className="hidden md:inline-flex border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[10px] shrink-0">
                   Saved
                 </Badge>
               )}
@@ -449,7 +477,7 @@ export function ReceiptTemplateEditorPage() {
         </div>
 
         {/* Right: Workspace Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap shrink-0 w-full sm:w-auto justify-end">
+        <div className="flex items-center gap-2 shrink-0 justify-end">
           {hasUnsavedChanges && (
             <Button
               type="button"
@@ -468,11 +496,11 @@ export function ReceiptTemplateEditorPage() {
             size="sm"
             onClick={handleTestPrint}
             disabled={isTestPrinting}
-            className="h-8.5 text-xs font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-1.5 shadow-2xs"
+            className="hidden md:flex h-8.5 text-xs font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-1.5 shadow-2xs"
             title={printerConnected ? 'Send test to connected Bluetooth printer' : 'Test thermal print stream'}
           >
             <HugeiconsIcon icon={PrinterIcon} size={14} className="text-cinnamon" />
-            <span className="hidden xs:inline">{isTestPrinting ? 'Transmitting...' : 'Test Print'}</span>
+            <span className="hidden sm:inline">{isTestPrinting ? 'Transmitting...' : 'Test Print'}</span>
           </Button>
 
           <Button
@@ -490,7 +518,8 @@ export function ReceiptTemplateEditorPage() {
             ) : (
               <>
                 <HugeiconsIcon icon={ViewIcon} size={14} />
-                <span>Save & Preview</span>
+                <span className="sm:hidden">Save</span>
+                <span className="hidden sm:inline">Save & Preview</span>
               </>
             )}
           </Button>
@@ -573,7 +602,7 @@ export function ReceiptTemplateEditorPage() {
       </div>
 
       {/* 2. TABLET / MOBILE TAB SWITCHER */}
-      <div className="flex lg:hidden bg-secondary/60 p-1 rounded-xl border border-border/80">
+      <div className="flex xl:hidden bg-secondary/60 p-1 rounded-xl border border-border/80 shadow-2xs">
         <Button
           type="button"
           onClick={() => setActiveMobileTab('customize')}
@@ -583,7 +612,7 @@ export function ReceiptTemplateEditorPage() {
           }`}
         >
           <HugeiconsIcon icon={Settings01Icon} size={14} className="mr-1.5" />
-          <span>1. Customize Settings</span>
+          <span>Customize</span>
         </Button>
         <Button
           type="button"
@@ -594,19 +623,27 @@ export function ReceiptTemplateEditorPage() {
           }`}
         >
           <HugeiconsIcon icon={ViewIcon} size={14} className="mr-1.5" />
-          <span>2. Live Receipt Preview</span>
+          <span>Live Preview</span>
         </Button>
       </div>
 
-      {/* 3. MAIN WORKSPACE GRID (45% Left Controls / 55% Right Sticky Preview) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full min-w-0">
+      {/* 3. MAIN WORKSPACE GRID (stacks through tablet / splits on large desktop) */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 xl:gap-6 items-start w-full min-w-0">
         {/* LEFT COLUMN: Scrollable Customization Controls */}
         <div
-          className={`lg:col-span-6 space-y-4 w-full min-w-0 ${
-            activeMobileTab === 'preview' ? 'hidden lg:block' : 'block'
+          className={`xl:col-span-5 space-y-4 w-full min-w-0 ${
+            activeMobileTab === 'preview' ? 'hidden xl:block' : 'block'
           }`}
         >
-          <Accordion defaultValue={['branding']} className="space-y-3 w-full">
+          <div className="flex items-end justify-between gap-3 px-1 pb-1">
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-cinnamon">Customize template</p>
+              <h2 className="font-heading text-base font-bold text-foreground">Receipt content & layout</h2>
+            </div>
+            <Badge variant="outline" className="bg-card text-[10px] font-semibold text-muted-foreground">9 sections</Badge>
+          </div>
+
+          <Accordion defaultValue={['paper']} className="space-y-3 w-full">
             {/* Section 1: Template & Paper Setup */}
             <AccordionItem value="paper" className="border border-border/80 rounded-2xl bg-card px-4 sm:px-5 shadow-xs overflow-hidden">
               <AccordionTrigger className="hover:no-underline py-4">
@@ -625,6 +662,30 @@ export function ReceiptTemplateEditorPage() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4 pt-1 pb-5 text-xs">
+                <div className="grid grid-cols-1 gap-3 rounded-xl border border-border/60 bg-secondary/20 p-3.5">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="receipt-template-name" className="text-xs font-semibold text-foreground">Template name</Label>
+                    <Input
+                      id="receipt-template-name"
+                      value={templateName}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setTemplateName(e.target.value)}
+                      placeholder="e.g. Counter receipt"
+                      className="h-9 rounded-xl bg-card text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="receipt-template-description" className="text-xs font-semibold text-foreground">Internal description</Label>
+                    <Textarea
+                      id="receipt-template-description"
+                      value={templateDescription}
+                      onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setTemplateDescription(e.target.value)}
+                      placeholder="Where and when this layout is used"
+                      className="min-h-[72px] resize-none rounded-xl bg-card text-xs leading-relaxed"
+                    />
+                    <p className="text-[10px] leading-relaxed text-muted-foreground">Visible to admins in the template gallery; it is not printed on receipts.</p>
+                  </div>
+                </div>
+
                 {/* Paper Roll Width Segmented Selector */}
                 <div className="space-y-2">
                   <Label className="text-xs font-bold text-foreground block">
@@ -669,15 +730,6 @@ export function ReceiptTemplateEditorPage() {
                   </div>
                 </div>
 
-                <div className="space-y-1.5 pt-1">
-                  <Label className="text-xs font-semibold text-foreground">Template Description</Label>
-                  <Input
-                    value={templateDescription}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) => setTemplateDescription(e.target.value)}
-                    placeholder="e.g. Standard layout for counter dine-in and takeaways"
-                    className="h-9 text-xs rounded-xl"
-                  />
-                </div>
               </AccordionContent>
             </AccordionItem>
 
@@ -1404,47 +1456,38 @@ export function ReceiptTemplateEditorPage() {
 
         {/* RIGHT COLUMN: Sticky Live Receipt Preview */}
         <div
-          className={`lg:col-span-6 lg:sticky lg:top-20 space-y-4 w-full min-w-0 ${
-            activeMobileTab === 'customize' ? 'hidden lg:block' : 'block'
+          className={`xl:col-span-7 xl:sticky xl:top-20 space-y-4 w-full min-w-0 ${
+            activeMobileTab === 'customize' ? 'hidden xl:block' : 'block'
           }`}
         >
-          <Card className="rounded-2xl border border-border/80 bg-card shadow-md overflow-hidden w-full min-w-0">
+          <Card className="rounded-3xl border border-border/80 bg-card shadow-sm overflow-hidden w-full min-w-0">
             {/* Live Preview Header & Inspection Toolbar */}
-            <CardHeader className="p-4 sm:p-5 border-b border-border/70 pb-3.5 space-y-3">
+            <CardHeader className="p-4 sm:p-5 border-b border-border/70 pb-3.5 space-y-3 bg-card">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <CardTitle className="text-sm sm:text-base font-bold font-heading text-foreground flex items-center gap-2">
-                    <span>Live Thermal Slip Preview</span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    <span>Live receipt preview</span>
+                    <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0 text-[9px] font-bold text-emerald-700 dark:text-emerald-300">Live</Badge>
                   </CardTitle>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Real-time simulation ({draftConfig.paperWidth} columns)
+                    Updates instantly as you edit · {draftConfig.paperWidth === 48 ? '80 mm' : '58 mm'} thermal roll
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleTestPrint}
-                    disabled={isTestPrinting}
-                    className="h-8 text-xs font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-1.5 shadow-2xs"
-                  >
-                    <HugeiconsIcon icon={PrinterIcon} size={13} className="text-cinnamon" />
-                    <span>{isTestPrinting ? 'Transmitting...' : 'Test Print'}</span>
-                  </Button>
-                </div>
+                <span className="hidden sm:inline-flex rounded-lg border border-border/70 bg-secondary/40 px-2 py-1 font-mono text-[10px] font-bold text-muted-foreground">
+                  {draftConfig.paperWidth} columns
+                </span>
               </div>
 
               {/* Toolbar Controls (Paper Width, Dataset Switcher, Zoom) */}
               <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-border/60 text-xs">
                 {/* Dataset Selector */}
-                <div className="flex items-center bg-secondary/60 p-0.5 rounded-lg border border-border/60">
+                <div role="group" aria-label="Preview sample order" className="flex items-center bg-secondary/60 p-1 rounded-xl border border-border/60">
                   <button
                     type="button"
                     onClick={() => setPreviewDataset('paid')}
-                    className={`px-2 py-1 rounded-md text-[11px] font-bold transition-all ${
+                    aria-pressed={previewDataset === 'paid'}
+                    className={`h-8 px-2.5 rounded-lg text-[11px] font-bold transition-all ${
                       previewDataset === 'paid'
                         ? 'bg-card text-foreground shadow-2xs'
                         : 'text-muted-foreground hover:text-foreground'
@@ -1455,7 +1498,8 @@ export function ReceiptTemplateEditorPage() {
                   <button
                     type="button"
                     onClick={() => setPreviewDataset('payLater')}
-                    className={`px-2 py-1 rounded-md text-[11px] font-bold transition-all ${
+                    aria-pressed={previewDataset === 'payLater'}
+                    className={`h-8 px-2.5 rounded-lg text-[11px] font-bold transition-all ${
                       previewDataset === 'payLater'
                         ? 'bg-card text-foreground shadow-2xs'
                         : 'text-muted-foreground hover:text-foreground'
@@ -1466,7 +1510,8 @@ export function ReceiptTemplateEditorPage() {
                   <button
                     type="button"
                     onClick={() => setPreviewDataset('walkIn')}
-                    className={`px-2 py-1 rounded-md text-[11px] font-bold transition-all ${
+                    aria-pressed={previewDataset === 'walkIn'}
+                    className={`h-8 px-2.5 rounded-lg text-[11px] font-bold transition-all ${
                       previewDataset === 'walkIn'
                         ? 'bg-card text-foreground shadow-2xs'
                         : 'text-muted-foreground hover:text-foreground'
@@ -1478,28 +1523,34 @@ export function ReceiptTemplateEditorPage() {
 
                 {/* Width & Zoom Controls */}
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-[10px] font-mono px-2 py-0.5">
-                    {draftConfig.paperWidth === 48 ? '80mm (48 cols)' : '58mm (32 cols)'}
+                  <Badge variant="outline" className="hidden sm:inline-flex text-[10px] font-mono px-2 py-0.5">
+                    {draftConfig.paperWidth === 48 ? '80 mm' : '58 mm'}
                   </Badge>
 
-                  <div className="flex items-center bg-secondary/60 p-0.5 rounded-lg border border-border/60">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewZoom(previewZoom === 100 ? 85 : 100)}
-                      className="px-2 py-0.5 text-[10px] font-mono text-muted-foreground hover:text-foreground"
-                    >
-                      {previewZoom}%
-                    </button>
+                  <div role="group" aria-label="Preview zoom" className="flex items-center bg-secondary/60 p-1 rounded-xl border border-border/60">
+                    {[85, 100].map((zoom) => (
+                      <button
+                        key={zoom}
+                        type="button"
+                        aria-pressed={previewZoom === zoom}
+                        onClick={() => setPreviewZoom(zoom)}
+                        className={`h-8 rounded-lg px-2 text-[10px] font-mono font-bold transition-colors ${
+                          previewZoom === zoom ? 'bg-card text-foreground shadow-2xs' : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {zoom}%
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
             </CardHeader>
 
             {/* Scrollable Monospace Thermal Paper Surface */}
-            <CardContent className="p-4 sm:p-6 bg-neutral-900/5 dark:bg-black/30 flex justify-center overflow-y-auto max-h-[calc(100vh-280px)] min-h-[420px]">
+            <CardContent className="p-4 sm:p-7 bg-[#eee9e1] dark:bg-[#171512] flex justify-center overflow-y-auto max-h-[calc(100vh-255px)] min-h-[460px] sm:min-h-[540px] bg-[radial-gradient(circle_at_1px_1px,rgba(91,72,52,0.12)_1px,transparent_0)] bg-size-[22px_22px]">
               <div
-                style={{ transform: `scale(${previewZoom / 100})`, transformOrigin: 'top center' }}
-                className="transition-transform w-full flex justify-center min-w-0"
+                style={{ zoom: previewZoom / 100 }}
+                className="w-full flex justify-center min-w-0"
               >
                 <ReceiptPreview
                   order={activeSampleOrder}
