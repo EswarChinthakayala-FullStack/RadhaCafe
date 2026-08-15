@@ -60,11 +60,11 @@ const SAMPLE_ORDER_DATA = {
     { item_name: 'Fresh Mineral Water (20L)', quantity: 2, unit_price: 50, total_price: 100 },
   ],
   subtotal: 160,
-  tax_amount: 8,
+  tax_amount: 0,
   discount_amount: 10,
-  total_amount: 158,
+  total_amount: 150,
   paid_amount: 50,
-  due_amount: 108,
+  due_amount: 100,
 };
 
 export function ReceiptTemplateBuilder() {

@@ -26,7 +26,7 @@ export function TaxCurrencySettings() {
   } = useForm<TaxCurrencyFormData>({
     resolver: zodResolver(taxCurrencySchema),
     defaultValues: {
-      tax_percentage: 5.0,
+      tax_percentage: 0.0,
       currency: 'INR',
     },
   });

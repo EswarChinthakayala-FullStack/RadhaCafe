@@ -49,7 +49,7 @@ export function OrderPaymentSettings({ onDirtyChange }: OrderPaymentSettingsProp
   } = useForm<OrderPaymentFormData>({
     resolver: zodResolver(orderPaymentSchema),
     defaultValues: {
-      tax_percentage: 5.0,
+      tax_percentage: 0.0,
     },
   });
 
@@ -59,7 +59,7 @@ export function OrderPaymentSettings({ onDirtyChange }: OrderPaymentSettingsProp
 
   useEffect(() => {
     if (settings) {
-      const tax = settings.tax_percentage !== undefined ? Number(settings.tax_percentage) : 5.0;
+      const tax = settings.tax_percentage !== undefined ? Number(settings.tax_percentage) : 0.0;
       setValue('tax_percentage', tax);
       reset({ tax_percentage: tax });
     }

@@ -370,10 +370,10 @@ export const SAMPLE_DATASETS: Record<'paid' | 'payLater' | 'walkIn', Order> = {
       { item_name: 'Crispy Veg Sandwich', quantity: 1, unit_price: 80, total_price: 80 },
     ],
     subtotal: 150,
-    tax_amount: 7.5,
+    tax_amount: 0,
     discount_amount: 10,
-    total_amount: 147.5,
-    paid_amount: 147.5,
+    total_amount: 140,
+    paid_amount: 140,
     due_amount: 0,
   },
   payLater: {
