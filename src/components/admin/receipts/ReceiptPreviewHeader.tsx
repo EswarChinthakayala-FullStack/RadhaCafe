@@ -57,7 +57,7 @@ export function ReceiptPreviewHeader({
   const is80mm = paperCols >= 42;
 
   return (
-    <div className="sticky top-2 z-20 mt-2 rounded-2xl border border-border/80 bg-card/95 px-4 py-3 shadow-sm backdrop-blur-md sm:px-5 flex items-center justify-between gap-3">
+    <div className="sticky -top-4 md:-top-6 z-20 -mt-4 md:-mt-6 -mx-4 md:-mx-6 px-4 md:px-6 pt-4 md:pt-6 pb-3 bg-background/95 backdrop-blur-md border-b border-border/80 shadow-2xs flex items-center justify-between gap-3">
       {/* Left: Back Navigation + Template Title + Status Pills */}
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <Button
