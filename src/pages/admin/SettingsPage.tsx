@@ -180,7 +180,7 @@ export function SettingsPage() {
           <div className="h-full overflow-hidden border-r border-border/80 bg-secondary/20">
             <SettingsSidebar
               activeKey={activeSection}
-              onSelectKey={(section) => requestNavigation({ type: 'section', section })}
+              onSelectKey={(section: SettingsSectionKey) => requestNavigation({ type: 'section', section })}
               printerConnected={printerConnected}
             />
           </div>
@@ -228,7 +228,7 @@ export function SettingsPage() {
           <div className="shrink-0">
             <SettingsMobileTabs
               activeKey={activeSection}
-              onSelectKey={(section) => requestNavigation({ type: 'section', section })}
+              onSelectKey={(section: SettingsSectionKey) => requestNavigation({ type: 'section', section })}
               printerConnected={printerConnected}
             />
           </div>
