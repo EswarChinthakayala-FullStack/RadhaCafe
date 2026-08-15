@@ -19,6 +19,7 @@ import {
   MoreVerticalIcon,
   Coffee02Icon,
   FireIcon,
+  Award01Icon,
 } from '@hugeicons/core-free-icons';
 import type { MenuItem } from '../../../types';
 
@@ -87,9 +88,15 @@ export function MenuItemCard({
             </Badge>
           )}
           {item.is_best_seller && (
+            <Badge className="bg-orange-600 text-white font-bold text-[10px] px-2 py-0.5 shadow-xs flex items-center gap-1 backdrop-blur-xs">
+              <HugeiconsIcon icon={Award01Icon} size={11} />
+              <span>Best Seller</span>
+            </Badge>
+          )}
+          {!item.is_best_seller && item.tags?.includes('popular') && (
             <Badge className="bg-cinnamon text-white font-bold text-[10px] px-2 py-0.5 shadow-xs flex items-center gap-1 backdrop-blur-xs">
               <HugeiconsIcon icon={FireIcon} size={11} />
-              <span>Best Seller</span>
+              <span>Popular</span>
             </Badge>
           )}
         </div>

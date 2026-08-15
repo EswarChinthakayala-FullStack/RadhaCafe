@@ -34,6 +34,7 @@ import {
   ArrowRight01Icon,
   FireIcon,
   StarIcon,
+  Award01Icon,
 } from '@hugeicons/core-free-icons';
 
 const ICON_MAP: Record<string, any> = {
@@ -369,6 +370,7 @@ export function OrderItemSelector() {
             const isTodaySpec = item.daily_special_date === todayStr;
             const isBestSell = bestSellerIdSet.has(item.id);
             const tags = item.tags || [];
+            const isPopular = !isBestSell && (tags.includes('popular') || tags.includes('trending') || tags.includes('bestseller'));
 
             return (
               <div
@@ -409,8 +411,17 @@ export function OrderItemSelector() {
                       )}
                       {isBestSell && !isTodaySpec && (
                         <div
+                          className="h-4 w-4 sm:h-auto sm:w-auto sm:px-1.5 sm:py-0.5 rounded-full sm:rounded bg-orange-600/95 text-white flex items-center justify-center gap-0.5 shadow-xs"
+                          title="Best Seller"
+                        >
+                          <HugeiconsIcon icon={Award01Icon} size={8.5} className="shrink-0" />
+                          <span className="hidden sm:inline text-[8px] font-bold truncate leading-tight">Best Seller</span>
+                        </div>
+                      )}
+                      {isPopular && !isTodaySpec && !isBestSell && (
+                        <div
                           className="h-4 w-4 sm:h-auto sm:w-auto sm:px-1.5 sm:py-0.5 rounded-full sm:rounded bg-cinnamon/95 text-white flex items-center justify-center gap-0.5 shadow-xs"
-                          title="Best Seller / Popular"
+                          title="Popular"
                         >
                           <HugeiconsIcon icon={FireIcon} size={8.5} className="shrink-0" />
                           <span className="hidden sm:inline text-[8px] font-bold truncate leading-tight">Popular</span>

@@ -4,7 +4,7 @@ import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import { LazyImage } from '../../ui/lazy-image';
 import { Badge } from '../../ui/badge';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { FireIcon, PlusSignIcon, MinusSignIcon, Coffee02Icon } from '@hugeicons/core-free-icons';
+import { Award01Icon, PlusSignIcon, MinusSignIcon, Coffee02Icon } from '@hugeicons/core-free-icons';
 
 interface BestSellersSectionProps {
   bestSellers: MenuItem[];
@@ -18,8 +18,8 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
     return (
       <div className="space-y-2.5">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-600 animate-pulse">
-            <HugeiconsIcon icon={FireIcon} size={15} />
+          <div className="p-1.5 rounded-lg bg-orange-500/15 text-orange-600 animate-pulse">
+            <HugeiconsIcon icon={Award01Icon} size={15} />
           </div>
           <div className="h-4 w-28 bg-secondary animate-pulse rounded" />
         </div>
@@ -46,7 +46,7 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
       {/* Section Header */}
       <div className="flex items-center gap-2">
         <div className="p-1.5 rounded-lg bg-orange-500/15 text-orange-600 dark:text-orange-400 shrink-0">
-          <HugeiconsIcon icon={FireIcon} size={15} />
+          <HugeiconsIcon icon={Award01Icon} size={15} />
         </div>
         <div className="min-w-0">
           <h3 className="font-bold text-sm font-heading text-foreground flex items-center gap-2">
@@ -95,7 +95,7 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
                       className="h-4 w-4 sm:h-auto sm:w-auto sm:px-1.5 sm:py-0.5 rounded-full sm:rounded bg-orange-600/95 text-white flex items-center justify-center gap-0.5 shadow-xs"
                       title="Best Seller"
                     >
-                      <HugeiconsIcon icon={FireIcon} size={8.5} className="shrink-0" />
+                      <HugeiconsIcon icon={Award01Icon} size={8.5} className="shrink-0" />
                       <span className="hidden sm:inline text-[8px] font-bold truncate leading-tight">Best Seller</span>
                     </div>
                   </div>
