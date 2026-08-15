@@ -102,31 +102,69 @@ export function useAdminReviews(params: AdminReviewQueryParams) {
 }
 
 /**
- * Public Submit Review Hook (Submits with is_approved = false)
+ * Public Submit Review Hook (Submits review and immediately invalidates all review caches)
  */
 export function useSubmitPublicReview() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: { customer_name: string; rating: number; message: string }) =>
       submitPublicReview(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: DISCUSSIONS_QUERY_KEY });
-      queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_SUMMARY_QUERY_KEY });
-      queryClient.invalidateQueries({ queryKey: ADMIN_REVIEWS_QUERY_KEY });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: DISCUSSIONS_QUERY_KEY }),
+        queryClient.invalidateQueries({ queryKey: REVIEW_SUMMARY_QUERY_KEY }),
+        queryClient.invalidateQueries({ queryKey: PUBLIC_REVIEWS_QUERY_KEY }),
+        queryClient.invalidateQueries({ queryKey: ADMIN_REVIEW_SUMMARY_QUERY_KEY }),
+        queryClient.invalidateQueries({ queryKey: ADMIN_REVIEWS_QUERY_KEY }),
+      ]);
+      queryClient.refetchQueries({ queryKey: PUBLIC_REVIEWS_QUERY_KEY });
+      queryClient.refetchQueries({ queryKey: REVIEW_SUMMARY_QUERY_KEY });
     },
   });
 }
 
 /**
- * Toggle Helpful Vote Hook with optimistic cache update
+ * Toggle Helpful Vote Hook with instant 0ms optimistic cache update
  */
 export function useToggleReviewHelpful() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ reviewId, sessionId }: { reviewId: string; sessionId: string }) =>
       toggleReviewHelpfulVote(reviewId, sessionId),
-    onMutate: async () => {
+    onMutate: async ({ reviewId }) => {
       await queryClient.cancelQueries({ queryKey: PUBLIC_REVIEWS_QUERY_KEY });
+
+      // Optimistically update all public reviews list queries in cache
+      queryClient.setQueriesData<PublicReviewsResponse>(
+        { queryKey: PUBLIC_REVIEWS_QUERY_KEY },
+        (old) => {
+          if (!old) return old;
+          const userVoted = new Set(old.userVotedIds || []);
+          const isCurrentlyVoted = userVoted.has(reviewId);
+
+          if (isCurrentlyVoted) {
+            userVoted.delete(reviewId);
+          } else {
+            userVoted.add(reviewId);
+          }
+
+          return {
+            ...old,
+            userVotedIds: Array.from(userVoted),
+            items: old.items.map((item) => {
+              if (item.id !== reviewId) return item;
+              const currentHelpful = Number(item.helpful_count || 0);
+              const nextHelpful = isCurrentlyVoted
+                ? Math.max(0, currentHelpful - 1)
+                : currentHelpful + 1;
+              return {
+                ...item,
+                helpful_count: nextHelpful,
+              };
+            }),
+          };
+        }
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PUBLIC_REVIEWS_QUERY_KEY });

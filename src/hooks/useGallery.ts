@@ -20,7 +20,7 @@ export function useGalleryImages() {
   return useQuery({
     queryKey: GALLERY_QUERY_KEY,
     queryFn: fetchGalleryItems,
-    staleTime: 60000,
+    staleTime: 15000,
   });
 }
 
@@ -51,6 +51,9 @@ export function useIncrementGalleryView() {
       if (context?.previousItems) {
         queryClient.setQueryData(GALLERY_QUERY_KEY, context.previousItems);
       }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: GALLERY_QUERY_KEY });
     },
   });
 }
