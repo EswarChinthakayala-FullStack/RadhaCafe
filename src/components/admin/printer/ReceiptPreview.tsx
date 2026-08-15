@@ -1,8 +1,5 @@
-import type { ReceiptTemplateConfig } from '../../../types';
+import type { ReceiptTemplateConfig, DividerStyleType } from '../../../types';
 import { formatReceiptFromTemplate } from '../../../lib/printer/receiptFormatter';
-import { formatCurrency } from '../../../lib/utils/formatCurrency';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { Coffee02Icon } from '@hugeicons/core-free-icons';
 
 interface ReceiptPreviewProps {
   order: any;
@@ -10,296 +7,421 @@ interface ReceiptPreviewProps {
   cafeSettings?: any;
 }
 
-export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptPreviewProps) {
-  if (!order) {
-    return null;
+const alignmentClass = (alignment?: 'left' | 'center' | 'right') => {
+  if (alignment === 'center') return 'text-center';
+  if (alignment === 'right') return 'text-right';
+  return 'text-left';
+};
+
+const emphasisClass = (emphasis?: 'normal' | 'bold' | 'double_size') => {
+  if (emphasis === 'double_size') return 'text-base sm:text-lg leading-tight font-black tracking-tight';
+  if (emphasis === 'bold') return 'font-black';
+  return 'font-normal';
+};
+
+const formatMoney = (value: number | undefined | null) => {
+  const num = Number(value || 0);
+  return `Rs. ${num.toFixed(2)}`;
+};
+
+/**
+ * Aesthetic thermal divider component that spans 100% width cleanly without wrapping glitches
+ */
+function ReceiptDivider({ style = 'dashed' }: { style?: DividerStyleType }) {
+  if (style === 'none') return null;
+
+  if (style === 'double') {
+    return (
+      <div aria-hidden="true" className="my-2 border-t-2 border-b border-black/40 h-1 w-full" />
+    );
   }
 
+  if (style === 'dotted') {
+    return (
+      <div aria-hidden="true" className="my-2 border-b border-dotted border-black/50 w-full" />
+    );
+  }
+
+  if (style === 'solid') {
+    return (
+      <div aria-hidden="true" className="my-2 border-b border-solid border-black/50 w-full" />
+    );
+  }
+
+  // Default dashed divider
+  return (
+    <div aria-hidden="true" className="my-2 border-b border-dashed border-black/45 w-full" />
+  );
+}
+
+/**
+ * Pixel-perfect, column-aligned, fully responsive DOM receipt slip preview.
+ * Immune to character-padding overflow and font-size clipping.
+ */
+export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptPreviewProps) {
+  if (!order) return null;
+
   const { data, config } = formatReceiptFromTemplate(order, templateConfig, cafeSettings);
+  const width = config.paperWidth >= 42 ? 48 : 32;
+  const isWide = width === 48;
+  const sections = config.sectionOrder || [
+    'header',
+    'orderInfo',
+    'customerInfo',
+    'items',
+    'summary',
+    'payment',
+    'footer',
+  ];
 
-  const paperCols = config.paperWidth || 32;
-  const isWide = paperCols >= 48;
-
-  const fontClass =
-    config.previewFont === 'Consolas'
-      ? 'font-mono'
-      : config.previewFont === 'Inter'
-      ? 'font-sans'
-      : 'font-mono';
-
-  const alignClass = (align?: 'left' | 'center' | 'right') => {
-    if (align === 'center') return 'text-center';
-    if (align === 'right') return 'text-right';
-    return 'text-left';
-  };
-
-  const dividerStyleClass =
-    config.dividerStyle === 'double'
-      ? 'border-b-2 border-double border-foreground/40'
-      : config.dividerStyle === 'solid'
-      ? 'border-b border-solid border-foreground/40'
-      : config.dividerStyle === 'dotted'
-      ? 'border-b border-dotted border-foreground/40'
-      : config.dividerStyle === 'none'
-      ? 'hidden'
-      : 'border-b border-dashed border-border/80';
-
-  const renderDivider = () => <div className={`my-2 ${dividerStyleClass}`} />;
-
-  const sections = config.sectionOrder || ['header', 'orderInfo', 'customerInfo', 'items', 'summary', 'payment', 'footer'];
+  const logoUrl = cafeSettings?.logo_url || (data as any)?.logoUrl || null;
 
   return (
-    <div className="flex justify-center w-full py-1 min-w-0 overflow-hidden">
-      <div
-        style={{
-          maxWidth: isWide ? '380px' : '300px',
-          width: '100%',
-        }}
-        className={`receipt-preview w-full max-w-full bg-white dark:bg-[#1e1e1e] text-[#111111] dark:text-[#f5f5f5] p-3.5 sm:p-5 pb-8 rounded-xl border border-neutral-300/90 dark:border-neutral-700/90 shadow-xl ${fontClass} text-xs leading-relaxed select-none space-y-2 relative transition-all duration-300 h-fit min-w-0`}
+    <div className="flex w-full min-w-0 justify-center py-2 px-1">
+      <article
+        aria-label={`${isWide ? '80' : '58'} mm thermal receipt slip preview`}
+        style={{ maxWidth: isWide ? '420px' : '320px' }}
+        className="receipt-preview relative h-fit w-full min-w-0 overflow-hidden border border-black/15 bg-[#fffef9] px-4 sm:px-5.5 pt-6 pb-9 font-mono text-[11px] sm:text-[11.5px] leading-[1.45] text-[#141414] shadow-[0_20px_50px_-20px_rgba(46,34,24,0.35),0_3px_12px_rgba(46,34,24,0.08)] select-text"
       >
-        {/* Paper Header Cut Indicator */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500/20 via-cinnamon/30 to-amber-500/20 rounded-t-xl" />
+        {/* Top Paper Perforation Border */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 h-1.5 border-b border-black/5 bg-[repeating-linear-gradient(90deg,transparent_0_6px,rgba(0,0,0,0.09)_6px_7px)]"
+        />
 
-        {sections.map((sectionKey, index) => {
-          if (sectionKey === 'header') {
-            return (
-              <div key={index} className={`space-y-0.5 ${alignClass(config.header.alignment)}`}>
-                {config.header.logoVisible && (
-                  <div className="flex justify-center my-1.5">
-                    <div className="w-10 h-10 rounded-full bg-cinnamon/10 text-cinnamon flex items-center justify-center border border-cinnamon/20 shadow-2xs">
-                      <HugeiconsIcon icon={Coffee02Icon} size={22} />
+        <div className="space-y-2.5 w-full min-w-0">
+          {sections.map((sectionKey, index) => {
+            // -------------------------------------------------------------
+            // SECTION: HEADER (Branding, Logo, Name, Address, Contact)
+            // -------------------------------------------------------------
+            if (sectionKey === 'header') {
+              return (
+                <section
+                  key={`${sectionKey}-${index}`}
+                  className={`space-y-0.5 w-full ${alignmentClass(config.header.alignment)}`}
+                >
+                  {/* Optional Brand Logo */}
+                  {config.header.logoVisible && logoUrl && (
+                    <div
+                      className={`mb-2 flex ${
+                        config.header.alignment === 'center'
+                          ? 'justify-center'
+                          : config.header.alignment === 'right'
+                          ? 'justify-end'
+                          : 'justify-start'
+                      }`}
+                    >
+                      <img
+                        src={logoUrl}
+                        alt="Cafe Logo"
+                        className="h-10 max-w-[120px] object-contain grayscale contrast-125"
+                      />
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {config.header.cafeNameVisible && config.header.cafeNameText && (
-                  <h3
-                    className={`font-bold text-sm tracking-tight uppercase ${
-                      config.header.emphasis === 'double_size'
-                        ? 'text-base font-extrabold text-cinnamon'
-                        : config.header.emphasis === 'bold'
-                        ? 'font-bold text-foreground'
-                        : 'font-normal text-foreground'
+                  {config.header.cafeNameVisible && config.header.cafeNameText && (
+                    <h3 className={`uppercase tracking-tight ${emphasisClass(config.header.emphasis)}`}>
+                      {config.header.cafeNameText}
+                    </h3>
+                  )}
+
+                  {config.header.taglineVisible && config.header.taglineText && (
+                    <p className="text-[10.5px] sm:text-[11px] text-black/80">{config.header.taglineText}</p>
+                  )}
+
+                  {config.header.addressVisible && config.header.addressText && (
+                    <p className="text-[10px] sm:text-[10.5px] text-black/80 whitespace-pre-line leading-tight pt-0.5">
+                      {config.header.addressText}
+                    </p>
+                  )}
+
+                  {config.header.phoneVisible && config.header.phoneText && (
+                    <p className="text-[10.5px]">Tel: {config.header.phoneText}</p>
+                  )}
+
+                  {config.header.emailVisible && config.header.emailText && (
+                    <p className="text-[10.5px]">Email: {config.header.emailText}</p>
+                  )}
+
+                  <ReceiptDivider style={config.dividerStyle} />
+                </section>
+              );
+            }
+
+            // -------------------------------------------------------------
+            // SECTION: ORDER INFO (Order #, Date, Cashier, Status)
+            // -------------------------------------------------------------
+            if (sectionKey === 'orderInfo') {
+              return (
+                <section
+                  key={`${sectionKey}-${index}`}
+                  className={`space-y-0.5 w-full ${alignmentClass(config.orderInfo.alignment)} ${emphasisClass(
+                    config.orderInfo.emphasis
+                  )}`}
+                >
+                  {config.orderInfo.orderNumberVisible && (
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-black/70">Order #:</span>
+                      <span className="font-bold">{data.orderNumber}</span>
+                    </div>
+                  )}
+
+                  {config.orderInfo.dateVisible && (
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-black/70">Date:</span>
+                      <span>{data.dateTime}</span>
+                    </div>
+                  )}
+
+                  {config.orderInfo.cashierVisible && data.cashierName && (
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-black/70">Cashier:</span>
+                      <span>{data.cashierName}</span>
+                    </div>
+                  )}
+
+                  {config.orderInfo.statusVisible && (
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-black/70">Status:</span>
+                      <span className="font-bold uppercase">{data.status}</span>
+                    </div>
+                  )}
+
+                  <ReceiptDivider style={config.dividerStyle} />
+                </section>
+              );
+            }
+
+            // -------------------------------------------------------------
+            // SECTION: CUSTOMER INFO
+            // -------------------------------------------------------------
+            if (sectionKey === 'customerInfo') {
+              const showCustomer =
+                config.customerInfo.customerNameVisible &&
+                data.customerName &&
+                data.customerName !== 'Walk-in Customer';
+              const showPhone = config.customerInfo.phoneVisible && data.customerPhone;
+              const showStatus = config.customerInfo.paymentStatusVisible && data.isPayLater;
+
+              if (!showCustomer && !showPhone && !showStatus) return null;
+
+              return (
+                <section
+                  key={`${sectionKey}-${index}`}
+                  className={`space-y-0.5 w-full ${alignmentClass(config.customerInfo.alignment)}`}
+                >
+                  {showCustomer && (
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-black/70">Customer:</span>
+                      <span className="font-semibold truncate">{data.customerName}</span>
+                    </div>
+                  )}
+
+                  {showPhone && (
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-black/70">Phone:</span>
+                      <span>{data.customerPhone}</span>
+                    </div>
+                  )}
+
+                  {showStatus && (
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-black/70">Account:</span>
+                      <span className="font-bold text-black">CREDIT CUSTOMER</span>
+                    </div>
+                  )}
+
+                  <ReceiptDivider style={config.dividerStyle} />
+                </section>
+              );
+            }
+
+            // -------------------------------------------------------------
+            // SECTION: ITEMS TABLE (Clean column grid alignment)
+            // -------------------------------------------------------------
+            if (sectionKey === 'items') {
+              const showUnitPrice = config.items.showUnitPrice;
+
+              return (
+                <section key={`${sectionKey}-${index}`} className="w-full space-y-1">
+                  {/* Table Column Headers */}
+                  {config.items.showHeaders && (
+                    <div className="flex items-baseline justify-between gap-1 pb-0.5 text-[10.5px] font-black uppercase text-black border-b border-black/30">
+                      <span className="flex-1 text-left">Item</span>
+                      <span className="w-8 text-center shrink-0">Qty</span>
+                      {showUnitPrice && isWide && (
+                        <span className="w-14 text-right shrink-0">Price</span>
+                      )}
+                      <span className="w-18 text-right shrink-0">Amount</span>
+                    </div>
+                  )}
+
+                  {config.items.dividerBefore && <ReceiptDivider style={config.dividerStyle} />}
+
+                  {/* Item Rows */}
+                  <div className="space-y-1.5 pt-0.5">
+                    {data.items.map((item, itemIdx) => (
+                      <div key={`item-${itemIdx}`} className="space-y-0.5">
+                        <div className="flex items-baseline justify-between gap-1">
+                          {/* Item Title & Optional inline unit price for compact 58mm */}
+                          <div className="flex-1 min-w-0 text-left pr-1">
+                            <span className="font-medium text-black leading-snug break-words">
+                              {item.name}
+                            </span>
+                            {showUnitPrice && !isWide && item.unitPrice > 0 && (
+                              <span className="text-[10px] text-black/60 block">
+                                @ Rs. {item.unitPrice.toFixed(0)}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Quantity */}
+                          <span className="w-8 text-center shrink-0 font-semibold text-black/80">
+                            x{item.quantity}
+                          </span>
+
+                          {/* Unit Price (80mm only) */}
+                          {showUnitPrice && isWide && (
+                            <span className="w-14 text-right shrink-0 text-black/75">
+                              Rs.{item.unitPrice.toFixed(0)}
+                            </span>
+                          )}
+
+                          {/* Total Line Amount */}
+                          <span className="w-18 text-right shrink-0 font-semibold text-black font-mono">
+                            Rs. {item.amount.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {config.items.dividerAfter && <ReceiptDivider style={config.dividerStyle} />}
+                </section>
+              );
+            }
+
+            // -------------------------------------------------------------
+            // SECTION: SUMMARY & TOTALS (Immune to clipping / misalignments)
+            // -------------------------------------------------------------
+            if (sectionKey === 'summary') {
+              return (
+                <section key={`${sectionKey}-${index}`} className="w-full space-y-1">
+                  {config.summary.dividerBeforeTotal && <ReceiptDivider style={config.dividerStyle} />}
+
+                  {/* Subtotal */}
+                  {config.summary.subtotalVisible && (
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-black/80">Subtotal</span>
+                      <span className="font-mono font-medium">{formatMoney(data.subtotal)}</span>
+                    </div>
+                  )}
+
+                  {/* Tax */}
+                  {config.summary.taxVisible && data.tax > 0 && (
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-black/80">GST Tax</span>
+                      <span className="font-mono font-medium">{formatMoney(data.tax)}</span>
+                    </div>
+                  )}
+
+                  {/* Discount */}
+                  {config.summary.discountVisible && data.discount > 0 && (
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-black/80">Discount</span>
+                      <span className="font-mono font-medium">-{formatMoney(data.discount)}</span>
+                    </div>
+                  )}
+
+                  {/* Grand Total — Always responsive, bold, perfectly spaced */}
+                  <div
+                    className={`flex items-baseline justify-between gap-2 border-t border-black/20 pt-1.5 mt-1 ${
+                      config.summary.doubleSizeTotal
+                        ? 'text-sm sm:text-[15px] font-black tracking-tight'
+                        : config.summary.grandTotalBold
+                        ? 'font-black text-xs sm:text-sm'
+                        : 'font-bold'
                     }`}
                   >
-                    {config.header.cafeNameText}
-                  </h3>
-                )}
-
-                {config.header.taglineVisible && config.header.taglineText && (
-                  <p className="text-[10px] text-muted-foreground font-medium italic">{config.header.taglineText}</p>
-                )}
-
-                {config.header.addressVisible && config.header.addressText && (
-                  <p className="text-[10px] text-muted-foreground leading-tight max-w-[260px] mx-auto">
-                    {config.header.addressText}
-                  </p>
-                )}
-
-                {config.header.phoneVisible && config.header.phoneText && (
-                  <p className="text-[10px] text-muted-foreground font-semibold">Tel: {config.header.phoneText}</p>
-                )}
-
-                {config.header.emailVisible && config.header.emailText && (
-                  <p className="text-[10px] text-muted-foreground">{config.header.emailText}</p>
-                )}
-
-                {renderDivider()}
-              </div>
-            );
-          }
-
-          if (sectionKey === 'orderInfo') {
-            return (
-              <div key={index} className={`text-[11px] space-y-0.5 text-muted-foreground ${alignClass(config.orderInfo.alignment)}`}>
-                {config.orderInfo.orderNumberVisible && (
-                  <div className="flex justify-between">
-                    <span>Order #:</span>
-                    <span className="font-bold text-foreground font-mono">{data.orderNumber}</span>
+                    <span className="uppercase">TOTAL</span>
+                    <span className="font-mono text-right">{formatMoney(data.total)}</span>
                   </div>
-                )}
-                {config.orderInfo.dateVisible && (
-                  <div className="flex justify-between">
-                    <span>Date:</span>
-                    <span className="font-semibold text-foreground">{data.dateTime}</span>
-                  </div>
-                )}
-                {config.orderInfo.cashierVisible && data.cashierName && (
-                  <div className="flex justify-between">
-                    <span>Cashier:</span>
-                    <span className="font-medium text-foreground">{data.cashierName}</span>
-                  </div>
-                )}
-                {config.orderInfo.statusVisible && (
-                  <div className="flex justify-between">
-                    <span>Status:</span>
-                    <span className="font-bold text-foreground">{data.status}</span>
-                  </div>
-                )}
+                </section>
+              );
+            }
 
-                {renderDivider()}
-              </div>
-            );
-          }
+            // -------------------------------------------------------------
+            // SECTION: PAYMENT DETAILS
+            // -------------------------------------------------------------
+            if (sectionKey === 'payment') {
+              return (
+                <section key={`${sectionKey}-${index}`} className="w-full space-y-1 pt-0.5">
+                  {config.payment.paymentMethodVisible && (
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-black/75">Payment</span>
+                      <span className="font-bold uppercase">{data.paymentMethod}</span>
+                    </div>
+                  )}
 
-          if (sectionKey === 'customerInfo') {
-            const hasCustomerInfo =
-              (config.customerInfo.customerNameVisible && data.customerName && data.customerName !== 'Walk-in Customer') ||
-              (config.customerInfo.phoneVisible && data.customerPhone) ||
-              (config.customerInfo.paymentStatusVisible && data.isPayLater);
+                  {config.payment.amountPaidVisible && (
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-black/75">Paid</span>
+                      <span className="font-mono font-medium">{formatMoney(data.paidAmount)}</span>
+                    </div>
+                  )}
 
-            if (!hasCustomerInfo) return null;
+                  {config.payment.amountDueVisible && data.dueAmount > 0 && (
+                    <div className="flex items-baseline justify-between gap-2 font-black text-black">
+                      <span>Amount Due</span>
+                      <span className="font-mono">{formatMoney(data.dueAmount)}</span>
+                    </div>
+                  )}
 
-            return (
-              <div key={index} className={`text-[11px] space-y-0.5 text-muted-foreground ${alignClass(config.customerInfo.alignment)}`}>
-                {config.customerInfo.customerNameVisible && data.customerName && (
-                  <div className="flex justify-between">
-                    <span>Customer:</span>
-                    <span className="font-bold text-foreground truncate max-w-[160px]">{data.customerName}</span>
-                  </div>
-                )}
-                {config.customerInfo.phoneVisible && data.customerPhone && (
-                  <div className="flex justify-between">
-                    <span>Phone:</span>
-                    <span className="font-semibold text-foreground">{data.customerPhone}</span>
-                  </div>
-                )}
-                {config.customerInfo.paymentStatusVisible && data.isPayLater && (
-                  <div className="flex justify-between text-amber-600 font-bold text-[10px]">
-                    <span>Account:</span>
-                    <span>CREDIT CUSTOMER</span>
-                  </div>
-                )}
+                  <ReceiptDivider style={config.dividerStyle} />
+                </section>
+              );
+            }
 
-                {renderDivider()}
-              </div>
-            );
-          }
-
-          if (sectionKey === 'items') {
-            return (
-              <div key={index} className="space-y-1 py-0.5">
-                {config.items.showHeaders && (
-                  <div className="grid grid-cols-12 gap-1 font-bold text-[10px] text-muted-foreground uppercase border-b border-dashed border-border/80 pb-1.5">
-                    <span className={isWide ? 'col-span-5' : 'col-span-6'}>Item</span>
-                    <span className="col-span-2 text-center">Qty</span>
-                    {isWide && config.items.showUnitPrice && <span className="col-span-2 text-right">Price</span>}
-                    <span className={isWide && config.items.showUnitPrice ? 'col-span-3 text-right' : 'col-span-4 text-right'}>
-                      Amount
-                    </span>
-                  </div>
-                )}
-
-                {config.items.dividerBefore && renderDivider()}
-
-                {data.items.map((item, i) => (
-                  <div key={i} className="grid grid-cols-12 gap-1 text-[11px] items-start leading-snug">
-                    <span className={`${isWide ? 'col-span-5' : 'col-span-6'} break-words font-medium text-foreground pr-1`}>
-                      {item.name}
-                    </span>
-                    <span className="col-span-2 text-center text-muted-foreground font-mono">x{item.quantity}</span>
-                    {isWide && config.items.showUnitPrice && (
-                      <span className="col-span-2 text-right text-muted-foreground font-mono text-[10px]">
-                        ₹{item.unitPrice}
-                      </span>
-                    )}
-                    <span
-                      className={`${
-                        isWide && config.items.showUnitPrice ? 'col-span-3' : 'col-span-4'
-                      } text-right font-bold font-mono text-foreground`}
-                    >
-                      {formatCurrency(item.amount)}
-                    </span>
-                  </div>
-                ))}
-
-                {config.items.dividerAfter && renderDivider()}
-              </div>
-            );
-          }
-
-          if (sectionKey === 'summary') {
-            return (
-              <div key={index} className="space-y-1 text-[11px]">
-                {config.summary.dividerBeforeTotal && renderDivider()}
-
-                {config.summary.subtotalVisible && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Subtotal</span>
-                    <span className="font-mono text-foreground">{formatCurrency(data.subtotal)}</span>
-                  </div>
-                )}
-
-                {config.summary.taxVisible && data.tax > 0 && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>GST Tax</span>
-                    <span className="font-mono text-foreground">{formatCurrency(data.tax)}</span>
-                  </div>
-                )}
-
-                {config.summary.discountVisible && data.discount > 0 && (
-                  <div className="flex justify-between text-cinnamon font-medium">
-                    <span>Discount</span>
-                    <span className="font-mono">-{formatCurrency(data.discount)}</span>
-                  </div>
-                )}
-
-                <div
-                  className={`flex justify-between pt-1.5 text-cinnamon ${
-                    config.summary.doubleSizeTotal ? 'text-base font-extrabold' : config.summary.grandTotalBold ? 'font-bold text-sm' : 'font-normal'
-                  }`}
+            // -------------------------------------------------------------
+            // SECTION: FOOTER (Thank You Note, Contact Note)
+            // -------------------------------------------------------------
+            if (sectionKey === 'footer') {
+              return (
+                <section
+                  key={`${sectionKey}-${index}`}
+                  className={`space-y-1 pt-1 w-full ${alignmentClass(config.footer.alignment)}`}
                 >
-                  <span>TOTAL</span>
-                  <span className="font-mono">{formatCurrency(data.total)}</span>
-                </div>
-              </div>
-            );
-          }
+                  {config.footer.thankYouMessage && (
+                    <p className={`text-[11.5px] ${emphasisClass(config.footer.emphasis)}`}>
+                      {config.footer.thankYouMessage}
+                    </p>
+                  )}
 
-          if (sectionKey === 'payment') {
-            return (
-              <div key={index} className="space-y-1 text-[11px] text-muted-foreground pt-1">
-                {config.payment.paymentMethodVisible && (
-                  <div className="flex justify-between text-[10px]">
-                    <span>Payment:</span>
-                    <span className="uppercase font-bold text-foreground">{data.paymentMethod}</span>
-                  </div>
-                )}
+                  {config.footer.secondaryMessage && (
+                    <p className="text-[10px] sm:text-[10.5px] text-black/80 leading-tight">
+                      {config.footer.secondaryMessage}
+                    </p>
+                  )}
 
-                {config.payment.amountPaidVisible && (
-                  <div className="flex justify-between text-[10px]">
-                    <span>Paid:</span>
-                    <span className="font-mono font-semibold text-foreground">{formatCurrency(data.paidAmount)}</span>
-                  </div>
-                )}
+                  {config.footer.contactMessage && (
+                    <p className="text-[10px] sm:text-[10.5px] text-black/80 font-medium">
+                      {config.footer.contactMessage}
+                    </p>
+                  )}
+                </section>
+              );
+            }
 
-                {config.payment.amountDueVisible && data.dueAmount > 0 && (
-                  <div className="flex justify-between text-[11px] font-bold text-amber-700 dark:text-amber-400 pt-0.5">
-                    <span>Amount Due:</span>
-                    <span className="font-mono">{formatCurrency(data.dueAmount)}</span>
-                  </div>
-                )}
+            return null;
+          })}
+        </div>
 
-                {renderDivider()}
-              </div>
-            );
-          }
-
-          if (sectionKey === 'footer') {
-            return (
-              <div key={index} className={`space-y-1 text-[10px] text-muted-foreground pt-2 ${alignClass(config.footer.alignment)}`}>
-                {config.footer.thankYouMessage && (
-                  <p className="font-bold text-foreground">{config.footer.thankYouMessage}</p>
-                )}
-                {config.footer.secondaryMessage && <p>{config.footer.secondaryMessage}</p>}
-                {config.footer.contactMessage && <p className="font-medium">{config.footer.contactMessage}</p>}
-              </div>
-            );
-          }
-
-          return null;
-        })}
-      </div>
+        {/* Bottom Paper Serrated Edge */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 bottom-0 h-2 bg-[linear-gradient(135deg,transparent_50%,#f4eee3_50%)_0_0/8px_8px_repeat-x]"
+        />
+      </article>
     </div>
   );
 }
