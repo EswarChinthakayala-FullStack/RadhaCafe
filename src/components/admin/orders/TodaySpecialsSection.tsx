@@ -70,11 +70,15 @@ export function TodaySpecialsSection({ specials }: TodaySpecialsSectionProps) {
                       <span className="text-[7.5px] font-bold uppercase tracking-wider">RadhaCafe</span>
                     </div>
                   )}
-                  <div className="absolute top-1 left-1 max-w-[85%]">
-                    <Badge className="bg-amber-600/95 backdrop-blur-xs text-white text-[7.5px] sm:text-[8.5px] px-1 py-0 font-bold shadow-xs flex items-center gap-0.5 rounded leading-tight">
-                      <HugeiconsIcon icon={StarIcon} size={8} />
-                      <span className="truncate">Special</span>
-                    </Badge>
+                  {/* System Priority Badges — Micro icon on mobile (never blocks image), full label on tablet/desktop */}
+                  <div className="absolute top-1 left-1 z-10 pointer-events-none">
+                    <div
+                      className="h-4 w-4 sm:h-auto sm:w-auto sm:px-1.5 sm:py-0.5 rounded-full sm:rounded bg-amber-600/95 text-white flex items-center justify-center gap-0.5 shadow-xs"
+                      title="Today's Special"
+                    >
+                      <HugeiconsIcon icon={StarIcon} size={8.5} className="shrink-0" />
+                      <span className="hidden sm:inline text-[8px] font-bold truncate leading-tight">Special</span>
+                    </div>
                   </div>
                   {qtyInCart > 0 && (
                     <div className="absolute top-1 right-1 bg-amber-600 text-white text-[9px] font-mono font-bold h-4.5 min-w-[18px] px-0.5 rounded-full flex items-center justify-center shadow-md border border-white/30">

@@ -5,7 +5,6 @@ import { useTodaysSpecials, useBestSellingItems } from '../../../hooks/useMenuRe
 import { useCart } from '../../../hooks/useCart';
 import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import { Input } from '../../ui/input';
-import { Badge } from '../../ui/badge';
 import { Loader } from '../../shared/Loader';
 import { LazyImage } from '../../ui/lazy-image';
 import { TodaySpecialsSection } from './TodaySpecialsSection';
@@ -397,19 +396,25 @@ export function OrderItemSelector() {
                       </div>
                     )}
 
-                    {/* System Priority Badges */}
-                    <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-10 max-w-[85%]">
+                    {/* System Priority Badges — Micro icon on mobile (never blocks image), full label on tablet/desktop */}
+                    <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-10 pointer-events-none">
                       {isTodaySpec && (
-                        <Badge className="bg-amber-600/95 backdrop-blur-xs text-white text-[7.5px] sm:text-[8.5px] px-1 py-0 font-bold shadow-xs flex items-center gap-0.5 rounded leading-tight">
-                          <HugeiconsIcon icon={StarIcon} size={8} />
-                          <span className="truncate">Special</span>
-                        </Badge>
+                        <div
+                          className="h-4 w-4 sm:h-auto sm:w-auto sm:px-1.5 sm:py-0.5 rounded-full sm:rounded bg-amber-600/95 text-white flex items-center justify-center gap-0.5 shadow-xs"
+                          title="Today's Special"
+                        >
+                          <HugeiconsIcon icon={StarIcon} size={8.5} className="shrink-0" />
+                          <span className="hidden sm:inline text-[8px] font-bold truncate leading-tight">Special</span>
+                        </div>
                       )}
                       {isBestSell && !isTodaySpec && (
-                        <Badge className="bg-cinnamon/95 backdrop-blur-xs text-white text-[7.5px] sm:text-[8.5px] px-1 py-0 font-bold shadow-xs flex items-center gap-0.5 rounded leading-tight">
-                          <HugeiconsIcon icon={FireIcon} size={8} />
-                          <span className="truncate">Popular</span>
-                        </Badge>
+                        <div
+                          className="h-4 w-4 sm:h-auto sm:w-auto sm:px-1.5 sm:py-0.5 rounded-full sm:rounded bg-cinnamon/95 text-white flex items-center justify-center gap-0.5 shadow-xs"
+                          title="Best Seller / Popular"
+                        >
+                          <HugeiconsIcon icon={FireIcon} size={8.5} className="shrink-0" />
+                          <span className="hidden sm:inline text-[8px] font-bold truncate leading-tight">Popular</span>
+                        </div>
                       )}
                     </div>
 
