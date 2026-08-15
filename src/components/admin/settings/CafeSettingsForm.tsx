@@ -25,7 +25,7 @@ export function CafeSettingsForm() {
       phone: '+91 98765 43210',
       email: 'contact@radhacafe.com',
       opening_hours: 'Mon - Sun: 8:00 AM - 10:00 PM',
-      tax_percentage: 5.0,
+      tax_percentage: 0.0,
       currency: 'INR',
     },
   });

@@ -88,7 +88,7 @@ export function OrderPaymentSettings({ onDirtyChange }: OrderPaymentSettingsProp
 
   const handleReset = () => {
     if (settings) {
-      const tax = settings.tax_percentage !== undefined ? Number(settings.tax_percentage) : 5.0;
+      const tax = settings.tax_percentage !== undefined ? Number(settings.tax_percentage) : 0.0;
       reset({ tax_percentage: tax });
     }
   };

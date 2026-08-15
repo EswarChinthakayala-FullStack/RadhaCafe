@@ -18,6 +18,7 @@ import { ReceiptPreviewToolbar, type DatasetMode } from '../../components/admin/
 import { ReceiptTemplateInfoPanel } from '../../components/admin/receipts/ReceiptTemplateInfoPanel';
 import { ReceiptPreviewMobileInfo } from '../../components/admin/receipts/ReceiptPreviewMobileInfo';
 import { ReceiptPreview } from '../../components/admin/printer/ReceiptPreview';
+import { printOrderViaBrowser } from '../../lib/printer/browserPrint';
 import { Button } from '../../components/ui/button';
 import { Skeleton } from '../../components/ui/skeleton';
 import {
@@ -278,7 +279,8 @@ export function ReceiptTemplatePreviewPage() {
 
   // Handler: Browser Print Fallback
   const handleBrowserPrint = () => {
-    window.print();
+    if (!template || !effectiveTemplateConfig) return;
+    printOrderViaBrowser(effectiveOrder, cafeSettings, effectiveTemplateConfig);
   };
 
   // Loading State Skeleton

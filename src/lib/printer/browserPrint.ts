@@ -1,23 +1,11 @@
 import type { Order } from '../../types';
 import { formatReceiptFromTemplate } from './receiptFormatter';
-import { toast } from '../../components/ui/toast';
 
 /**
- * Fallback browser printing handler generating a clean print window when Web Bluetooth is unavailable.
- * Returns true if the popup window opened successfully, or false if blocked by browser.
+ * Generates formatted HTML string for browser receipt printing
  */
-export function printOrderViaBrowser(order: Order, cafeSettings?: any, templateConfig?: any): boolean {
+function buildReceiptHtml(order: Order, cafeSettings?: any, templateConfig?: any): string {
   const { data: receipt } = formatReceiptFromTemplate(order, templateConfig, cafeSettings);
-
-  const printWindow = window.open('', '_blank', 'width=420,height=650');
-  if (!printWindow) {
-    toast.add({
-      title: 'Browser Popup Blocked',
-      description: 'Please allow popups in your browser settings to enable receipt printing fallback.',
-      type: 'warning',
-    });
-    return false;
-  }
 
   const itemsHtml = receipt.items
     .map(
@@ -30,44 +18,46 @@ export function printOrderViaBrowser(order: Order, cafeSettings?: any, templateC
     )
     .join('');
 
-  const htmlContent = `
+  return `
     <!DOCTYPE html>
     <html>
       <head>
         <title>Receipt - ${receipt.orderNumber}</title>
         <meta charset="utf-8" />
         <style>
-          @page { size: 80mm auto; margin: 0; }
+          @page { size: 80mm auto; margin: 4mm 0; }
+          * { box-sizing: border-box; }
           body {
-            font-family: monospace, Courier, sans-serif;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
             width: 290px;
             margin: 0 auto;
-            padding: 16px 10px;
-            font-size: 12px;
+            padding: 12px 8px;
+            font-size: 11.5px;
             color: #000;
             background: #fff;
-            line-height: 1.35;
+            line-height: 1.4;
           }
           .center { text-align: center; }
           .right { text-align: right; }
           .bold { font-weight: bold; }
-          .divider { border-top: 1px dashed #000; margin: 8px 0; }
+          .divider { border-top: 1px dashed #000; margin: 7px 0; }
           table { width: 100%; border-collapse: collapse; }
-          h2 { margin: 0 0 4px 0; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+          h2 { margin: 0 0 3px 0; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; }
           p { margin: 2px 0; }
         </style>
       </head>
       <body>
         <div class="center">
           <h2>${receipt.cafeName}</h2>
-          <p>${receipt.address}</p>
-          <p>Tel: ${receipt.phone}</p>
+          ${receipt.tagline ? `<p style="font-size: 10px;">${receipt.tagline}</p>` : ''}
+          ${receipt.address ? `<p style="font-size: 10px;">${receipt.address}</p>` : ''}
+          ${receipt.phone ? `<p style="font-size: 10px;">Tel: ${receipt.phone}</p>` : ''}
         </div>
         <div class="divider"></div>
         <div>
           <p><strong>Order #:</strong> ${receipt.orderNumber}</p>
           <p><strong>Date:</strong> ${receipt.dateTime}</p>
-          ${receipt.customerName ? `<p><strong>Guest:</strong> ${receipt.customerName}</p>` : ''}
+          ${receipt.customerName && receipt.customerName !== 'Walk-in Customer' ? `<p><strong>Guest:</strong> ${receipt.customerName}</p>` : ''}
         </div>
         <div class="divider"></div>
         <table>
@@ -89,37 +79,84 @@ export function printOrderViaBrowser(order: Order, cafeSettings?: any, templateC
           </tr>
           ${receipt.tax > 0 ? `<tr><td>GST Tax</td><td class="right">Rs. ${receipt.tax.toFixed(2)}</td></tr>` : ''}
           ${receipt.discount > 0 ? `<tr><td>Discount</td><td class="right">-Rs. ${receipt.discount.toFixed(2)}</td></tr>` : ''}
-          <tr class="bold" style="font-size: 14px;">
+          <tr class="bold" style="font-size: 13.5px;">
             <td style="padding-top: 6px;">TOTAL</td>
             <td class="right" style="padding-top: 6px;">Rs. ${receipt.total.toFixed(2)}</td>
           </tr>
           <tr>
-            <td style="padding-top: 2px;">Payment</td>
-            <td class="right" style="padding-top: 2px;">${(receipt.paymentMethod || 'cash').toUpperCase()}</td>
+            <td style="padding-top: 3px;">Payment</td>
+            <td class="right" style="padding-top: 3px;">${(receipt.paymentMethod || 'cash').toUpperCase()}</td>
           </tr>
         </table>
         <div class="divider"></div>
-        <div class="center" style="margin-top: 12px;">
-          <p>${receipt.footerMessage}</p>
+        <div class="center" style="margin-top: 10px; font-size: 10.5px;">
+          <p>${receipt.footerMessage || 'Thank You For Your Visit!'}</p>
         </div>
-        <script>
-          window.onload = function() {
-            setTimeout(function() {
-              window.print();
-            }, 150);
-          };
-        </script>
       </body>
     </html>
   `;
+}
 
+/**
+ * Safe, zero-crash browser receipt printing using a hidden iframe.
+ * Avoids opening `about:blank` popup windows and never triggers popup blocker alerts.
+ */
+export function printOrderViaBrowser(
+  order: Order,
+  cafeSettings?: any,
+  templateConfig?: any
+): boolean {
   try {
-    printWindow.document.open();
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+    const htmlContent = buildReceiptHtml(order, cafeSettings, templateConfig);
+
+    // Remove any previously existing print iframe
+    const existingIframe = document.getElementById('radhacafe-print-frame');
+    if (existingIframe) {
+      existingIframe.remove();
+    }
+
+    // Create a hidden iframe
+    const iframe = document.createElement('iframe');
+    iframe.id = 'radhacafe-print-frame';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.style.visibility = 'hidden';
+    iframe.style.zIndex = '-9999';
+
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (!doc) {
+      iframe.remove();
+      return false;
+    }
+
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    // Trigger print safely after content has rendered
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch (printErr) {
+        console.error('Error invoking iframe print:', printErr);
+      } finally {
+        // Automatically cleanup iframe from DOM after print dialog is closed
+        setTimeout(() => {
+          iframe.remove();
+        }, 1500);
+      }
+    }, 200);
+
     return true;
   } catch (err) {
-    console.error('Error writing to print window:', err);
+    console.error('Browser printing error:', err);
     return false;
   }
 }

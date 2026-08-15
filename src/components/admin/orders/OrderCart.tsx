@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCart } from '../../../hooks/useCart';
 import { useCreateOrder } from '../../../hooks/useOrders';
@@ -197,6 +197,18 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
     setIsPrinting(false);
   };
 
+  // Keyboard shortcut (Enter / Esc) to instantly dismiss order success dialog
+  useEffect(() => {
+    if (!showSuccessModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === 'Escape') {
+        handleCloseSuccessModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSuccessModal]);
+
   const triggerSmartReceiptPrint = async (targetOrder: any) => {
     if (!targetOrder) return;
     setIsPrinting(true);
@@ -225,15 +237,18 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
       }
     }
 
-    // 2. Fallback to Browser / PDF print (when Bluetooth printer is not connected or failed)
+    // 2. Fallback to Safe Hidden-iFrame Browser / PDF print
     setIsPrinting(false);
-    setPrintMessage('Opening browser print slip...');
+    setPrintMessage('Generating receipt print slip...');
     setTimeout(() => {
       const opened = printOrderViaBrowser(targetOrder, settings, activeTemplate?.template_config);
       if (opened) {
-        setPrintMessage('Receipt generated for browser / PDF printing.');
+        setPrintMessage('Receipt sent to printer. Starting next order...');
+        setTimeout(() => {
+          handleCloseSuccessModal();
+        }, 2200);
       } else {
-        setShowPopupBlockedAlert(true);
+        setPrintMessage('Receipt ready for preview.');
       }
     }, 150);
   };
