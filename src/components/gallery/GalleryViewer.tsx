@@ -248,16 +248,47 @@ export function GalleryViewer({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Web Share API
+  // Web Share API with rich image photo attachment
   const handleShare = async () => {
     if (!currentItem) return;
 
     const shareUrl = `${window.location.origin}${window.location.pathname}?photo=${currentItem.id}`;
-    const shareTitle = currentItem.title || 'RadhaCafe Gallery';
-    const shareText = currentItem.caption || 'Moments and atmosphere from RadhaCafe Tallur.';
+    const shareTitle = currentItem.title || 'RadhaCafe Moments';
+    const shareText = currentItem.caption
+      ? `${currentItem.caption} — RadhaCafe Tallur`
+      : 'Moments and atmosphere from RadhaCafe Tallur.';
+
+    let imageFile: File | null = null;
+
+    // Attempt to fetch and package image blob for rich photo sharing (WhatsApp, Instagram, Messages, etc.)
+    if (currentItem.image_url && typeof fetch !== 'undefined') {
+      try {
+        const res = await fetch(currentItem.image_url, { mode: 'cors' });
+        if (res.ok) {
+          const blob = await res.blob();
+          const mimeType = blob.type || 'image/jpeg';
+          const extension = mimeType.includes('png') ? 'png' : mimeType.includes('webp') ? 'webp' : 'jpg';
+          const safeFileName = `radhacafe-${(currentItem.title || 'photo').toLowerCase().replace(/[^a-z0-9]/g, '-')}.${extension}`;
+          imageFile = new File([blob], safeFileName, { type: mimeType });
+        }
+      } catch (e) {
+        console.warn('Could not fetch image blob for sharing, falling back to URL sharing:', e);
+      }
+    }
 
     if (navigator.share) {
       try {
+        // 1. If file sharing is supported by device browser, share with the actual photo attached!
+        if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+          await navigator.share({
+            files: [imageFile],
+            title: shareTitle,
+            text: `${shareTitle}\n${shareText}\n${shareUrl}`,
+          });
+          return;
+        }
+
+        // 2. Fallback to standard native Web Share with URL and text
         await navigator.share({
           title: shareTitle,
           text: shareText,
@@ -269,6 +300,7 @@ export function GalleryViewer({
       }
     }
 
+    // 3. Fallback: Copy link to clipboard
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopiedToast(true);
