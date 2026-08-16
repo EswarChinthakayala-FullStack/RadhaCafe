@@ -1,4 +1,4 @@
-import type { ReceiptTemplateConfig, DividerStyleType } from '../../../types';
+import type { ReceiptTemplateConfig, DividerStyleType, ReceiptWatermarkConfig } from '../../../types';
 import { formatReceiptFromTemplate } from '../../../lib/printer/receiptFormatter';
 
 interface ReceiptPreviewProps {
@@ -55,6 +55,85 @@ function ReceiptDivider({ style = 'dashed' }: { style?: DividerStyleType }) {
 }
 
 /**
+ * Renders an inline thermal watermark block approximating monochrome output
+ */
+function WatermarkPreviewBlock({
+  watermark,
+  logoUrl,
+  isRepeat = false,
+}: {
+  watermark?: ReceiptWatermarkConfig;
+  logoUrl?: string | null;
+  isRepeat?: boolean;
+}) {
+  if (!watermark?.enabled) return null;
+
+  const wmText = (watermark.text || 'RADHACAFE • OFFICIAL').trim();
+  const intensityOpacity =
+    watermark.intensity === 'light'
+      ? 'opacity-40'
+      : watermark.intensity === 'strong'
+      ? 'opacity-90'
+      : 'opacity-65';
+
+  if (watermark.type === 'authenticity_band' || isRepeat) {
+    return (
+      <div
+        aria-hidden="true"
+        className={`my-2 py-1 text-center font-mono text-[9.5px] font-bold tracking-widest text-black border-y border-dashed border-black/30 select-none ${intensityOpacity}`}
+      >
+        - - - {wmText} - - -
+      </div>
+    );
+  }
+
+  if (watermark.type === 'logo') {
+    return (
+      <div aria-hidden="true" className={`my-2 flex justify-center items-center py-1 select-none ${intensityOpacity}`}>
+        {logoUrl ? (
+          <img
+            src={logoUrl}
+            alt=""
+            className="h-7 max-w-[100px] object-contain grayscale contrast-150"
+          />
+        ) : (
+          <span className="text-[9.5px] font-bold tracking-wider uppercase border border-black/40 px-2 py-0.5 rounded">
+            {wmText}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  if (watermark.type === 'logo_text') {
+    return (
+      <div aria-hidden="true" className={`my-2 text-center py-1 select-none ${intensityOpacity}`}>
+        {logoUrl && (
+          <div className="flex justify-center mb-1">
+            <img
+              src={logoUrl}
+              alt=""
+              className="h-6 max-w-[90px] object-contain grayscale contrast-150"
+            />
+          </div>
+        )}
+        <p className="text-[10px] font-black tracking-wider uppercase">{wmText}</p>
+      </div>
+    );
+  }
+
+  // Text watermark
+  return (
+    <div
+      aria-hidden="true"
+      className={`my-2 text-center py-1 select-none ${intensityOpacity}`}
+    >
+      <p className="text-[10px] font-black tracking-wider uppercase">{wmText}</p>
+    </div>
+  );
+}
+
+/**
  * Pixel-perfect, column-aligned, fully responsive DOM receipt slip preview.
  * Immune to character-padding overflow and font-size clipping.
  */
@@ -82,7 +161,18 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
     showAuthenticityMark: true,
     authenticityText: 'Official RadhaCafe Receipt',
     showReceiptReference: true,
+    watermark: {
+      enabled: true,
+      type: 'logo_text',
+      position: 'center',
+      intensity: 'light',
+      repeat: false,
+      text: 'RADHACAFE • OFFICIAL',
+    },
   };
+
+  const wmPosition = branding.watermark?.position || 'center';
+  const shouldRepeatWm = branding.watermark?.repeat && data.items.length > 5;
 
   return (
     <div className="flex w-full min-w-0 justify-center py-2 px-1">
@@ -165,6 +255,14 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
                   )}
 
                   <ReceiptDivider style={config.dividerStyle} />
+
+                  {/* Upper Position Watermark */}
+                  {wmPosition === 'upper' && (
+                    <>
+                      <WatermarkPreviewBlock watermark={branding.watermark} logoUrl={logoUrl} />
+                      <ReceiptDivider style={config.dividerStyle} />
+                    </>
+                  )}
                 </section>
               );
             }
@@ -313,11 +411,28 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
                             Rs. {item.amount.toFixed(2)}
                           </span>
                         </div>
+
+                        {/* Controlled repeat watermark in long receipt items */}
+                        {shouldRepeatWm && itemIdx === Math.floor(data.items.length / 2) && (
+                          <WatermarkPreviewBlock
+                            watermark={branding.watermark}
+                            logoUrl={logoUrl}
+                            isRepeat={true}
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
 
                   {config.items.dividerAfter && <ReceiptDivider style={config.dividerStyle} />}
+
+                  {/* Center Position Watermark (Between Items and Totals) */}
+                  {wmPosition === 'center' && (
+                    <>
+                      <WatermarkPreviewBlock watermark={branding.watermark} logoUrl={logoUrl} />
+                      <ReceiptDivider style={config.dividerStyle} />
+                    </>
+                  )}
                 </section>
               );
             }
@@ -354,7 +469,7 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
                     </div>
                   )}
 
-                  {/* Grand Total — Always responsive, bold, perfectly spaced */}
+                  {/* Grand Total */}
                   <div
                     className={`flex items-baseline justify-between gap-2 border-t border-black/20 pt-1.5 mt-1 ${
                       config.summary.doubleSizeTotal
@@ -399,6 +514,14 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
                   )}
 
                   <ReceiptDivider style={config.dividerStyle} />
+
+                  {/* Lower Position Watermark */}
+                  {wmPosition === 'lower' && (
+                    <>
+                      <WatermarkPreviewBlock watermark={branding.watermark} logoUrl={logoUrl} />
+                      <ReceiptDivider style={config.dividerStyle} />
+                    </>
+                  )}
                 </section>
               );
             }

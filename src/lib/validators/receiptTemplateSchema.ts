@@ -1,5 +1,18 @@
 import { z } from 'zod';
 
+export const watermarkSchema = z.object({
+  enabled: z.boolean().default(true),
+  type: z.enum(['logo', 'text', 'logo_text', 'authenticity_band']).default('logo_text'),
+  position: z.enum(['upper', 'center', 'lower']).default('center'),
+  intensity: z.enum(['light', 'medium', 'strong']).default('light'),
+  repeat: z.boolean().default(false),
+  text: z
+    .string()
+    .max(80, 'Watermark text must be at most 80 characters')
+    .trim()
+    .default('RADHACAFE • OFFICIAL'),
+});
+
 export const receiptTemplateSchema = z.object({
   name: z.string().min(2, 'Template name must be at least 2 characters'),
   description: z.string().nullable().optional(),
@@ -24,6 +37,14 @@ export const receiptTemplateSchema = z.object({
           .trim()
           .default('Official RadhaCafe Receipt'),
         showReceiptReference: z.boolean().default(true),
+        watermark: watermarkSchema.default({
+          enabled: true,
+          type: 'logo_text',
+          position: 'center',
+          intensity: 'light',
+          repeat: false,
+          text: 'RADHACAFE • OFFICIAL',
+        }),
       })
       .default({
         showLogo: true,
@@ -32,6 +53,14 @@ export const receiptTemplateSchema = z.object({
         showAuthenticityMark: true,
         authenticityText: 'Official RadhaCafe Receipt',
         showReceiptReference: true,
+        watermark: {
+          enabled: true,
+          type: 'logo_text',
+          position: 'center',
+          intensity: 'light',
+          repeat: false,
+          text: 'RADHACAFE • OFFICIAL',
+        },
       }),
     header: z.object({
       logoVisible: z.boolean(),

@@ -15,7 +15,18 @@ import {
   Loading03Icon,
 } from "@hugeicons/core-free-icons"
 
-const toast = ToastPrimitive.createToastManager()
+const baseToastManager = ToastPrimitive.createToastManager()
+
+const toast = Object.assign(baseToastManager, {
+  success: (title: string, description?: string) =>
+    baseToastManager.add({ title, description, type: 'success' }),
+  error: (title: string, description?: string) =>
+    baseToastManager.add({ title, description, type: 'error' }),
+  info: (title: string, description?: string) =>
+    baseToastManager.add({ title, description, type: 'info' }),
+  warning: (title: string, description?: string) =>
+    baseToastManager.add({ title, description, type: 'warning' }),
+})
 
 function ToastProvider({ ...props }: ToastPrimitive.Provider.Props) {
   return <ToastPrimitive.Provider {...props} />

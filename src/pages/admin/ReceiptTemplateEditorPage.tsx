@@ -19,6 +19,10 @@ import type {
   DividerStyleType,
   SectionType,
   LogoAlignment,
+  WatermarkType,
+  WatermarkPosition,
+  WatermarkIntensity,
+  ReceiptWatermarkConfig,
   BrandingConfig,
 } from '../../types';
 import { ReceiptPreview } from '../../components/admin/printer/ReceiptPreview';
@@ -81,6 +85,8 @@ import {
   SparklesIcon,
   AlertCircleIcon,
   ArrowRight01Icon,
+  Shield01Icon,
+  InformationCircleIcon,
 } from '@hugeicons/core-free-icons';
 
 export function ReceiptTemplateEditorPage() {
@@ -90,7 +96,11 @@ export function ReceiptTemplateEditorPage() {
 
   const { data: templates, isLoading } = useReceiptTemplates();
   const { data: cafeSettings } = useCafeSettings();
-  const { isConnected: printerConnected, printCustomReceipt } = useBluetoothPrinter();
+  const {
+    isConnected: printerConnected,
+    printCustomReceipt,
+    printWatermarkCalibrationTest,
+  } = useBluetoothPrinter();
 
   const {
     createMutation,
@@ -434,6 +444,14 @@ export function ReceiptTemplateEditorPage() {
     showAuthenticityMark: true,
     authenticityText: 'Official RadhaCafe Receipt',
     showReceiptReference: true,
+    watermark: {
+      enabled: true,
+      type: 'logo_text',
+      position: 'center',
+      intensity: 'light',
+      repeat: false,
+      text: 'RADHACAFE • OFFICIAL',
+    },
   };
 
   const updateBranding = (updates: Partial<BrandingConfig>) => {
@@ -450,6 +468,57 @@ export function ReceiptTemplateEditorPage() {
         ...updates,
       },
     }));
+  };
+
+  const updateWatermark = (updates: Partial<ReceiptWatermarkConfig>) => {
+    updateDraft((prev) => ({
+      ...prev,
+      branding: {
+        showLogo: true,
+        logoAlignment: 'center',
+        logoSize: 'medium',
+        showAuthenticityMark: true,
+        authenticityText: 'Official RadhaCafe Receipt',
+        showReceiptReference: true,
+        ...(prev.branding || {}),
+        watermark: {
+          enabled: true,
+          type: 'logo_text',
+          position: 'center',
+          intensity: 'light',
+          repeat: false,
+          text: 'RADHACAFE • OFFICIAL',
+          ...(prev.branding?.watermark || {}),
+          ...updates,
+        },
+      },
+    }));
+  };
+
+  const handlePrintWatermarkTest = async () => {
+    if (!printerConnected) {
+      toast.error('Printer Offline', 'Connect a Bluetooth thermal printer to print calibration slips.');
+      return;
+    }
+
+    toast.info('Printing Watermark Calibration...', 'Sending Light, Medium, and Strong intensity test slips.');
+
+    try {
+      const success = await printWatermarkCalibrationTest(
+        draftConfig.paperWidth,
+        branding.watermark?.text || 'RADHACAFE • OFFICIAL',
+        cafeSettings?.cafe_name || 'RadhaCafe',
+        cafeSettings?.receipt_logo_url || cafeSettings?.logo_url
+      );
+
+      if (success) {
+        toast.success('Calibration Slip Printed', 'Check the 3 intensity levels on your thermal paper.');
+      } else {
+        toast.error('Print Failed', 'Unable to complete watermark test print.');
+      }
+    } catch {
+      toast.error('Print Error', 'Failed to communicate with printer.');
+    }
   };
 
   return (
@@ -589,6 +658,14 @@ export function ReceiptTemplateEditorPage() {
               >
                 <HugeiconsIcon icon={FloppyDiskIcon} size={13} />
                 <span>Save Without Leaving</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={handlePrintWatermarkTest}
+                className="cursor-pointer gap-2 font-medium"
+              >
+                <HugeiconsIcon icon={PrinterIcon} size={13} />
+                <span>Print Watermark Test</span>
               </DropdownMenuItem>
 
               {loadedTemplateId && loadedTemplateId !== 'new' && (
@@ -772,131 +849,318 @@ export function ReceiptTemplateEditorPage() {
                   </div>
                   <div>
                     <span className="font-bold text-sm font-heading text-foreground block">
-                      2. Branding & Authenticity
+                      2. Branding, Watermark & Authenticity
                     </span>
                     <span className="text-[11px] text-muted-foreground font-normal">
-                      RadhaCafe logo, alignment, authenticity seal, and order reference
+                      Official Cafe logo, anti-copy watermark, intensity calibration, and seal
                     </span>
                   </div>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="space-y-4 pt-1 pb-5 text-xs">
-                {/* 1. Show Logo Switch */}
-                <div className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-secondary/20">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="toggle-branding-logo" className="text-xs font-semibold text-foreground cursor-pointer block">
-                      Show RadhaCafe Logo
-                    </Label>
-                    <p className="text-[10px] text-muted-foreground">
-                      Display the official Cafe logo at the top of this receipt slip.
-                    </p>
+              <AccordionContent className="space-y-5 pt-1 pb-5 text-xs">
+                {/* ══════════ SUBSECTION A: HEADER BRAND LOGO ══════════ */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-foreground font-bold text-xs uppercase tracking-wider text-cinnamon">
+                    <HugeiconsIcon icon={SparklesIcon} size={14} />
+                    <span>Header Branding</span>
                   </div>
-                  <Switch
-                    id="toggle-branding-logo"
-                    checked={branding.showLogo}
-                    onCheckedChange={(val: boolean) => updateBranding({ showLogo: val })}
-                  />
-                </div>
 
-                {/* Logo Options (if showLogo is true) */}
-                {branding.showLogo && (
-                  <div className="space-y-3.5 pl-3 border-l-2 border-cinnamon/40 ml-1 py-1">
-                    {/* Logo Source Check */}
-                    {cafeSettings?.receipt_logo_url || cafeSettings?.logo_url ? (
-                      <div className="flex items-center gap-3 p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
-                        <img
-                          src={(cafeSettings.receipt_logo_url || cafeSettings.logo_url) ?? undefined}
-                          alt="Configured Cafe Logo"
-                          className="h-9 w-16 object-contain rounded bg-white p-1 border border-border/60 shrink-0"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
-                            Using Official Cafe Logo
-                          </p>
-                          <p className="text-[10px] text-muted-foreground truncate">
-                            Source: {cafeSettings.receipt_logo_url ? 'Thermal Receipt Logo' : 'Cafe Settings Logo'}
-                          </p>
+                  <div className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-secondary/20">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="toggle-branding-logo" className="text-xs font-semibold text-foreground cursor-pointer block">
+                        Show RadhaCafe Logo
+                      </Label>
+                      <p className="text-[10px] text-muted-foreground">
+                        Display the official Cafe logo at the top of this receipt slip.
+                      </p>
+                    </div>
+                    <Switch
+                      id="toggle-branding-logo"
+                      checked={branding.showLogo}
+                      onCheckedChange={(val: boolean) => updateBranding({ showLogo: val })}
+                    />
+                  </div>
+
+                  {branding.showLogo && (
+                    <div className="space-y-3.5 pl-3 border-l-2 border-cinnamon/40 ml-1 py-1">
+                      {cafeSettings?.receipt_logo_url || cafeSettings?.logo_url ? (
+                        <div className="flex items-center gap-3 p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                          <img
+                            src={(cafeSettings.receipt_logo_url || cafeSettings.logo_url) ?? undefined}
+                            alt="Configured Cafe Logo"
+                            className="h-9 w-16 object-contain rounded bg-white p-1 border border-border/60 shrink-0"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
+                              Using Official Cafe Logo
+                            </p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              Source: {cafeSettings.receipt_logo_url ? 'Thermal Receipt Logo' : 'Cafe Settings Logo'}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10">
+                          <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                            <HugeiconsIcon icon={AlertCircleIcon} size={16} className="shrink-0" />
+                            <span className="text-[11px] font-semibold">No Cafe logo configured yet.</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(ROUTES.ADMIN.SETTINGS)}
+                            className="h-7 text-[10px] font-bold rounded-lg border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+                          >
+                            <span>Add in Settings</span>
+                            <HugeiconsIcon icon={ArrowRight01Icon} size={11} className="ml-1" />
+                          </Button>
+                        </div>
+                      )}
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-foreground">Logo Position</Label>
+                        <div className="flex items-center bg-secondary/40 p-1 rounded-xl border border-border/70">
+                          {(['left', 'center', 'right'] as LogoAlignment[]).map((pos) => (
+                            <button
+                              key={pos}
+                              type="button"
+                              onClick={() => updateBranding({ logoAlignment: pos })}
+                              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg capitalize transition-all ${
+                                branding.logoAlignment === pos
+                                  ? 'bg-card text-foreground shadow-2xs font-bold ring-1 ring-border/50'
+                                  : 'text-muted-foreground hover:text-foreground'
+                              }`}
+                            >
+                              {pos}
+                            </button>
+                          ))}
                         </div>
                       </div>
-                    ) : (
-                      <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10">
-                        <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
-                          <HugeiconsIcon icon={AlertCircleIcon} size={16} className="shrink-0" />
-                          <span className="text-[11px] font-semibold">No Cafe logo configured yet.</span>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-foreground">Logo Size</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {(
+                            [
+                              { key: 'small', label: 'Small', desc: '35% width' },
+                              { key: 'medium', label: 'Medium', desc: '55% width' },
+                              { key: 'large', label: 'Large', desc: '75% width' },
+                            ] as const
+                          ).map((s) => (
+                            <button
+                              key={s.key}
+                              type="button"
+                              onClick={() => updateBranding({ logoSize: s.key })}
+                              className={`p-2 rounded-xl border text-center transition-all ${
+                                branding.logoSize === s.key
+                                  ? 'bg-cinnamon/10 border-cinnamon text-cinnamon font-bold ring-1 ring-cinnamon shadow-2xs'
+                                  : 'bg-card border-border/80 text-foreground hover:bg-secondary/60'
+                              }`}
+                            >
+                              <span className="block text-xs">{s.label}</span>
+                              <span className="text-[9px] text-muted-foreground font-normal">{s.desc}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ══════════ SUBSECTION B: RECEIPT WATERMARK & ANTI-COPY ══════════ */}
+                <div className="space-y-3 pt-2 border-t border-border/60">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-foreground font-bold text-xs uppercase tracking-wider text-cinnamon">
+                      <HugeiconsIcon icon={Shield01Icon} size={14} />
+                      <span>Receipt Watermark & Anti-Copy</span>
+                    </div>
+                    {branding.watermark?.enabled && (
+                      <Badge variant="outline" className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
+                        Protected
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-secondary/20">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="toggle-branding-watermark" className="text-xs font-semibold text-foreground cursor-pointer block">
+                        Show Receipt Watermark
+                      </Label>
+                      <p className="text-[10px] text-muted-foreground">
+                        Add RadhaCafe identification to help distinguish official receipts from unofficial copies.
+                      </p>
+                    </div>
+                    <Switch
+                      id="toggle-branding-watermark"
+                      checked={branding.watermark?.enabled ?? true}
+                      onCheckedChange={(val: boolean) => updateWatermark({ enabled: val })}
+                    />
+                  </div>
+
+                  {branding.watermark?.enabled && (
+                    <div className="space-y-3.5 pl-3 border-l-2 border-cinnamon/40 ml-1 py-1">
+                      {/* Watermark Style */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-foreground">Watermark Style</Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {(
+                            [
+                              { key: 'logo', label: 'Logo', desc: 'Thermal raster' },
+                              { key: 'text', label: 'Official Text', desc: 'Bold text mark' },
+                              { key: 'logo_text', label: 'Logo + Official', desc: 'Recommended' },
+                              { key: 'authenticity_band', label: 'Authenticity Band', desc: 'Separator style' },
+                            ] as const
+                          ).map((st) => (
+                            <button
+                              key={st.key}
+                              type="button"
+                              onClick={() => updateWatermark({ type: st.key as WatermarkType })}
+                              className={`p-2 rounded-xl border text-center transition-all ${
+                                branding.watermark?.type === st.key
+                                  ? 'bg-cinnamon/10 border-cinnamon text-cinnamon font-bold ring-1 ring-cinnamon shadow-2xs'
+                                  : 'bg-card border-border/80 text-foreground hover:bg-secondary/60'
+                              }`}
+                            >
+                              <span className="block text-xs">{st.label}</span>
+                              <span className="text-[9px] text-muted-foreground font-normal">{st.desc}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Watermark Position */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-foreground">Watermark Position</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {(
+                            [
+                              { key: 'upper', label: 'Upper', desc: 'Below header' },
+                              { key: 'center', label: 'Center', desc: 'Between items & totals' },
+                              { key: 'lower', label: 'Lower', desc: 'Above footer' },
+                            ] as const
+                          ).map((pos) => (
+                            <button
+                              key={pos.key}
+                              type="button"
+                              onClick={() => updateWatermark({ position: pos.key as WatermarkPosition })}
+                              className={`p-2 rounded-xl border text-center transition-all ${
+                                branding.watermark?.position === pos.key
+                                  ? 'bg-cinnamon/10 border-cinnamon text-cinnamon font-bold ring-1 ring-cinnamon shadow-2xs'
+                                  : 'bg-card border-border/80 text-foreground hover:bg-secondary/60'
+                              }`}
+                            >
+                              <span className="block text-xs">{pos.label}</span>
+                              <span className="text-[9px] text-muted-foreground font-normal">{pos.desc}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Watermark Intensity */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-semibold text-foreground">Watermark Intensity</Label>
+                          <span className="text-[10px] text-muted-foreground">Monochrome Dither</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {(
+                            [
+                              { key: 'light', label: 'Light', desc: 'Sparse 25% density' },
+                              { key: 'medium', label: 'Medium', desc: 'Balanced 50% contrast' },
+                              { key: 'strong', label: 'Strong', desc: 'Bold 75% contrast' },
+                            ] as const
+                          ).map((int) => (
+                            <button
+                              key={int.key}
+                              type="button"
+                              onClick={() => updateWatermark({ intensity: int.key as WatermarkIntensity })}
+                              className={`p-2 rounded-xl border text-center transition-all ${
+                                branding.watermark?.intensity === int.key
+                                  ? 'bg-cinnamon/10 border-cinnamon text-cinnamon font-bold ring-1 ring-cinnamon shadow-2xs'
+                                  : 'bg-card border-border/80 text-foreground hover:bg-secondary/60'
+                              }`}
+                            >
+                              <span className="block text-xs">{int.label}</span>
+                              <span className="text-[9px] text-muted-foreground font-normal">{int.desc}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Watermark Text Input (if style includes text) */}
+                      {branding.watermark?.type !== 'logo' && (
+                        <div className="space-y-1.5">
+                          <Label htmlFor="watermark-custom-text" className="text-xs font-semibold text-foreground">
+                            Watermark Brand Text
+                          </Label>
+                          <Input
+                            id="watermark-custom-text"
+                            value={branding.watermark?.text || 'RADHACAFE • OFFICIAL'}
+                            maxLength={80}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                              updateWatermark({ text: e.target.value })
+                            }
+                            placeholder="RADHACAFE • OFFICIAL"
+                            className="h-9 text-xs rounded-xl"
+                          />
+                        </div>
+                      )}
+
+                      {/* Repeat Watermark Switch */}
+                      <div className="flex items-center justify-between p-2.5 rounded-xl border border-border/60 bg-secondary/15">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="toggle-branding-watermark-repeat" className="text-xs font-semibold text-foreground cursor-pointer block">
+                            Repeat on Long Orders
+                          </Label>
+                          <p className="text-[10px] text-muted-foreground">
+                            Inserts a secondary subtle authenticity band for receipts with more than 5 items.
+                          </p>
+                        </div>
+                        <Switch
+                          id="toggle-branding-watermark-repeat"
+                          checked={branding.watermark?.repeat ?? false}
+                          onCheckedChange={(val: boolean) => updateWatermark({ repeat: val })}
+                        />
+                      </div>
+
+                      {/* Thermal Notice & Calibration Button */}
+                      <div className="p-3 rounded-xl border border-border/70 bg-secondary/30 space-y-2.5">
+                        <div className="flex items-start gap-2 text-muted-foreground text-[11px] leading-relaxed">
+                          <HugeiconsIcon icon={InformationCircleIcon} size={15} className="text-cinnamon shrink-0 mt-0.5" />
+                          <span>
+                            Thermal printers use monochrome dots. Output intensity is approximated through raster dithering.
+                          </span>
                         </div>
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => navigate(ROUTES.ADMIN.SETTINGS)}
-                          className="h-7 text-[10px] font-bold rounded-lg border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+                          onClick={handlePrintWatermarkTest}
+                          className="h-7.5 w-full text-xs font-semibold rounded-lg bg-card hover:bg-secondary border-border gap-1.5 shadow-2xs"
                         >
-                          <span>Add in Settings</span>
-                          <HugeiconsIcon icon={ArrowRight01Icon} size={11} className="ml-1" />
+                          <HugeiconsIcon icon={PrinterIcon} size={13} className="text-cinnamon" />
+                          <span>Print Calibration Test (3 Intensity Levels)</span>
                         </Button>
                       </div>
-                    )}
-
-                    {/* Logo Position / Alignment */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold text-foreground">Logo Position</Label>
-                      <div className="flex items-center bg-secondary/40 p-1 rounded-xl border border-border/70">
-                        {(['left', 'center', 'right'] as LogoAlignment[]).map((pos) => (
-                          <button
-                            key={pos}
-                            type="button"
-                            onClick={() => updateBranding({ logoAlignment: pos })}
-                            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg capitalize transition-all ${
-                              branding.logoAlignment === pos
-                                ? 'bg-card text-foreground shadow-2xs font-bold ring-1 ring-border/50'
-                                : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                          >
-                            {pos}
-                          </button>
-                        ))}
-                      </div>
                     </div>
+                  )}
+                </div>
 
-                    {/* Logo Size */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold text-foreground">Logo Size</Label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {(
-                          [
-                            { key: 'small', label: 'Small', desc: '35% width' },
-                            { key: 'medium', label: 'Medium', desc: '55% width' },
-                            { key: 'large', label: 'Large', desc: '75% width' },
-                          ] as const
-                        ).map((s) => (
-                          <button
-                            key={s.key}
-                            type="button"
-                            onClick={() => updateBranding({ logoSize: s.key })}
-                            className={`p-2 rounded-xl border text-center transition-all ${
-                              branding.logoSize === s.key
-                                ? 'bg-cinnamon/10 border-cinnamon text-cinnamon font-bold ring-1 ring-cinnamon shadow-2xs'
-                                : 'bg-card border-border/80 text-foreground hover:bg-secondary/60'
-                            }`}
-                          >
-                            <span className="block text-xs">{s.label}</span>
-                            <span className="text-[9px] text-muted-foreground font-normal">{s.desc}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                {/* ══════════ SUBSECTION C: AUTHENTICITY SEAL & REFERENCE ══════════ */}
+                <div className="space-y-3 pt-2 border-t border-border/60">
+                  <div className="flex items-center gap-2 text-foreground font-bold text-xs uppercase tracking-wider text-cinnamon">
+                    <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} />
+                    <span>Authenticity Mark & Verification</span>
                   </div>
-                )}
 
-                {/* 2. Official Receipt Authenticity Mark */}
-                <div className="space-y-2 pt-1">
                   <div className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-secondary/20">
                     <div className="space-y-0.5">
                       <Label htmlFor="toggle-branding-mark" className="text-xs font-semibold text-foreground cursor-pointer block">
                         Official Receipt Mark
                       </Label>
                       <p className="text-[10px] text-muted-foreground">
-                        Add an official RadhaCafe identifier to help distinguish genuine receipts.
+                        Add an official RadhaCafe identifier to certify genuine receipts.
                       </p>
                     </div>
                     <Switch
@@ -921,28 +1185,32 @@ export function ReceiptTemplateEditorPage() {
                         placeholder="Official RadhaCafe Receipt"
                         className="h-9 text-xs rounded-xl"
                       />
-                      <p className="text-[10px] text-muted-foreground">
-                        Printed beneath the Cafe brand heading to certify transaction authenticity.
-                      </p>
                     </div>
                   )}
-                </div>
 
-                {/* 3. Show Receipt Reference Switch */}
-                <div className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-secondary/20">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="toggle-branding-ref" className="text-xs font-semibold text-foreground cursor-pointer block">
-                      Show Receipt Reference
-                    </Label>
-                    <p className="text-[10px] text-muted-foreground">
-                      Include the unique order verification reference on the receipt slip.
-                    </p>
+                  <div className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-secondary/20">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="toggle-branding-ref" className="text-xs font-semibold text-foreground cursor-pointer block">
+                        Show Receipt Reference
+                      </Label>
+                      <p className="text-[10px] text-muted-foreground">
+                        Include the unique order verification reference on the receipt slip.
+                      </p>
+                    </div>
+                    <Switch
+                      id="toggle-branding-ref"
+                      checked={branding.showReceiptReference}
+                      onCheckedChange={(val: boolean) => updateBranding({ showReceiptReference: val })}
+                    />
                   </div>
-                  <Switch
-                    id="toggle-branding-ref"
-                    checked={branding.showReceiptReference}
-                    onCheckedChange={(val: boolean) => updateBranding({ showReceiptReference: val })}
-                  />
+
+                  {/* Anti-Copy Protection Info Banner */}
+                  <div className="flex items-start gap-2 p-2.5 rounded-xl border border-primary/20 bg-primary/5 text-muted-foreground text-[10.5px] leading-relaxed">
+                    <HugeiconsIcon icon={Shield01Icon} size={14} className="text-primary shrink-0 mt-0.5" />
+                    <span>
+                      Watermarks and unique order references together make unofficial copies easily identifiable for cafe staff.
+                    </span>
+                  </div>
                 </div>
               </AccordionContent>
             </AccordionItem>

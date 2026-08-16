@@ -15,6 +15,28 @@ export type PreviewFontType = 'JetBrains Mono' | 'Consolas' | 'Inter' | 'System 
 export type LogoAlignment = 'left' | 'center' | 'right';
 export type LogoSize = 'small' | 'medium' | 'large';
 
+export type WatermarkType = 'logo' | 'text' | 'logo_text' | 'authenticity_band';
+export type WatermarkPosition = 'upper' | 'center' | 'lower';
+export type WatermarkIntensity = 'light' | 'medium' | 'strong';
+
+export interface ReceiptWatermarkConfig {
+  enabled: boolean;
+  type: WatermarkType;
+  position: WatermarkPosition;
+  intensity: WatermarkIntensity;
+  repeat: boolean;
+  text: string;
+}
+
+export const DEFAULT_WATERMARK_CONFIG: ReceiptWatermarkConfig = {
+  enabled: true,
+  type: 'logo_text',
+  position: 'center',
+  intensity: 'light',
+  repeat: false,
+  text: 'RADHACAFE • OFFICIAL',
+};
+
 export interface BrandingConfig {
   showLogo: boolean;
   logoAlignment: LogoAlignment;
@@ -22,6 +44,7 @@ export interface BrandingConfig {
   showAuthenticityMark: boolean;
   authenticityText: string;
   showReceiptReference: boolean;
+  watermark?: ReceiptWatermarkConfig;
 }
 
 export const DEFAULT_BRANDING_CONFIG: BrandingConfig = {
@@ -31,6 +54,7 @@ export const DEFAULT_BRANDING_CONFIG: BrandingConfig = {
   showAuthenticityMark: true,
   authenticityText: 'Official RadhaCafe Receipt',
   showReceiptReference: true,
+  watermark: DEFAULT_WATERMARK_CONFIG,
 };
 
 export interface HeaderConfig {

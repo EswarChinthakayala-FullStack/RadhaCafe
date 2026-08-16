@@ -1,14 +1,27 @@
 {
-  "generatedAt": "2026-08-16T22:12:26.788Z",
-  "latestCommit": "8c4ed7c",
-  "totalEntries": 120,
+  "generatedAt": "2026-08-16T22:25:43.834Z",
+  "latestCommit": "c84a036",
+  "totalEntries": 121,
   "releases": [
     {
       "id": "rel-2026-08-17",
       "title": "17 Aug 2026",
-      "date": "2026-08-17T03:25:09+05:30",
+      "date": "2026-08-17T03:45:27+05:30",
       "isLatest": true,
       "entries": [
+        {
+          "id": "c84a036",
+          "title": "Add Logo, Authenticity Branding, and Thermal Raster Engine",
+          "description": "Added logo, Authenticity Branding, and Thermal Raster Engine to provide enhanced capabilities and visibility across Receipts.",
+          "category": "new",
+          "area": "Receipts",
+          "date": "17 Aug 2026",
+          "commitHash": "c84a0363d14aef67248e44895aeb3e760fecfb6d",
+          "shortHash": "c84a036",
+          "isBreaking": false,
+          "rawType": "feat",
+          "rawScope": "receipts"
+        },
         {
           "id": "8c4ed7c",
           "title": "Harmonize Search Input and Dropdown Control Heights to H-9",

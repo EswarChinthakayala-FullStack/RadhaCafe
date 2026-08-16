@@ -204,6 +204,7 @@ export interface TemplateReceiptPrintOptions {
   supportsCut?: boolean;
   supportsImages?: boolean;
   rasterLogoBuffer?: Uint8Array | null;
+  watermarkRasterBuffer?: Uint8Array | null;
 }
 
 /**
@@ -269,11 +270,56 @@ export function encodeTemplateReceiptToEscPos(
 
   const width = config.paperWidth || 32;
 
+  // Watermark renderer helper
+  const renderWatermarkBlock = (isRepeat = false) => {
+    const wm = config.branding?.watermark;
+    if (!wm?.enabled) return;
+
+    const wmText = (wm.text || 'RADHACAFE • OFFICIAL').trim();
+
+    if (wm.type === 'authenticity_band' || isRepeat) {
+      applyAlignment('center');
+      addText(`- - - ${wmText} - - -\n`);
+      resetEmphasis();
+    } else if (wm.type === 'logo') {
+      if (
+        options.watermarkRasterBuffer &&
+        options.watermarkRasterBuffer.length > 0 &&
+        options.supportsImages !== false
+      ) {
+        addBytes(options.watermarkRasterBuffer);
+      } else {
+        applyAlignment('center');
+        addText(`- - - ${wmText} - - -\n`);
+        resetEmphasis();
+      }
+    } else if (wm.type === 'logo_text') {
+      if (
+        options.watermarkRasterBuffer &&
+        options.watermarkRasterBuffer.length > 0 &&
+        options.supportsImages !== false
+      ) {
+        addBytes(options.watermarkRasterBuffer);
+      }
+      applyAlignment('center');
+      addBytes(ESC_POS_COMMANDS.TEXT_BOLD_ON);
+      addText(`${wmText}\n`);
+      resetEmphasis();
+    } else if (wm.type === 'text') {
+      applyAlignment('center');
+      addBytes(ESC_POS_COMMANDS.TEXT_BOLD_ON);
+      addText(`${wmText}\n`);
+      resetEmphasis();
+    }
+  };
+
   // 1. Initialize Printer
   addBytes(ESC_POS_COMMANDS.INIT);
 
   // Render Sections based on configured sectionOrder
   const sections = config.sectionOrder || ['header', 'orderInfo', 'customerInfo', 'items', 'summary', 'payment', 'footer'];
+  const wmPosition = config.branding?.watermark?.position || 'center';
+  const shouldRepeatWm = config.branding?.watermark?.repeat && data.items.length > 5;
 
   sections.forEach((sec: string) => {
     if (sec === 'header') {
@@ -316,6 +362,11 @@ export function encodeTemplateReceiptToEscPos(
         addText(`Email: ${config.header.emailText}\n`);
       }
       if (dividerLine) addText(`${dividerLine}\n`);
+
+      if (wmPosition === 'upper') {
+        renderWatermarkBlock();
+        if (dividerLine) addText(`${dividerLine}\n`);
+      }
     } else if (sec === 'orderInfo') {
       applyAlignment(config.orderInfo.alignment);
       applyEmphasis(config.orderInfo.emphasis);
@@ -369,7 +420,7 @@ export function encodeTemplateReceiptToEscPos(
         addText(`${dividerLine}\n`);
       }
 
-      data.items.forEach((item: NormalizedReceiptItem) => {
+      data.items.forEach((item: NormalizedReceiptItem, idx: number) => {
         const rowLines = formatItemRow(
           item.name,
           item.quantity,
@@ -379,10 +430,23 @@ export function encodeTemplateReceiptToEscPos(
           width
         );
         rowLines.forEach((l: string) => addText(`${l}\n`));
+
+        // Insert controlled repeat watermark inside long lists if enabled
+        if (shouldRepeatWm && idx === Math.floor(data.items.length / 2)) {
+          if (dividerLine) addText(`${dividerLine}\n`);
+          renderWatermarkBlock(true);
+          if (dividerLine) addText(`${dividerLine}\n`);
+        }
       });
 
       if (config.items.dividerAfter && dividerLine) {
         addText(`${dividerLine}\n`);
+      }
+
+      // Center watermark positioned directly between items and totals
+      if (wmPosition === 'center') {
+        renderWatermarkBlock();
+        if (dividerLine) addText(`${dividerLine}\n`);
       }
     } else if (sec === 'summary') {
       applyAlignment('left');
@@ -422,6 +486,11 @@ export function encodeTemplateReceiptToEscPos(
       }
 
       if (dividerLine) addText(`${dividerLine}\n`);
+
+      if (wmPosition === 'lower') {
+        renderWatermarkBlock();
+        if (dividerLine) addText(`${dividerLine}\n`);
+      }
     } else if (sec === 'footer') {
       applyAlignment(config.footer.alignment);
       applyEmphasis(config.footer.emphasis);
@@ -456,6 +525,87 @@ export function encodeTemplateReceiptToEscPos(
       }
     }
   }
+
+  return new Uint8Array(buffer);
+}
+
+/**
+ * Encodes a Calibration Test Slip containing Light, Medium, and Strong intensity watermark levels
+ */
+export function encodeWatermarkTestToEscPos(
+  paperWidth = 32,
+  cafeName = 'RadhaCafe',
+  options?: {
+    lightRaster?: Uint8Array | null;
+    mediumRaster?: Uint8Array | null;
+    strongRaster?: Uint8Array | null;
+    watermarkText?: string;
+  }
+): Uint8Array {
+  const encoder = new TextEncoder();
+  const buffer: number[] = [];
+
+  const addBytes = (bytes: readonly number[] | Uint8Array | number[]) => {
+    if (bytes instanceof Uint8Array) {
+      buffer.push(...Array.from(bytes));
+    } else {
+      buffer.push(...bytes);
+    }
+  };
+
+  const addText = (str: string) => {
+    buffer.push(...Array.from(encoder.encode(str)));
+  };
+
+  const divider = '-'.repeat(paperWidth) + '\n';
+  const textLabel = options?.watermarkText || 'RADHACAFE • OFFICIAL';
+
+  // 1. Initialize
+  addBytes(ESC_POS_COMMANDS.INIT);
+  addBytes(ESC_POS_COMMANDS.ALIGN_CENTER);
+  addBytes(ESC_POS_COMMANDS.TEXT_BOLD_ON);
+  addBytes(ESC_POS_COMMANDS.TEXT_LARGE);
+  addText(`${cafeName}\n`);
+  addBytes(ESC_POS_COMMANDS.TEXT_NORMAL);
+  addBytes(ESC_POS_COMMANDS.TEXT_BOLD_OFF);
+  addText('WATERMARK INTENSITY TEST\n');
+  addText(divider);
+
+  // [1] LIGHT LEVEL
+  addBytes(ESC_POS_COMMANDS.ALIGN_CENTER);
+  addText('[1] LIGHT INTENSITY (Recommended)\n');
+  if (options?.lightRaster && options.lightRaster.length > 0) {
+    addBytes(options.lightRaster);
+  }
+  addText(`- - - ${textLabel} - - -\n`);
+  addText(divider);
+
+  // [2] MEDIUM LEVEL
+  addBytes(ESC_POS_COMMANDS.ALIGN_CENTER);
+  addText('[2] MEDIUM INTENSITY\n');
+  if (options?.mediumRaster && options.mediumRaster.length > 0) {
+    addBytes(options.mediumRaster);
+  }
+  addBytes(ESC_POS_COMMANDS.TEXT_BOLD_ON);
+  addText(`${textLabel}\n`);
+  addBytes(ESC_POS_COMMANDS.TEXT_BOLD_OFF);
+  addText(divider);
+
+  // [3] STRONG LEVEL
+  addBytes(ESC_POS_COMMANDS.ALIGN_CENTER);
+  addText('[3] STRONG INTENSITY\n');
+  if (options?.strongRaster && options.strongRaster.length > 0) {
+    addBytes(options.strongRaster);
+  }
+  addBytes(ESC_POS_COMMANDS.TEXT_BOLD_ON);
+  addText(`### ${textLabel} ###\n`);
+  addBytes(ESC_POS_COMMANDS.TEXT_BOLD_OFF);
+  addText(divider);
+
+  addBytes(ESC_POS_COMMANDS.ALIGN_CENTER);
+  addText('Select the clearest level that\npreserves text readability.\n');
+  addBytes(ESC_POS_COMMANDS.FEED_PAPER_3_LINES);
+  addBytes(ESC_POS_COMMANDS.CUT_PAPER);
 
   return new Uint8Array(buffer);
 }

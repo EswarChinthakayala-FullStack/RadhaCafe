@@ -16,6 +16,14 @@ export const CLASSIC_PRESET_CONFIG: ReceiptTemplateConfig = {
     showAuthenticityMark: true,
     authenticityText: 'Official RadhaCafe Receipt',
     showReceiptReference: true,
+    watermark: {
+      enabled: true,
+      type: 'logo_text',
+      position: 'center',
+      intensity: 'light',
+      repeat: false,
+      text: 'RADHACAFE • OFFICIAL',
+    },
   },
   header: {
     logoVisible: true,
@@ -94,6 +102,14 @@ export const MODERN_PRESET_CONFIG: ReceiptTemplateConfig = {
     showAuthenticityMark: true,
     authenticityText: 'Official RadhaCafe Receipt',
     showReceiptReference: true,
+    watermark: {
+      enabled: true,
+      type: 'authenticity_band',
+      position: 'center',
+      intensity: 'medium',
+      repeat: false,
+      text: 'RADHACAFE • OFFICIAL RECEIPT',
+    },
   },
   header: {
     logoVisible: true,
@@ -172,6 +188,14 @@ export const COMPACT_PRESET_CONFIG: ReceiptTemplateConfig = {
     showAuthenticityMark: true,
     authenticityText: 'Official RadhaCafe Receipt',
     showReceiptReference: true,
+    watermark: {
+      enabled: true,
+      type: 'authenticity_band',
+      position: 'lower',
+      intensity: 'light',
+      repeat: false,
+      text: 'RADHACAFE • OFFICIAL',
+    },
   },
   header: {
     logoVisible: false,
@@ -250,6 +274,14 @@ export const DETAILED_PRESET_CONFIG: ReceiptTemplateConfig = {
     showAuthenticityMark: true,
     authenticityText: 'Official RadhaCafe Receipt',
     showReceiptReference: true,
+    watermark: {
+      enabled: true,
+      type: 'logo_text',
+      position: 'center',
+      intensity: 'medium',
+      repeat: true,
+      text: 'RADHACAFE • AUTHENTIC TRANSACTION',
+    },
   },
   header: {
     logoVisible: true,

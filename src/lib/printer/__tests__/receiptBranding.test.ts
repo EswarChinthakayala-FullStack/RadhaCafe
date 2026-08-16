@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { formatReceiptFromTemplate } from '../receiptFormatter';
-import { encodeTemplateReceiptToEscPos } from '../escpos';
+import { encodeTemplateReceiptToEscPos, encodeWatermarkTestToEscPos } from '../escpos';
 import { calculateTargetWidth } from '../rasterLogo';
 import { receiptTemplateSchema } from '../../validators/receiptTemplateSchema';
 import { CLASSIC_PRESET_CONFIG, MODERN_PRESET_CONFIG } from '../presetTemplates';
 
-describe('Receipt Template Branding & Authenticity Engine', () => {
+describe('Receipt Template Branding & Watermark Engine', () => {
   const sampleOrder = {
     id: 'ord-branding-test-12345',
     order_number: 'RC-101',
@@ -31,7 +31,7 @@ describe('Receipt Template Branding & Authenticity Engine', () => {
     logo_url: 'https://example.com/logo.png',
   };
 
-  it('correctly normalizes legacy templates without branding configuration', () => {
+  it('correctly normalizes legacy templates without branding and watermark configuration', () => {
     const legacyConfig: any = {
       paperWidth: 32,
       dividerStyle: 'dashed',
@@ -56,10 +56,16 @@ describe('Receipt Template Branding & Authenticity Engine', () => {
     expect(config.branding?.showAuthenticityMark).toBe(true);
     expect(config.branding?.authenticityText).toBe('Official RadhaCafe Receipt');
     expect(config.branding?.showReceiptReference).toBe(true);
+    expect(config.branding?.watermark).toBeDefined();
+    expect(config.branding?.watermark?.enabled).toBe(true);
+    expect(config.branding?.watermark?.type).toBe('logo_text');
+    expect(config.branding?.watermark?.position).toBe('center');
+    expect(config.branding?.watermark?.intensity).toBe('light');
+    expect(config.branding?.watermark?.text).toBe('RADHACAFE • OFFICIAL');
     expect(data.logoUrl).toBe('https://example.com/logo.png');
   });
 
-  it('correctly formats ESC/POS bytes containing authenticity mark and order reference', () => {
+  it('correctly formats ESC/POS bytes containing authenticity mark, order ref, and watermark', () => {
     const customConfig = {
       ...MODERN_PRESET_CONFIG,
       branding: {
@@ -69,6 +75,14 @@ describe('Receipt Template Branding & Authenticity Engine', () => {
         showAuthenticityMark: true,
         authenticityText: 'AUTHENTIC RADHACAFE RECEIPT',
         showReceiptReference: true,
+        watermark: {
+          enabled: true,
+          type: 'authenticity_band' as const,
+          position: 'center' as const,
+          intensity: 'medium' as const,
+          repeat: false,
+          text: 'RADHACAFE • VERIFIED TRANSACTION',
+        },
       },
     };
 
@@ -80,6 +94,20 @@ describe('Receipt Template Branding & Authenticity Engine', () => {
     const decoded = new TextDecoder().decode(bytes);
     expect(decoded).toContain('AUTHENTIC RADHACAFE RECEIPT');
     expect(decoded).toContain('Order Ref: RC-101');
+    expect(decoded).toContain('- - - RADHACAFE • VERIFIED TRANSACTION - - -');
+  });
+
+  it('correctly generates Watermark Calibration Test Sheet', () => {
+    const testBytes = encodeWatermarkTestToEscPos(32, 'RadhaCafe', {
+      watermarkText: 'RADHACAFE • OFFICIAL',
+    });
+
+    const decoded = new TextDecoder().decode(testBytes);
+    expect(decoded).toContain('WATERMARK INTENSITY TEST');
+    expect(decoded).toContain('[1] LIGHT INTENSITY');
+    expect(decoded).toContain('[2] MEDIUM INTENSITY');
+    expect(decoded).toContain('[3] STRONG INTENSITY');
+    expect(decoded).toContain('Select the clearest level');
   });
 
   it('correctly computes raster target dot widths for 58mm and 80mm roll sizes', () => {
@@ -108,7 +136,7 @@ describe('Receipt Template Branding & Authenticity Engine', () => {
     expect(large80 % 8).toBe(0);
   });
 
-  it('validates template configuration with Zod schema', () => {
+  it('validates template configuration with Zod schema including watermark', () => {
     const validFormData = {
       name: 'Counter Receipt',
       description: 'Daily counter thermal layout',
@@ -122,6 +150,8 @@ describe('Receipt Template Branding & Authenticity Engine', () => {
     if (parseResult.success) {
       expect(parseResult.data.template_config.branding.showLogo).toBe(true);
       expect(parseResult.data.template_config.branding.authenticityText).toBe('Official RadhaCafe Receipt');
+      expect(parseResult.data.template_config.branding.watermark.enabled).toBe(true);
+      expect(parseResult.data.template_config.branding.watermark.text).toBe('RADHACAFE • OFFICIAL');
     }
   });
 });

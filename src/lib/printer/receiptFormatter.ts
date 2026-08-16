@@ -115,6 +115,14 @@ export function formatReceiptFromTemplate(
       showAuthenticityMark: true,
       authenticityText: 'Official RadhaCafe Receipt',
       showReceiptReference: true,
+      watermark: {
+        enabled: true,
+        type: 'logo_text',
+        position: 'center',
+        intensity: 'light',
+        repeat: false,
+        text: 'RADHACAFE • OFFICIAL',
+      },
     },
     header: {
       logoVisible: true,
@@ -180,7 +188,14 @@ export function formatReceiptFromTemplate(
   const config: ReceiptTemplateConfig = {
     ...DEFAULT_CONFIG,
     ...(templateConfig || {}),
-    branding: { ...DEFAULT_CONFIG.branding!, ...(templateConfig?.branding || {}) },
+    branding: {
+      ...DEFAULT_CONFIG.branding!,
+      ...(templateConfig?.branding || {}),
+      watermark: {
+        ...DEFAULT_CONFIG.branding!.watermark!,
+        ...(templateConfig?.branding?.watermark || {}),
+      },
+    },
     header: { ...DEFAULT_CONFIG.header, ...(templateConfig?.header || {}) },
     orderInfo: { ...DEFAULT_CONFIG.orderInfo, ...(templateConfig?.orderInfo || {}) },
     customerInfo: { ...DEFAULT_CONFIG.customerInfo, ...(templateConfig?.customerInfo || {}) },

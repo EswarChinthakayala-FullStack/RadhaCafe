@@ -2,8 +2,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import { usePrinterStore } from '../store/printerStore';
 import { printerSessionManager } from '../lib/printer/printerSessionManager';
 import { executePrintJob } from '../lib/printer/printQueue';
-import { encodeTestReceiptToEscPos, encodeTemplateReceiptToEscPos } from '../lib/printer/escpos';
-import { convertImageToEscPosRaster } from '../lib/printer/rasterLogo';
+import {
+  encodeTestReceiptToEscPos,
+  encodeTemplateReceiptToEscPos,
+  encodeWatermarkTestToEscPos,
+} from '../lib/printer/escpos';
+import {
+  convertImageToEscPosRaster,
+  convertWatermarkToEscPosRaster,
+} from '../lib/printer/rasterLogo';
 import { printOrderViaBrowser } from '../lib/printer/browserPrint';
 import { markOrderAsPrinted } from '../lib/supabase/queries/printer';
 import { fetchActiveReceiptTemplate } from '../lib/supabase/queries/receiptTemplates';
@@ -153,6 +160,8 @@ export function useBluetoothPrinter() {
 
       const logoUrl = cafeSettings?.receipt_logo_url || cafeSettings?.logo_url || null;
       let rasterLogoBuffer: Uint8Array | null = null;
+      let watermarkRasterBuffer: Uint8Array | null = null;
+
       if (
         logoUrl &&
         store.activeProfile?.supportsImages !== false &&
@@ -165,11 +174,25 @@ export function useBluetoothPrinter() {
         }).catch(() => null);
       }
 
+      if (
+        logoUrl &&
+        store.activeProfile?.supportsImages !== false &&
+        (templateCfg as any)?.branding?.watermark?.enabled !== false &&
+        ['logo', 'logo_text'].includes((templateCfg as any)?.branding?.watermark?.type || 'logo_text')
+      ) {
+        watermarkRasterBuffer = await convertWatermarkToEscPosRaster(logoUrl, {
+          paperWidth: targetWidth,
+          intensity: (templateCfg as any)?.branding?.watermark?.intensity || 'light',
+          type: (templateCfg as any)?.branding?.watermark?.type || 'logo_text',
+        }).catch(() => null);
+      }
+
       const escposBytes = encodeTemplateReceiptToEscPos(order, {
         templateConfig: templateCfg,
         cafeSettings,
         supportsImages: store.activeProfile?.supportsImages !== false,
         rasterLogoBuffer,
+        watermarkRasterBuffer,
       });
 
       const chunkSize = store.activeProfile?.defaultChunkSize || 20;
@@ -211,6 +234,71 @@ export function useBluetoothPrinter() {
     try {
       const width = store.connectedPrinter?.paper_width || store.paperWidth || 32;
       const testBytes = encodeTestReceiptToEscPos(width, cafeName);
+      const chunkSize = store.activeProfile?.defaultChunkSize || 20;
+      const writeMode = store.activeProfile?.defaultWriteMode || 'without-response';
+
+      const result = await executePrintJob({
+        data: testBytes,
+        chunkSize,
+        writeMode,
+      });
+
+      usePrinterStore.getState().setStatus('ready');
+      return result.status === 'printed-sent';
+    } catch {
+      usePrinterStore.getState().setStatus('ready');
+      return false;
+    }
+  };
+
+  /**
+   * Prints Watermark Intensity Calibration Test Slip (Light / Medium / Strong)
+   */
+  const printWatermarkCalibrationTest = async (
+    paperWidth?: number,
+    watermarkText = 'RADHACAFE • OFFICIAL',
+    cafeName = 'RadhaCafe',
+    logoUrl?: string | null
+  ): Promise<boolean> => {
+    const store = usePrinterStore.getState();
+    const readyCheck = await printerSessionManager.ensurePrinterReady();
+    if (!readyCheck.ready) return false;
+
+    store.setStatus('printing');
+    try {
+      const targetWidth = paperWidth || store.connectedPrinter?.paper_width || store.paperWidth || 32;
+
+      let lightRaster: Uint8Array | null = null;
+      let mediumRaster: Uint8Array | null = null;
+      let strongRaster: Uint8Array | null = null;
+
+      if (logoUrl && store.activeProfile?.supportsImages !== false) {
+        [lightRaster, mediumRaster, strongRaster] = await Promise.all([
+          convertWatermarkToEscPosRaster(logoUrl, {
+            paperWidth: targetWidth,
+            intensity: 'light',
+            type: 'logo_text',
+          }).catch(() => null),
+          convertWatermarkToEscPosRaster(logoUrl, {
+            paperWidth: targetWidth,
+            intensity: 'medium',
+            type: 'logo_text',
+          }).catch(() => null),
+          convertWatermarkToEscPosRaster(logoUrl, {
+            paperWidth: targetWidth,
+            intensity: 'strong',
+            type: 'logo_text',
+          }).catch(() => null),
+        ]);
+      }
+
+      const testBytes = encodeWatermarkTestToEscPos(targetWidth, cafeName, {
+        lightRaster,
+        mediumRaster,
+        strongRaster,
+        watermarkText,
+      });
+
       const chunkSize = store.activeProfile?.defaultChunkSize || 20;
       const writeMode = store.activeProfile?.defaultWriteMode || 'without-response';
 
@@ -301,6 +389,7 @@ export function useBluetoothPrinter() {
       const targetWidth = store.connectedPrinter?.paper_width || store.paperWidth || templateConfig?.paperWidth || 32;
       const logoUrl = cafeSettings?.receipt_logo_url || cafeSettings?.logo_url || null;
       let rasterLogoBuffer: Uint8Array | null = null;
+      let watermarkRasterBuffer: Uint8Array | null = null;
 
       if (
         logoUrl &&
@@ -314,11 +403,25 @@ export function useBluetoothPrinter() {
         }).catch(() => null);
       }
 
+      if (
+        logoUrl &&
+        store.activeProfile?.supportsImages !== false &&
+        templateConfig?.branding?.watermark?.enabled !== false &&
+        ['logo', 'logo_text'].includes(templateConfig?.branding?.watermark?.type || 'logo_text')
+      ) {
+        watermarkRasterBuffer = await convertWatermarkToEscPosRaster(logoUrl, {
+          paperWidth: targetWidth,
+          intensity: templateConfig?.branding?.watermark?.intensity || 'light',
+          type: templateConfig?.branding?.watermark?.type || 'logo_text',
+        }).catch(() => null);
+      }
+
       const escposBytes = encodeTemplateReceiptToEscPos(order, {
         templateConfig,
         cafeSettings,
         supportsImages: store.activeProfile?.supportsImages !== false,
         rasterLogoBuffer,
+        watermarkRasterBuffer,
       });
       const chunkSize = store.activeProfile?.defaultChunkSize || 20;
       const writeMode = store.activeProfile?.defaultWriteMode || 'without-response';
@@ -383,6 +486,7 @@ export function useBluetoothPrinter() {
     ensurePrinterReady,
     printOrder,
     printTestReceipt,
+    printWatermarkCalibrationTest,
     printTemplateTest,
     printCustomReceipt,
     printBrowserFallback,
