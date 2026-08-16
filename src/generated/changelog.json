@@ -1,14 +1,27 @@
 {
-  "generatedAt": "2026-08-16T21:53:12.854Z",
-  "latestCommit": "158712b",
-  "totalEntries": 118,
+  "generatedAt": "2026-08-16T21:54:16.144Z",
+  "latestCommit": "f8aadb8",
+  "totalEntries": 119,
   "releases": [
     {
       "id": "rel-2026-08-17",
       "title": "17 Aug 2026",
-      "date": "2026-08-17T03:21:43+05:30",
+      "date": "2026-08-17T03:23:38+05:30",
       "isLatest": true,
       "entries": [
+        {
+          "id": "f8aadb8",
+          "title": "Prevent Search Bar Auto-Focus Jump After Order Placement",
+          "description": "Resolved an issue with prevent Search Bar Auto-Focus Jump After Order Placement to ensure consistent behavior throughout Orders.",
+          "category": "fixed",
+          "area": "Orders",
+          "date": "17 Aug 2026",
+          "commitHash": "f8aadb8421c6409b0674ebc50312c8d79387f2c8",
+          "shortHash": "f8aadb8",
+          "isBreaking": false,
+          "rawType": "fix",
+          "rawScope": "pos"
+        },
         {
           "id": "158712b",
           "title": "Responsive Mobile Layout and Compact Sticky Toolbar",
