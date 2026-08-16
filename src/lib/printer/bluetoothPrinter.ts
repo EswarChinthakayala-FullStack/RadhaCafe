@@ -1,30 +1,25 @@
 import { BLE_CHUNK_SIZE } from '../../constants/printerCommands';
+import type { ConnectionStage, NormalizedPrinterError } from '../../types/printer.types';
+import {
+  getAllSupportedServiceUuids,
+  matchProfileByServiceUuid,
+  getPrinterProfile,
+  type PrinterProfile,
+} from './printerProfiles';
 
-/**
- * Common Bluetooth Thermal Printer GATT Service UUIDs
- */
-export const DEFAULT_PRINTER_SERVICE_UUIDS = [
-  '000018f0-0000-1000-8000-00805f9b34fb', // Standard ESC/POS BLE Service
-  '49535343-fe7d-4ae5-8fa9-9fafd205e455', // ISSC Transparent Service
-  '0000ff00-0000-1000-8000-00805f9b34fb', // General Thermal Printer Service
-  '0000e7b0-0000-1000-8000-00805f9b34fb', // Munbyn / ZJiang Printer Service
-];
-
-export type ConnectionStage =
-  | 'idle'
-  | 'requesting'
-  | 'connecting_gatt'
-  | 'discovering_service'
-  | 'preparing_channel'
-  | 'ready';
+export type { ConnectionStage };
+export const DEFAULT_PRINTER_SERVICE_UUIDS = getAllSupportedServiceUuids();
 
 let connectedDevice: any = null;
 let writeCharacteristic: any = null;
+let activeGattServer: any = null;
 let disconnectListener: (() => void) | null = null;
-let isWriteLocked = false; // BLE Write Mutex Lock to protect from concurrent write collisions
+let isWriteLocked = false;
+let activeConnectionPromise: Promise<any> | null = null;
+
 const eventLog: { timestamp: string; message: string }[] = [];
 
-function logEvent(message: string) {
+export function logEvent(message: string) {
   const time = new Date().toLocaleTimeString('en-US', { hour12: false });
   eventLog.unshift({ timestamp: time, message });
   if (eventLog.length > 50) eventLog.pop();
@@ -34,25 +29,8 @@ export function getPrinterEventLog() {
   return [...eventLog];
 }
 
-export type PrinterErrorCode =
-  | 'BLUETOOTH_UNSUPPORTED'
-  | 'NOT_SECURE_CONTEXT'
-  | 'PERMISSION_DENIED'
-  | 'DEVICE_NOT_FOUND'
-  | 'GATT_CONNECTION_FAILED'
-  | 'CHARACTERISTIC_NOT_FOUND'
-  | 'WRITE_FAILED'
-  | 'PRINT_LOCKED'
-  | 'TIMEOUT'
-  | 'UNKNOWN';
-
-export interface NormalizedPrinterError {
-  code: PrinterErrorCode;
-  message: string;
-}
-
 /**
- * Normalizes raw DOM/Bluetooth exceptions into user-friendly application error messages.
+ * Normalizes raw DOM / Web Bluetooth exceptions into structured application error codes
  */
 export function normalizePrinterError(err: any): NormalizedPrinterError {
   const msg = err?.message || String(err || '');
@@ -60,7 +38,7 @@ export function normalizePrinterError(err: any): NormalizedPrinterError {
   if (msg.includes('not supported') || msg.includes('navigator.bluetooth')) {
     return {
       code: 'BLUETOOTH_UNSUPPORTED',
-      message: 'Web Bluetooth API is not supported in this browser. Please use Google Chrome or Microsoft Edge.',
+      message: 'Web Bluetooth API is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Opera.',
     };
   }
   if (msg.includes('secure') || msg.includes('HTTPS')) {
@@ -80,6 +58,12 @@ export function normalizePrinterError(err: any): NormalizedPrinterError {
       message: 'Printer selection was cancelled.',
     };
   }
+  if (msg.includes('permission_required') || msg.includes('permission-required')) {
+    return {
+      code: 'PERMISSION_REQUIRED',
+      message: 'This printer needs browser permission. Click Reconnect or Authorize to grant access.',
+    };
+  }
   if (msg.includes('locked') || msg.includes('concurrent')) {
     return {
       code: 'PRINT_LOCKED',
@@ -89,13 +73,25 @@ export function normalizePrinterError(err: any): NormalizedPrinterError {
   if (msg.includes('characteristic') || msg.includes('service') || msg.includes('writable')) {
     return {
       code: 'CHARACTERISTIC_NOT_FOUND',
-      message: 'The selected device is not a compatible ESC/POS thermal printer with writable print service.',
+      message: 'The device connected, but does not expose a writable ESC/POS thermal printing service.',
+    };
+  }
+  if (msg.includes('not found') || msg.includes('device-not-found')) {
+    return {
+      code: 'DEVICE_NOT_FOUND',
+      message: 'The Bluetooth printer was not found. Make sure it is powered on, charged, and in range.',
     };
   }
   if (msg.includes('timeout') || msg.includes('timed out')) {
     return {
       code: 'TIMEOUT',
       message: 'The printer took too long to respond. Ensure it is powered on and within Bluetooth range.',
+    };
+  }
+  if (msg.includes('gatt') || msg.includes('GATT')) {
+    return {
+      code: 'GATT_CONNECTION_FAILED',
+      message: "RadhaCafe couldn't reach the printer. Make sure it's powered on and nearby.",
     };
   }
 
@@ -105,9 +101,6 @@ export function normalizePrinterError(err: any): NormalizedPrinterError {
   };
 }
 
-/**
- * Feature-detection helper verifying browser & window environment safely
- */
 export function isBluetoothSupported(): boolean {
   return (
     typeof window !== 'undefined' &&
@@ -116,9 +109,6 @@ export function isBluetoothSupported(): boolean {
   );
 }
 
-/**
- * Checks if getDevices API is supported to retrieve previously authorized devices
- */
 export function isGetDevicesSupported(): boolean {
   return (
     isBluetoothSupported() &&
@@ -126,9 +116,6 @@ export function isGetDevicesSupported(): boolean {
   );
 }
 
-/**
- * Checks if current context is secure (HTTPS or localhost) required for Web Bluetooth
- */
 export function isSecureContext(): boolean {
   if (typeof window === 'undefined') return false;
   return (
@@ -139,7 +126,7 @@ export function isSecureContext(): boolean {
 }
 
 /**
- * Retrieves previously granted Bluetooth devices (without prompting device picker)
+ * Retrieves previously granted Bluetooth devices from the browser origin
  */
 export async function getPreviouslyGrantedPrinters(): Promise<{ id: string; name: string }[]> {
   if (!isGetDevicesSupported()) return [];
@@ -154,15 +141,27 @@ export async function getPreviouslyGrantedPrinters(): Promise<{ id: string; name
   }
 }
 
+export interface VerifiedConnectionResult {
+  device: any;
+  gattServer: any;
+  service: any;
+  characteristic: any;
+  profile: PrinterProfile;
+  serviceUuid: string;
+  characteristicUuid: string;
+  writeMode: 'with-response' | 'without-response';
+  chunkSize: number;
+}
+
 /**
- * Connects and configures a BluetoothDevice object (GATT -> Services -> Writable Characteristic)
+ * Connects GATT server, discovers services, locates writable characteristic, and verifies profile
  */
 async function setupDeviceConnection(
   device: any,
   onDisconnect?: () => void,
   onStageChange?: (stage: ConnectionStage) => void
-): Promise<any> {
-  // Clean up previous event listener
+): Promise<VerifiedConnectionResult> {
+  // Clean up previous disconnect listener
   if (disconnectListener && connectedDevice) {
     try {
       connectedDevice.removeEventListener('gattserverdisconnected', disconnectListener);
@@ -176,11 +175,13 @@ async function setupDeviceConnection(
 
   const server = await device.gatt.connect();
   connectedDevice = device;
+  activeGattServer = server;
 
   if (onDisconnect) {
     disconnectListener = () => {
       connectedDevice = null;
       writeCharacteristic = null;
+      activeGattServer = null;
       isWriteLocked = false;
       logEvent(`Printer ${device.name || device.id} disconnected.`);
       onDisconnect();
@@ -192,42 +193,63 @@ async function setupDeviceConnection(
   logEvent('Discovering thermal printer GATT services...');
 
   const services = await server.getPrimaryServices();
-  writeCharacteristic = null;
+  let foundCharacteristic: any = null;
+  let foundService: any = null;
+  let detectedProfile: PrinterProfile = getPrinterProfile('generic-ble-escpos');
 
   onStageChange?.('preparing_channel');
   logEvent('Locating writable ESC/POS printing characteristic...');
 
   for (const service of services) {
     try {
-      const characteristics = await service.getCharacteristics();
-      for (const char of characteristics) {
+      const chars = await service.getCharacteristics();
+      for (const char of chars) {
         if (char.properties.write || char.properties.writeWithoutResponse) {
-          writeCharacteristic = char;
+          foundCharacteristic = char;
+          foundService = service;
+          detectedProfile = matchProfileByServiceUuid(service.uuid);
           break;
         }
       }
-      if (writeCharacteristic) break;
+      if (foundCharacteristic) break;
     } catch {
       // Inspect next service
     }
   }
 
-  if (!writeCharacteristic) {
-    throw new Error('The selected printer does not expose a writable thermal printing service.');
+  if (!foundCharacteristic || !foundService) {
+    throw new Error('The selected printer does not expose a writable ESC/POS printing service.');
   }
 
+  writeCharacteristic = foundCharacteristic;
+
+  const writeMode = foundCharacteristic.properties.writeWithoutResponse
+    ? 'without-response'
+    : 'with-response';
+
   onStageChange?.('ready');
-  logEvent(`Printer ${device.name || device.id} ready for receipt printing.`);
-  return device;
+  logEvent(`Printer ${device.name || device.id} ready (${detectedProfile.name}, ${writeMode}).`);
+
+  return {
+    device,
+    gattServer: server,
+    service: foundService,
+    characteristic: foundCharacteristic,
+    profile: detectedProfile,
+    serviceUuid: foundService.uuid,
+    characteristicUuid: foundCharacteristic.uuid,
+    writeMode,
+    chunkSize: detectedProfile.defaultChunkSize || BLE_CHUNK_SIZE,
+  };
 }
 
 /**
- * Initiates Bluetooth device selection (MUST originate from user click handler)
+ * User-gesture triggered printer scan and pairing dialog
  */
-export async function requestBluetoothPrinter(
+export async function requestAndVerifyPrinter(
   onDisconnect?: () => void,
   onStageChange?: (stage: ConnectionStage) => void
-): Promise<any> {
+): Promise<VerifiedConnectionResult> {
   if (!isBluetoothSupported()) {
     throw new Error('Web Bluetooth API is not supported in this browser.');
   }
@@ -236,50 +258,107 @@ export async function requestBluetoothPrinter(
     throw new Error('Web Bluetooth requires a secure HTTPS or localhost context.');
   }
 
-  onStageChange?.('requesting');
-  logEvent('Opening Web Bluetooth device chooser...');
-
-  // 1. Prompt browser device picker dialog (Triggered by user gesture)
-  const device = await (navigator as any).bluetooth.requestDevice({
-    acceptAllDevices: true,
-    optionalServices: DEFAULT_PRINTER_SERVICE_UUIDS,
-  });
-
-  if (!device) {
-    throw new Error('User cancelled printer selection.');
+  if (activeConnectionPromise) {
+    return activeConnectionPromise;
   }
 
-  logEvent(`Device selected: ${device.name || device.id}`);
-  return setupDeviceConnection(device, onDisconnect, onStageChange);
+  const connectTask = async () => {
+    onStageChange?.('requesting');
+    logEvent('Opening Web Bluetooth device chooser...');
+
+    const allUuids = getAllSupportedServiceUuids();
+
+    const device = await (navigator as any).bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: allUuids,
+    });
+
+    if (!device) {
+      throw new Error('User cancelled printer selection.');
+    }
+
+    logEvent(`Device selected: ${device.name || device.id}`);
+    return setupDeviceConnection(device, onDisconnect, onStageChange);
+  };
+
+  try {
+    activeConnectionPromise = connectTask();
+    const result = await activeConnectionPromise;
+    return result;
+  } finally {
+    activeConnectionPromise = null;
+  }
 }
 
 /**
- * Attempts direct reconnection to a previously granted Bluetooth device by ID (without opening chooser)
+ * Connects a previously saved printer without opening the native device chooser.
+ * Uses navigator.bluetooth.getDevices() to find the browser-authorized device.
  */
-export async function reconnectKnownPrinter(
+export async function connectSavedPrinter(
   deviceId: string,
   onDisconnect?: () => void,
   onStageChange?: (stage: ConnectionStage) => void
-): Promise<any> {
+): Promise<VerifiedConnectionResult> {
   if (!isGetDevicesSupported()) {
     throw new Error('Direct device reconnection is not supported in this browser.');
   }
 
-  const devices = await (navigator as any).bluetooth.getDevices();
-  const targetDevice = devices.find((d: any) => d.id === deviceId);
-
-  if (!targetDevice) {
-    throw new Error('Previously paired printer was not found. Please scan and pair again.');
+  if (activeConnectionPromise) {
+    return activeConnectionPromise;
   }
 
-  logEvent(`Attempting direct reconnect to ${targetDevice.name || targetDevice.id}...`);
-  return setupDeviceConnection(targetDevice, onDisconnect, onStageChange);
+  const connectTask = async () => {
+    logEvent(`Looking for granted device ID: ${deviceId}...`);
+    const devices = await (navigator as any).bluetooth.getDevices();
+    const targetDevice = (devices || []).find((d: any) => d.id === deviceId);
+
+    if (!targetDevice) {
+      logEvent(`Device ID ${deviceId} not found in granted devices. Permission required.`);
+      const err: any = new Error('permission-required');
+      err.code = 'PERMISSION_REQUIRED';
+      throw err;
+    }
+
+    logEvent(`Found granted device ${targetDevice.name || targetDevice.id}. Connecting GATT...`);
+    return setupDeviceConnection(targetDevice, onDisconnect, onStageChange);
+  };
+
+  try {
+    activeConnectionPromise = connectTask();
+    const result = await activeConnectionPromise;
+    return result;
+  } finally {
+    activeConnectionPromise = null;
+  }
 }
 
 /**
- * Sends ESC/POS byte payload using sequential BLE chunking & flow control
+ * Attempts to revoke browser permission via BluetoothDevice.forget() if supported
  */
-export async function sendEscPosData(data: Uint8Array, chunkSize = BLE_CHUNK_SIZE): Promise<void> {
+export async function forgetBrowserDevice(deviceId: string): Promise<boolean> {
+  if (!isGetDevicesSupported()) return false;
+  try {
+    const devices = await (navigator as any).bluetooth.getDevices();
+    const targetDevice = (devices || []).find((d: any) => d.id === deviceId);
+    if (targetDevice && typeof targetDevice.forget === 'function') {
+      await targetDevice.forget();
+      logEvent(`Browser permission forgotten for device: ${targetDevice.name || deviceId}`);
+      return true;
+    }
+  } catch (err) {
+    logEvent(`Failed to forget browser device: ${(err as any)?.message}`);
+  }
+  return false;
+}
+
+/**
+ * Transmits ESC/POS byte payload using sequential BLE chunking and flow control
+ */
+export async function sendEscPosData(
+  data: Uint8Array,
+  chunkSize = BLE_CHUNK_SIZE,
+  writeMode?: 'with-response' | 'without-response'
+): Promise<void> {
   if (!writeCharacteristic) {
     throw new Error('Printer is disconnected. Please connect thermal printer first.');
   }
@@ -291,12 +370,15 @@ export async function sendEscPosData(data: Uint8Array, chunkSize = BLE_CHUNK_SIZ
   try {
     isWriteLocked = true;
     logEvent(`Transmitting ${data.length} bytes to thermal printer...`);
-    const useWithoutResponse = Boolean(writeCharacteristic.properties.writeWithoutResponse);
+
+    const useWithoutResponse =
+      writeMode === 'without-response' ||
+      (!writeMode && Boolean(writeCharacteristic.properties.writeWithoutResponse));
 
     for (let i = 0; i < data.length; i += chunkSize) {
       const chunk = data.slice(i, i + chunkSize);
 
-      if (useWithoutResponse) {
+      if (useWithoutResponse && typeof writeCharacteristic.writeValueWithoutResponse === 'function') {
         await writeCharacteristic.writeValueWithoutResponse(chunk);
       } else {
         await writeCharacteristic.writeValue(chunk);
@@ -315,7 +397,7 @@ export async function sendEscPosData(data: Uint8Array, chunkSize = BLE_CHUNK_SIZ
 }
 
 /**
- * Safely disconnects GATT server and clears runtime Bluetooth references
+ * Safely disconnects GATT server and resets runtime references
  */
 export function disconnectBluetoothPrinter(): void {
   if (connectedDevice && connectedDevice.gatt && connectedDevice.gatt.connected) {
@@ -325,9 +407,10 @@ export function disconnectBluetoothPrinter(): void {
       // Ignore disconnect errors
     }
   }
-  logEvent('Printer disconnected by user.');
+  logEvent('Printer disconnected.');
   connectedDevice = null;
   writeCharacteristic = null;
+  activeGattServer = null;
   isWriteLocked = false;
 }
 
@@ -337,4 +420,8 @@ export function getCurrentConnectedDevice() {
 
 export function getWriteCharacteristic() {
   return writeCharacteristic;
+}
+
+export function getActiveGattServer() {
+  return activeGattServer;
 }

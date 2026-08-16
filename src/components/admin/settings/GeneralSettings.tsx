@@ -12,6 +12,7 @@ import { Skeleton } from '../../ui/skeleton';
 import { toast } from '../../ui/toast';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { InformationCircleIcon } from '@hugeicons/core-free-icons';
+import { OfflineSyncSettings } from './OfflineSyncSettings';
 
 const generalSchema = z.object({
   cafe_name: z.string().trim().min(1, 'Cafe name is required').max(100, 'Cafe name is too long'),
@@ -158,6 +159,11 @@ export function GeneralSettings({ onDirtyChange }: GeneralSettingsProps) {
         <span className="leading-relaxed text-[11px]">
           Currency and timezone settings are calibrated to RadhaCafe's South Indian operations. For specialized multi-branch invoicing, configure your receipt template parameters.
         </span>
+      </div>
+
+      {/* Offline POS & Power-Cut Mode Section */}
+      <div className="pt-2">
+        <OfflineSyncSettings />
       </div>
 
       {/* Sticky Save Footer */}

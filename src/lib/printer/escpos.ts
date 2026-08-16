@@ -196,16 +196,35 @@ export function encodeReceiptToEscPos(
   return new Uint8Array(buffer);
 }
 
+export interface TemplateReceiptPrintOptions {
+  templateConfig?: any;
+  cafeSettings?: any;
+  finishingMode?: 'continuous' | 'manual-tear' | 'auto-cut';
+  tearGap?: 'compact' | 'normal' | 'extra';
+  supportsCut?: boolean;
+}
+
 /**
  * Advanced Template-Driven ESC/POS Byte Encoder
  * Formats printer byte commands according to active ReceiptTemplateConfig
  */
 export function encodeTemplateReceiptToEscPos(
   rawOrder: any,
-  templateConfig?: any,
+  templateConfigOrOptions?: any,
   cafeSettings?: any
 ): Uint8Array {
-  const { data, config, dividerLine } = formatReceiptFromTemplate(rawOrder, templateConfig, cafeSettings);
+  const options: TemplateReceiptPrintOptions =
+    templateConfigOrOptions && ('finishingMode' in templateConfigOrOptions || 'templateConfig' in templateConfigOrOptions)
+      ? templateConfigOrOptions
+      : { templateConfig: templateConfigOrOptions, cafeSettings };
+
+  const effectiveConfig = options.templateConfig;
+  const effectiveSettings = options.cafeSettings || cafeSettings;
+  const finishingMode = options.finishingMode || 'continuous';
+  const tearGap = options.tearGap || 'extra';
+  const supportsCut = options.supportsCut ?? false;
+
+  const { data, config, dividerLine } = formatReceiptFromTemplate(rawOrder, effectiveConfig, effectiveSettings);
   const encoder = new TextEncoder();
   const buffer: number[] = [];
 
@@ -399,16 +418,22 @@ export function encodeTemplateReceiptToEscPos(
     }
   });
 
-  // Paper feed & cut
-  const feedCount = config.feedLines || 3;
-  if (feedCount === 3) {
-    addBytes(ESC_POS_COMMANDS.FEED_PAPER_3_LINES);
+  // Paper finishing: Auto Cut vs Manual Tear Feed Gap
+  if (finishingMode === 'auto-cut' && supportsCut) {
+    addBytes(ESC_POS_COMMANDS.FEED_LINE);
+    addBytes(ESC_POS_COMMANDS.FEED_LINE);
+    addBytes(ESC_POS_COMMANDS.CUT_PAPER);
   } else {
-    for (let i = 0; i < feedCount; i++) {
-      addBytes(ESC_POS_COMMANDS.FEED_LINE);
+    // Manual tear or continuous queue: provide blank feed lines so operator can comfortably grasp and tear
+    const gapLines = tearGap === 'compact' ? 2 : tearGap === 'normal' ? 3 : 5;
+    if (gapLines === 3) {
+      addBytes(ESC_POS_COMMANDS.FEED_PAPER_3_LINES);
+    } else {
+      for (let i = 0; i < gapLines; i++) {
+        addBytes(ESC_POS_COMMANDS.FEED_LINE);
+      }
     }
   }
-  addBytes(ESC_POS_COMMANDS.CUT_PAPER);
 
   return new Uint8Array(buffer);
 }
@@ -442,7 +467,7 @@ export function encodeTestReceiptToEscPos(paperWidth = 32, cafeName = 'RadhaCafe
   addText(divider);
   addBytes(ESC_POS_COMMANDS.ALIGN_CENTER);
   addText('Bluetooth BLE Receipt System Ready!\n');
-  addBytes(ESC_POS_COMMANDS.FEED_PAPER_3_LINES);
+  addBytes(ESC_POS_COMMANDS.FEED_LINE);
   addBytes(ESC_POS_COMMANDS.CUT_PAPER);
 
   return new Uint8Array(buffer);

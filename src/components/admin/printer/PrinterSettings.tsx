@@ -249,7 +249,11 @@ export function PrinterSettings() {
                     <Button
                       size="xs"
                       variant="ghost"
-                      onClick={forgetPrinter}
+                      onClick={() => {
+                        if (settings?.preferred_printer_id) {
+                          forgetPrinter(settings.preferred_printer_id, settings.device_id || undefined);
+                        }
+                      }}
                       className="text-destructive hover:bg-destructive/10 h-7 px-2 rounded-lg gap-1 font-semibold"
                     >
                       <HugeiconsIcon icon={Delete02Icon} size={13} />

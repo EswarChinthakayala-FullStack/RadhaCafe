@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useBluetoothPrinter } from '../../hooks/useBluetoothPrinter';
 import { usePrinterSettings, useUpdatePrinterSettings } from '../../hooks/useSettings';
+import { usePreferredPrinter } from '../../hooks/useSavedPrinters';
 import { useActiveReceiptTemplate } from '../../hooks/useReceiptTemplates';
 import { useCafeSettings } from '../../hooks/useCafeSettings';
 import { PrinterStatusHero } from '../../components/admin/printer/PrinterStatusHero';
+import { SavedPrintersList } from '../../components/admin/printer/SavedPrintersList';
 import { PrinterConnectionWizard } from '../../components/admin/printer/PrinterConnectionWizard';
 import { PrinterTestPanel } from '../../components/admin/printer/PrinterTestPanel';
 import { PrinterReceiptSettings } from '../../components/admin/printer/PrinterReceiptSettings';
@@ -14,6 +16,7 @@ import { Skeleton } from '../../components/ui/skeleton';
 
 export function PrinterPage() {
   const { data: settings, isLoading: isSettingsLoading } = usePrinterSettings();
+  const { data: preferredPrinter } = usePreferredPrinter();
   const updateSettingsMutation = useUpdatePrinterSettings();
   const { data: activeTemplate } = useActiveReceiptTemplate();
   const { data: cafeSettings } = useCafeSettings();
@@ -22,13 +25,14 @@ export function PrinterPage() {
     status,
     connectionStage,
     device,
+    connectedPrinter,
     isSupported,
     isSecure,
     isConnected,
     isConnecting,
     isPrinting,
     scanAndConnect,
-    reconnectKnownDevice,
+    reconnectPreferred,
     disconnect,
     forgetPrinter,
     printTestReceipt,
@@ -83,19 +87,22 @@ export function PrinterPage() {
         status={status}
         connectionStage={connectionStage}
         device={device}
-        savedPrinterName={settings?.printer_name}
-        savedDeviceId={settings?.device_id}
+        connectedPrinter={connectedPrinter}
+        preferredPrinter={preferredPrinter ?? null}
         paperWidth={paperWidth}
         activeTemplateName={activeTemplate?.name || 'Classic Receipt'}
         isSupported={isSupported}
         onOpenWizard={() => setIsWizardOpen(true)}
-        onReconnect={reconnectKnownDevice}
+        onReconnectPreferred={reconnectPreferred}
         onDisconnect={disconnect}
         onTestPrint={() => printTestReceipt(cafeSettings?.cafe_name || 'RadhaCafe')}
         isTestPrinting={isPrinting}
       />
 
-      {/* 2. Responsive 2-Column Desktop / Stacked Mobile Layout */}
+      {/* 2. Saved Printers Management List */}
+      <SavedPrintersList onAddNewPrinter={() => setIsWizardOpen(true)} />
+
+      {/* 3. Responsive 2-Column Desktop / Stacked Mobile Layout */}
       <div className="grid lg:grid-cols-12 gap-6 items-start w-full min-w-0">
         {/* Left Column (~60-65%): Testing, Diagnostics, Troubleshooting & Technical */}
         <div className="lg:col-span-7 space-y-6 w-full min-w-0">
@@ -110,7 +117,7 @@ export function PrinterPage() {
             isSupported={isSupported}
             isSecure={isSecure}
             isConnected={isConnected}
-            deviceName={device?.name || settings?.printer_name}
+            deviceName={connectedPrinter?.friendly_name || connectedPrinter?.device_name || device?.name || settings?.printer_name}
             paperWidth={paperWidth}
           />
 
@@ -119,9 +126,13 @@ export function PrinterPage() {
 
           {/* Advanced Hardware Parameters & Event Logs */}
           <PrinterAdvancedSettings
-            savedPrinterName={settings?.printer_name}
-            savedDeviceId={settings?.device_id}
-            onForgetPrinter={forgetPrinter}
+            savedPrinterName={connectedPrinter?.friendly_name || settings?.printer_name}
+            savedDeviceId={connectedPrinter?.device_id || settings?.device_id}
+            onForgetPrinter={async () => {
+              if (connectedPrinter) {
+                await forgetPrinter(connectedPrinter.id, connectedPrinter.device_id);
+              }
+            }}
           />
         </div>
 
@@ -139,12 +150,12 @@ export function PrinterPage() {
         </div>
       </div>
 
-      {/* 3. Custom RadhaCafe Connection Wizard Modal */}
+      {/* 4. Custom RadhaCafe Connection Wizard Modal */}
       <PrinterConnectionWizard
         open={isWizardOpen}
         onOpenChange={setIsWizardOpen}
         onScanForPrinter={scanAndConnect}
-        savedPrinterName={settings?.printer_name}
+        savedPrinterName={preferredPrinter?.friendly_name || preferredPrinter?.device_name || settings?.printer_name}
         isConnecting={isConnecting}
       />
     </div>

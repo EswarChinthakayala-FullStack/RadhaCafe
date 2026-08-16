@@ -14,10 +14,7 @@ import {
 } from '@hugeicons/core-free-icons';
 
 export function PrinterStatusCard() {
-  const { status, device, connect, lastError } = useBluetoothPrinter();
-
-  const isConnected = status === 'connected';
-  const isConnecting = status === 'connecting';
+  const { savedPrinterName, isConnected, isConnecting, isReconnecting, reconnectPreferred, lastError } = useBluetoothPrinter();
 
   return (
     <Card className="border border-border/80 bg-card rounded-xl p-4 shadow-2xs">
@@ -43,21 +40,21 @@ export function PrinterStatusCard() {
                 variant="outline"
                 className={`text-[10px] font-bold px-1.5 py-0 h-4 flex items-center gap-1 ${
                   isConnected
-                    ? 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30'
-                    : 'bg-amber-500/15 text-amber-700 border-amber-500/30'
+                    ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
+                    : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30'
                 }`}
               >
                 <HugeiconsIcon
                   icon={isConnected ? CheckmarkCircle01Icon : AlertCircleIcon}
                   size={10}
                 />
-                <span>{isConnected ? 'Ready' : isConnecting ? 'Pairing...' : 'Disconnected'}</span>
+                <span>{isConnected ? 'Ready' : isConnecting || isReconnecting ? 'Connecting...' : 'Offline'}</span>
               </Badge>
             </div>
 
             <p className="text-[11px] text-muted-foreground line-clamp-1">
               {isConnected
-                ? device?.name || 'ESC/POS Bluetooth Printer Connected'
+                ? savedPrinterName || 'Bluetooth Printer Connected & Ready'
                 : lastError || 'Receipt printing requires paired Bluetooth connection'}
             </p>
           </div>
@@ -68,16 +65,16 @@ export function PrinterStatusCard() {
           {!isConnected && (
             <Button
               size="sm"
-              onClick={connect}
-              disabled={isConnecting}
+              onClick={reconnectPreferred}
+              disabled={isConnecting || isReconnecting}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs h-8 px-3 gap-1.5 shadow-2xs"
             >
               <HugeiconsIcon
                 icon={BluetoothIcon}
                 size={13}
-                className={isConnecting ? 'animate-pulse' : ''}
+                className={isConnecting || isReconnecting ? 'animate-pulse' : ''}
               />
-              <span>{isConnecting ? 'Connecting...' : 'Connect'}</span>
+              <span>{isConnecting || isReconnecting ? 'Connecting...' : 'Reconnect'}</span>
             </Button>
           )}
 

@@ -107,7 +107,7 @@ export function formatReceiptFromTemplate(
     paperWidth: 32,
     dividerStyle: 'dashed',
     previewFont: 'JetBrains Mono',
-    feedLines: 3,
+    feedLines: 1,
     header: {
       logoVisible: true,
       cafeNameVisible: true,

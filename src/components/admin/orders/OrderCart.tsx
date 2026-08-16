@@ -1,21 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCart } from '../../../hooks/useCart';
 import { useCreateOrder } from '../../../hooks/useOrders';
 import { useCafeSettings } from '../../../hooks/useCafeSettings';
-import { useBluetoothPrinter } from '../../../hooks/useBluetoothPrinter';
 import { useActiveReceiptTemplate } from '../../../hooks/useReceiptTemplates';
 import { useCustomerSearch } from '../../../hooks/useCustomers';
+import { useOfflinePOS } from '../../../providers/OfflineProvider';
+import { useReceiptPrintQueue } from '../../../providers/ReceiptPrintQueueProvider';
+import { generateClientOrderId } from '../../../lib/offline/offlineOrderService';
 import { formatCurrency } from '../../../lib/utils/formatCurrency';
 import type { Customer, PaymentMethod } from '../../../types';
 import { CustomerFormModal } from '../customers/CustomerFormModal';
-import { ReceiptPreview } from '../printer/ReceiptPreview';
-import { printOrderViaBrowser } from '../../../lib/printer/browserPrint';
 import { toast } from '../../ui/toast';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +31,6 @@ import {
   MinusSignIcon,
   Delete02Icon,
   PrinterIcon,
-  CheckmarkCircle02Icon,
   ShoppingCart01Icon,
   UserIcon,
   UserAdd01Icon,
@@ -58,7 +56,8 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
   const { data: settings } = useCafeSettings();
   const { data: activeTemplate } = useActiveReceiptTemplate();
   const createOrderMutation = useCreateOrder();
-  const { status: printerStatus, connect, printOrder } = useBluetoothPrinter();
+  const { isOffline, saveOfflineOrder } = useOfflinePOS();
+  const { enqueueOrderReceipt } = useReceiptPrintQueue();
 
   const [customerName, setCustomerName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(() => {
@@ -74,26 +73,23 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
   const [showClearConfirmDialog, setShowClearConfirmDialog] = useState(false);
   const [showDiscountInput, setShowDiscountInput] = useState(false);
 
-  const [createdOrder, setCreatedOrder] = useState<any | null>(null);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showPopupBlockedAlert, setShowPopupBlockedAlert] = useState(false);
-  const [isPrinting, setIsPrinting] = useState(false);
-  const [printMessage, setPrintMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [autoPrint, setAutoPrint] = useState<boolean>(() => {
-    return localStorage.getItem('radhacafe_autoprint_completion') === 'true';
+    return localStorage.getItem('radhacafe_autoprint_completion') !== 'false';
   });
 
   const { data: customerSearchResults } = useCustomerSearch(customerSearchQuery);
 
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  const taxRate =
-    settings?.tax_percentage !== undefined && settings?.tax_percentage !== null
-      ? Math.max(0, Number(settings.tax_percentage))
-      : 0;
+  const taxRate = isOffline
+    ? 0
+    : settings?.tax_percentage !== undefined && settings?.tax_percentage !== null
+    ? Math.max(0, Number(settings.tax_percentage))
+    : 0;
   const taxableAmount = Math.max(0, subtotal - discount);
-  const calculatedTax = taxRate > 0 ? Math.round(taxableAmount * (taxRate / 100) * 100) / 100 : 0;
+  const calculatedTax = isOffline ? 0 : taxRate > 0 ? Math.round(taxableAmount * (taxRate / 100) * 100) / 100 : 0;
   const grandTotal = taxableAmount + calculatedTax;
 
   const toggleAutoPrint = () => {
@@ -104,20 +100,89 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
 
   const handlePlaceOrder = async (overrideMethod?: PaymentMethod) => {
     setErrorMsg(null);
-    setPrintMessage(null);
+    setIsSubmitting(true);
 
     const activeMethod = overrideMethod || paymentMethod;
 
-    if (items.length === 0) {
-      setErrorMsg('Cart is empty. Please add items before placing order.');
-      return;
-    }
-
     if (activeMethod === 'pay_later' && !selectedCustomer) {
-      setErrorMsg('Please select a credit customer for Pay Later orders.');
+      setErrorMsg('Please select a customer for Pay Later credit order.');
+      setIsSubmitting(false);
       return;
     }
 
+    const clientOrderId = generateClientOrderId();
+
+    // 1. Offline Mode: Persist directly to IndexedDB
+    if (isOffline) {
+      try {
+        const offlineOrder = await saveOfflineOrder({
+          items,
+          customer: selectedCustomer,
+          customerName,
+          paymentMethod: activeMethod,
+          discountAmount: discount,
+          clientOrderId,
+        });
+
+        const fullOrder = {
+          id: offlineOrder.client_order_id,
+          order_number: offlineOrder.offline_reference,
+          customer_name: offlineOrder.customer_name,
+          customer_id: offlineOrder.customer_id,
+          total_amount: offlineOrder.total_amount,
+          subtotal: offlineOrder.subtotal,
+          tax_amount: offlineOrder.tax_amount,
+          discount_amount: offlineOrder.discount_amount,
+          payment_method: offlineOrder.payment_method,
+          payment_status: offlineOrder.payment_status,
+          created_at: offlineOrder.offline_created_at,
+          status: 'completed',
+          created_offline: true,
+          offline_reference: offlineOrder.offline_reference,
+          items: items.map((i) => ({
+            item_name: i.menuItem.name,
+            name: i.menuItem.name,
+            unit_price: i.menuItem.price,
+            quantity: i.quantity,
+            total_price: i.menuItem.price * i.quantity,
+          })),
+        };
+
+        // Non-blocking background print queue
+        if (autoPrint) {
+          enqueueOrderReceipt(fullOrder, activeTemplate?.template_config, settings).catch(() => {});
+        }
+
+        // Immediately clear cart & return POS to ready state
+        clearCart();
+        setCustomerName('');
+        setSelectedCustomer(null);
+        setCustomerSearchQuery('');
+        setPaymentMethod('cash');
+        setShowDiscountInput(false);
+        setDiscount(0);
+        if (onCloseMobileCart) onCloseMobileCart();
+
+        toast.add({
+          title: `Order #${fullOrder.order_number} Saved`,
+          description: autoPrint ? 'Receipt queued in background.' : 'Offline order stored successfully.',
+          type: 'success',
+        });
+
+        // Fast re-focus on product search
+        setTimeout(() => {
+          const searchInput = document.querySelector<HTMLInputElement>('input[placeholder*="Search menu"]');
+          searchInput?.focus();
+        }, 50);
+      } catch (err: any) {
+        setErrorMsg(err.message || 'Failed to save offline order. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // 2. Online Mode: Submit to Supabase with automatic offline fallback on network loss
     const payload = {
       customer_id: selectedCustomer ? selectedCustomer.id : null,
       customer_name: selectedCustomer ? selectedCustomer.name : customerName.trim() || 'Walk-in Customer',
@@ -125,6 +190,7 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
       payment_method: activeMethod,
       discount_amount: discount,
       tax_amount: calculatedTax,
+      client_order_id: clientOrderId,
       notes: null,
       items: items.map((i) => ({
         menu_item_id: i.menuItem.id,
@@ -145,19 +211,29 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
           quantity: i.quantity,
         })),
       };
-      setCreatedOrder(fullOrder);
-      setShowSuccessModal(true);
 
-      // Clear runtime cart ONLY after atomic DB commit succeeds
+      // Non-blocking background print queue
+      if (autoPrint) {
+        enqueueOrderReceipt(fullOrder, activeTemplate?.template_config, settings).catch(() => {});
+      }
+
+      // Immediately clear cart & return POS to ready state
       clearCart();
       setCustomerName('');
       setSelectedCustomer(null);
       setCustomerSearchQuery('');
       setPaymentMethod('cash');
       setShowDiscountInput(false);
+      setDiscount(0);
       if (onCloseMobileCart) onCloseMobileCart();
 
-      // Invalidate relevant queries in background
+      toast.add({
+        title: `Order #${fullOrder.order_number} Saved`,
+        description: autoPrint ? 'Receipt queued in background.' : 'Order saved successfully.',
+        type: 'success',
+      });
+
+      // Background invalidation without blocking next customer
       queryClient.invalidateQueries({ queryKey: ['menu', 'best-sellers'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
@@ -165,12 +241,84 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         queryClient.invalidateQueries({ queryKey: ['customers'] });
       }
 
-      // Auto-Print Receipt if Auto-Print setting is enabled or Bluetooth printer is connected
-      if (autoPrint || printerStatus === 'connected') {
-        await triggerSmartReceiptPrint(fullOrder);
-      }
+      // Fast re-focus on product search
+      setTimeout(() => {
+        const searchInput = document.querySelector<HTMLInputElement>('input[placeholder*="Search menu"]');
+        searchInput?.focus();
+      }, 50);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to place order. Please try again.');
+      const isNetworkErr =
+        err?.message?.includes('Failed to fetch') ||
+        err?.message?.includes('NetworkError') ||
+        err?.message?.includes('network');
+
+      if (isNetworkErr) {
+        try {
+          const offlineOrder = await saveOfflineOrder({
+            items,
+            customer: selectedCustomer,
+            customerName,
+            paymentMethod: activeMethod,
+            discountAmount: discount,
+            clientOrderId,
+          });
+
+          const fullOrder = {
+            id: offlineOrder.client_order_id,
+            order_number: offlineOrder.offline_reference,
+            customer_name: offlineOrder.customer_name,
+            customer_id: offlineOrder.customer_id,
+            total_amount: offlineOrder.total_amount,
+            subtotal: offlineOrder.subtotal,
+            tax_amount: offlineOrder.tax_amount,
+            discount_amount: offlineOrder.discount_amount,
+            payment_method: offlineOrder.payment_method,
+            payment_status: offlineOrder.payment_status,
+            created_at: offlineOrder.offline_created_at,
+            status: 'completed',
+            created_offline: true,
+            offline_reference: offlineOrder.offline_reference,
+            items: items.map((i) => ({
+              item_name: i.menuItem.name,
+              name: i.menuItem.name,
+              unit_price: i.menuItem.price,
+              quantity: i.quantity,
+              total_price: i.menuItem.price * i.quantity,
+            })),
+          };
+
+          if (autoPrint) {
+            enqueueOrderReceipt(fullOrder, activeTemplate?.template_config, settings).catch(() => {});
+          }
+
+          clearCart();
+          setCustomerName('');
+          setSelectedCustomer(null);
+          setCustomerSearchQuery('');
+          setPaymentMethod('cash');
+          setShowDiscountInput(false);
+          setDiscount(0);
+          if (onCloseMobileCart) onCloseMobileCart();
+
+          toast.add({
+            title: `Order #${fullOrder.order_number} Saved Offline`,
+            description: autoPrint ? 'Receipt queued in background.' : 'Stored on device.',
+            type: 'success',
+          });
+
+          setTimeout(() => {
+            const searchInput = document.querySelector<HTMLInputElement>('input[placeholder*="Search menu"]');
+            searchInput?.focus();
+          }, 50);
+          return;
+        } catch (saveErr: any) {
+          setErrorMsg(saveErr.message || 'Failed to save offline order.');
+        }
+      } else {
+        setErrorMsg(err.message || 'Failed to place order. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -192,81 +340,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
       description: `${methodName} payment integration is coming soon. Please use Cash or Credit (Pay Later) for now.`,
       type: 'info',
     });
-  };
-
-  const handleCloseSuccessModal = () => {
-    setShowSuccessModal(false);
-    setPrintMessage(null);
-    setIsPrinting(false);
-  };
-
-  // Keyboard shortcut (Enter / Esc) to instantly dismiss order success dialog
-  useEffect(() => {
-    if (!showSuccessModal) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === 'Escape') {
-        handleCloseSuccessModal();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showSuccessModal]);
-
-  const triggerSmartReceiptPrint = async (targetOrder: any) => {
-    if (!targetOrder) return;
-    setIsPrinting(true);
-    setPrintMessage(null);
-
-    // 1. First check if Bluetooth thermal printer is connected -> print directly via BLE ESC/POS
-    if (printerStatus === 'connected') {
-      try {
-        const success = await printOrder(targetOrder);
-        setIsPrinting(false);
-        if (success) {
-          setPrintMessage('Receipt printed successfully via Bluetooth!');
-          toast.add({
-            title: 'Thermal Receipt Printed',
-            description: `Order #${targetOrder.order_number} sent to Bluetooth printer.`,
-            type: 'success',
-          });
-          setTimeout(() => {
-            handleCloseSuccessModal();
-          }, 1200);
-          return;
-        }
-      } catch (err: any) {
-        setIsPrinting(false);
-        setPrintMessage(err.message || 'Bluetooth printing failed. Falling back to browser print...');
-      }
-    }
-
-    // 2. Fallback to Safe Hidden-iFrame Browser / PDF print
-    setIsPrinting(false);
-    setPrintMessage('Generating receipt print slip...');
-    setTimeout(() => {
-      const opened = printOrderViaBrowser(targetOrder, settings, activeTemplate?.template_config);
-      if (opened) {
-        setPrintMessage('Receipt sent to printer. Starting next order...');
-        setTimeout(() => {
-          handleCloseSuccessModal();
-        }, 2200);
-      } else {
-        setPrintMessage('Receipt ready for preview.');
-      }
-    }, 150);
-  };
-
-  const handleBluetoothPrint = async () => {
-    if (!createdOrder) return;
-    if (printerStatus !== 'connected') {
-      try {
-        await connect();
-      } catch (err: any) {
-        setPrintMessage(err.message || 'Bluetooth connection failed.');
-        return;
-      }
-    }
-    await triggerSmartReceiptPrint(createdOrder);
   };
 
   const handleCustomerCreatedOnTheFly = (newCustomer: Customer) => {
@@ -634,12 +707,13 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
         onClick={() => handlePlaceOrder()}
         disabled={
           items.length === 0 ||
+          isSubmitting ||
           createOrderMutation.isPending ||
           (paymentMethod === 'pay_later' && !selectedCustomer)
         }
         className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-11 text-xs sm:text-sm rounded-xl shadow-md transition-all active:scale-[0.99] gap-2"
       >
-        {createOrderMutation.isPending ? (
+        {isSubmitting || createOrderMutation.isPending ? (
           <>
             <HugeiconsIcon icon={Loading03Icon} size={16} className="animate-spin" />
             <span>Processing Order...</span>
@@ -674,132 +748,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
               className="h-8 text-xs font-bold bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg"
             >
               Clear Order
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* ── Order Placement Success Modal ── */}
-      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-md sm:max-w-2xl md:max-w-3xl max-h-[90vh] overflow-y-auto bg-card rounded-xl border border-border/80 p-4 sm:p-6 shadow-2xl space-y-4 no-scrollbar">
-          <DialogHeader className="text-center pb-2 border-b border-border/60 space-y-1">
-            <div className="w-11 h-11 mx-auto rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 shadow-2xs">
-              <HugeiconsIcon icon={CheckmarkCircle02Icon} size={22} />
-            </div>
-            <DialogTitle className="text-lg sm:text-xl font-bold font-heading text-foreground text-center">
-              Order Placed Successfully!
-            </DialogTitle>
-            <DialogDescription className="text-xs text-center flex items-center justify-center gap-1.5 pt-0.5">
-              <span className="text-muted-foreground">Order Number:</span>
-              <span className="font-bold text-cinnamon font-mono text-xs px-2.5 py-0.5 rounded-md bg-cinnamon/10 border border-cinnamon/20">
-                {createdOrder?.order_number}
-              </span>
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* 2-Column Responsive Layout: Thermal Paper Slip (Left) & Actions (Right) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start pt-1">
-            {/* Left Column: Authentic Template-Based Thermal Receipt Paper Slip */}
-            <div className="p-3 pb-6 rounded-xl bg-secondary/30 border border-border/60 flex justify-center max-h-[420px] overflow-y-auto no-scrollbar">
-              <ReceiptPreview
-                order={createdOrder}
-                templateConfig={activeTemplate?.template_config}
-                cafeSettings={settings}
-              />
-            </div>
-
-            {/* Right Column: Actions & Summary */}
-            <div className="space-y-3.5 flex flex-col justify-between h-full">
-              <div className="p-3.5 rounded-lg bg-secondary/50 border border-border/60 space-y-2 text-xs">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Customer Profile:</span>
-                  <span className="font-bold text-foreground">{createdOrder?.customer_name}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Payment Method:</span>
-                  <span className="uppercase text-[10px] font-bold px-2 py-0.5 rounded bg-cinnamon/10 text-cinnamon border border-cinnamon/20">
-                    {createdOrder?.payment_method === 'pay_later' ? 'PAY LATER' : createdOrder?.payment_method}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center pt-1 border-t border-border/40">
-                  <span className="text-muted-foreground font-semibold">Total Charged:</span>
-                  <span className="font-bold text-cinnamon text-sm font-mono font-heading">
-                    {formatCurrency(createdOrder?.total_amount || 0)}
-                  </span>
-                </div>
-              </div>
-
-              {printMessage && (
-                <div className="p-2.5 rounded-lg bg-secondary text-xs text-center font-medium border border-border/60 text-foreground">
-                  {printMessage}
-                </div>
-              )}
-
-              <div className="space-y-2 pt-1">
-                <Button
-                  onClick={handleCloseSuccessModal}
-                  className="w-full bg-cinnamon hover:bg-cinnamon/90 text-white font-bold h-10 text-xs sm:text-sm rounded-lg shadow-md gap-1.5 transition-all active:scale-[0.98]"
-                >
-                  <span>Done & Start Next Order</span>
-                </Button>
-
-                <Button
-                  onClick={() => {
-                    if (createdOrder) {
-                      const opened = printOrderViaBrowser(createdOrder, settings, activeTemplate?.template_config);
-                      if (!opened) {
-                        setShowPopupBlockedAlert(true);
-                      }
-                    }
-                  }}
-                  variant="outline"
-                  className="w-full h-9 text-xs font-bold gap-2 rounded-lg border-border/80 hover:bg-secondary"
-                >
-                  <HugeiconsIcon icon={PrinterIcon} size={14} />
-                  <span>Print via Browser / PDF</span>
-                </Button>
-
-                <Button
-                  onClick={handleBluetoothPrint}
-                  disabled={isPrinting}
-                  variant="ghost"
-                  className="w-full h-8 text-[11px] font-semibold text-muted-foreground hover:text-foreground gap-1.5"
-                >
-                  <HugeiconsIcon icon={PrinterIcon} size={13} />
-                  <span>
-                    {isPrinting
-                      ? 'Printing Thermal Receipt...'
-                      : printerStatus === 'connected'
-                        ? 'Print via Bluetooth Thermal Printer'
-                        : 'Connect Bluetooth Thermal Printer'}
-                  </span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Popups Blocked Alert Dialog */}
-      <AlertDialog open={showPopupBlockedAlert} onOpenChange={setShowPopupBlockedAlert}>
-        <AlertDialogContent className="max-w-md bg-card border border-border/80 p-5 rounded-xl shadow-2xl space-y-3">
-          <AlertDialogHeader className="space-y-1.5">
-            <div className="w-11 h-11 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center mx-auto">
-              <HugeiconsIcon icon={PrinterIcon} size={22} />
-            </div>
-            <AlertDialogTitle className="text-center text-base font-bold font-heading text-foreground">
-              Browser Popups Blocked
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-center text-xs text-muted-foreground leading-relaxed">
-              Your browser blocked the print receipt window. Please allow popups for this site in your browser address bar to automatically generate and print thermal receipts.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex justify-center pt-1">
-            <AlertDialogAction
-              onClick={() => setShowPopupBlockedAlert(false)}
-              className="w-full sm:w-auto bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-md"
-            >
-              Got It, I'll Enable Popups
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

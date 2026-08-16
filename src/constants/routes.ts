@@ -21,6 +21,7 @@ export const ROUTES = {
     DISCUSSIONS: '/admin/discussions',
     DISCUSSION_DETAILS: '/admin/discussion/:reviewId',
     PRINTER: '/admin/printer',
+    CHANGELOG: '/admin/changelog',
     SETTINGS: '/admin/settings',
     RECEIPTS: '/admin/settings/receipts',
     RECEIPT_NEW: '/admin/settings/receipts/new',

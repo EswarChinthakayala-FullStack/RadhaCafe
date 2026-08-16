@@ -6,21 +6,22 @@ import {
   BluetoothIcon,
   Loading03Icon,
   RefreshIcon,
+  StarIcon,
 } from '@hugeicons/core-free-icons';
-import type { PrinterDevice, PrinterConnectionStatus } from '../../../types';
+import type { PrinterDevice, PrinterConnectionStatus, SavedPrinter } from '../../../types';
 import type { ConnectionStage } from '../../../lib/printer/bluetoothPrinter';
 
 interface PrinterStatusHeroProps {
   status: PrinterConnectionStatus;
   connectionStage: ConnectionStage;
   device: PrinterDevice | null;
-  savedPrinterName?: string | null;
-  savedDeviceId?: string | null;
+  connectedPrinter: SavedPrinter | null;
+  preferredPrinter: SavedPrinter | null;
   paperWidth: number;
   activeTemplateName?: string;
   isSupported: boolean;
   onOpenWizard: () => void;
-  onReconnect: (deviceId: string) => void;
+  onReconnectPreferred: () => void;
   onDisconnect: () => void;
   onTestPrint: () => void;
   isTestPrinting: boolean;
@@ -30,48 +31,57 @@ export function PrinterStatusHero({
   status,
   connectionStage,
   device,
-  savedPrinterName,
-  savedDeviceId,
+  connectedPrinter,
+  preferredPrinter,
   paperWidth,
   activeTemplateName = 'Classic Receipt',
   isSupported,
   onOpenWizard,
-  onReconnect,
+  onReconnectPreferred,
   onDisconnect,
   onTestPrint,
   isTestPrinting,
 }: PrinterStatusHeroProps) {
-  const isConnected = status === 'connected';
+  const isConnected = status === 'connected' || status === 'ready';
   const isConnecting = status === 'connecting';
+  const isReconnecting = status === 'reconnecting';
 
   // Connecting Stage Label
   const getStageLabel = () => {
     switch (connectionStage) {
       case 'requesting':
-        return 'Waiting for printer selection...';
+        return 'Waiting for printer selection in browser window...';
       case 'connecting_gatt':
         return 'Connecting to printer GATT server...';
       case 'discovering_service':
         return 'Discovering thermal printer services...';
       case 'preparing_channel':
-        return 'Preparing ESC/POS printing channel...';
+        return 'Locating ESC/POS writable characteristic...';
       case 'ready':
         return 'Printer ready for receipts!';
       default:
-        return 'Connecting...';
+        return isReconnecting ? 'Reconnecting to preferred printer...' : 'Connecting...';
     }
   };
+
+  const displayName =
+    connectedPrinter?.friendly_name ||
+    connectedPrinter?.device_name ||
+    device?.name ||
+    preferredPrinter?.friendly_name ||
+    preferredPrinter?.device_name ||
+    'Bluetooth Thermal Printer';
 
   return (
     <div className="rounded-2xl border border-border/80 bg-card p-4 sm:p-7 shadow-xs space-y-5 w-full min-w-0 overflow-hidden">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 w-full min-w-0">
         {/* Left: Device Icon + Title + Status */}
-        <div className="flex items-start gap-3 sm:gap-4 w-full min-w-0">
+        <div className="flex items-start gap-3 sm:gap-4 w-full min-w-0 flex-1">
           <div
             className={`p-2.5 sm:p-3.5 rounded-2xl shrink-0 border shadow-2xs transition-colors ${
               isConnected
                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                : isConnecting
+                : isConnecting || isReconnecting
                 ? 'bg-cinnamon/10 border-cinnamon/30 text-cinnamon animate-pulse'
                 : 'bg-secondary border-border text-muted-foreground'
             }`}
@@ -82,12 +92,19 @@ export function PrinterStatusHero({
           <div className="space-y-1.5 min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap min-w-0">
               <h1 className="text-base sm:text-2xl font-bold font-heading text-foreground tracking-tight break-words">
-                {isConnected && device?.name
-                  ? device.name
-                  : savedPrinterName
-                  ? savedPrinterName
-                  : 'Thermal Receipt Printer'}
+                {displayName}
               </h1>
+
+              {/* Preferred Indicator Badge */}
+              {preferredPrinter && (
+                <Badge
+                  variant="outline"
+                  className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 text-[10px] font-bold px-1.5 py-0 rounded gap-1 flex items-center shrink-0"
+                >
+                  <HugeiconsIcon icon={StarIcon} size={10} className="fill-current" />
+                  <span>Preferred</span>
+                </Badge>
+              )}
 
               {/* Status Badge */}
               <Badge
@@ -95,30 +112,38 @@ export function PrinterStatusHero({
                 className={`text-[11px] sm:text-xs font-bold rounded-lg px-2.5 py-0.5 capitalize shrink-0 ${
                   isConnected
                     ? 'bg-emerald-600 hover:bg-emerald-600 text-white border-emerald-600'
-                    : isConnecting
+                    : isConnecting || isReconnecting
                     ? 'bg-cinnamon/10 text-cinnamon border-cinnamon/40 animate-pulse'
                     : 'bg-secondary text-muted-foreground border-border'
                 }`}
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full mr-1.5 shrink-0 ${
-                    isConnected ? 'bg-white' : isConnecting ? 'bg-cinnamon animate-ping' : 'bg-muted-foreground'
+                    isConnected
+                      ? 'bg-white'
+                      : isConnecting || isReconnecting
+                      ? 'bg-cinnamon animate-ping'
+                      : 'bg-muted-foreground'
                   }`}
                 />
-                {isConnected ? 'Connected & Ready' : isConnecting ? 'Connecting...' : 'Not Connected'}
+                {isConnected
+                  ? 'Connected & Ready'
+                  : isConnecting || isReconnecting
+                  ? 'Connecting...'
+                  : 'Offline / Disconnected'}
               </Badge>
             </div>
 
             <p className="text-xs text-muted-foreground leading-relaxed break-words">
               {isConnected
                 ? 'Ready to print customer receipts for counter and takeaway orders.'
-                : isConnecting
+                : isConnecting || isReconnecting
                 ? getStageLabel()
                 : !isSupported
                 ? 'Web Bluetooth is not supported in this browser. Browser fallback print will be used.'
-                : savedPrinterName
-                ? `Previously paired with ${savedPrinterName}. Turn on the printer and click Reconnect.`
-                : 'Connect your Bluetooth thermal printer to print order receipts.'}
+                : preferredPrinter
+                ? `Ready to connect to "${preferredPrinter.friendly_name || preferredPrinter.device_name}". Turn on the printer and click Reconnect.`
+                : 'Connect your Bluetooth thermal printer once to start printing order receipts.'}
             </p>
 
             {/* Runtime Device Metadata Pills (When Connected) */}
@@ -172,30 +197,24 @@ export function PrinterStatusHero({
               >
                 Disconnect
               </Button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={onOpenWizard}
-                className="text-xs text-muted-foreground hover:text-foreground rounded-xl h-10 px-3 flex-1 sm:flex-none justify-center"
-              >
-                Choose Another
-              </Button>
             </>
           ) : (
             <>
-              {savedDeviceId && isSupported && (
+              {preferredPrinter && isSupported && (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => onReconnect(savedDeviceId)}
-                  disabled={isConnecting}
+                  onClick={onReconnectPreferred}
+                  disabled={isConnecting || isReconnecting}
                   className="text-xs font-bold rounded-xl h-10 px-3.5 border-cinnamon/40 bg-cinnamon/5 hover:bg-cinnamon/10 text-cinnamon gap-1.5 shadow-2xs flex-1 sm:flex-none justify-center"
                 >
-                  <HugeiconsIcon icon={RefreshIcon} size={14} />
-                  <span>Reconnect</span>
+                  <HugeiconsIcon
+                    icon={RefreshIcon}
+                    size={14}
+                    className={isConnecting || isReconnecting ? 'animate-spin' : ''}
+                  />
+                  <span>{isConnecting || isReconnecting ? 'Reconnecting...' : 'Reconnect Preferred'}</span>
                 </Button>
               )}
 
@@ -203,11 +222,11 @@ export function PrinterStatusHero({
                 type="button"
                 size="sm"
                 onClick={onOpenWizard}
-                disabled={isConnecting || !isSupported}
+                disabled={isConnecting || isReconnecting || !isSupported}
                 className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs rounded-xl h-10 px-4 shadow-2xs gap-1.5 flex-1 sm:flex-none justify-center"
               >
                 <HugeiconsIcon icon={BluetoothIcon} size={15} />
-                <span>{savedDeviceId ? 'Pair New Printer' : 'Connect Thermal Printer'}</span>
+                <span>{preferredPrinter ? 'Scan & Connect' : 'Connect Thermal Printer'}</span>
               </Button>
             </>
           )}

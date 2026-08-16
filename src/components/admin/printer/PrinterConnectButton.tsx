@@ -19,7 +19,7 @@ export function PrinterConnectButton({
   size = 'sm',
   showLabelOnMobile = true,
 }: PrinterConnectButtonProps) {
-  const { status, device, isSupported, connect, disconnect } = useBluetoothPrinter();
+  const { status, isConnected, isConnecting, isReconnecting, savedPrinterName, isSupported, connect, disconnect } = useBluetoothPrinter();
 
   if (!isSupported) {
     return (
@@ -37,17 +37,17 @@ export function PrinterConnectButton({
     );
   }
 
-  if (status === 'connected') {
+  if (isConnected) {
     return (
       <Button
         variant="outline"
         size={size}
         onClick={disconnect}
-        className="border-success/40 text-success hover:border-destructive hover:text-destructive text-xs font-semibold rounded-md gap-1.5 transition-colors"
+        className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:border-destructive hover:text-destructive text-xs font-semibold rounded-md gap-1.5 transition-colors"
       >
         <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} />
         <span className={showLabelOnMobile ? 'inline' : 'hidden sm:inline'}>
-          {device?.name || 'Printer Connected'}
+          {savedPrinterName || 'Printer Connected'}
         </span>
       </Button>
     );
@@ -58,10 +58,10 @@ export function PrinterConnectButton({
       variant={variant}
       size={size}
       onClick={connect}
-      disabled={status === 'connecting'}
+      disabled={isConnecting || isReconnecting}
       className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs rounded-md gap-1.5 shadow-xs"
     >
-      {status === 'connecting' ? (
+      {isConnecting || isReconnecting ? (
         <>
           <HugeiconsIcon icon={PrinterIcon} size={14} className="animate-pulse" />
           <span className={showLabelOnMobile ? 'inline' : 'hidden sm:inline'}>Connecting...</span>

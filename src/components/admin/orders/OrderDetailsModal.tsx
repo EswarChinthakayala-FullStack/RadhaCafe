@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Order } from '../../../types';
-import { useBluetoothPrinter } from '../../../hooks/useBluetoothPrinter';
+import { useReceiptPrintQueue } from '../../../providers/ReceiptPrintQueueProvider';
 import { useCafeSettings } from '../../../hooks/useCafeSettings';
 import { useActiveReceiptTemplate } from '../../../hooks/useReceiptTemplates';
 import { useCustomer } from '../../../hooks/useCustomers';
@@ -61,7 +61,7 @@ export function OrderDetailsModal({ order, open, onClose, onOpenChange }: OrderD
     if (onClose) onClose();
   };
 
-  const { printOrder } = useBluetoothPrinter();
+  const { enqueueReprint, openQueue } = useReceiptPrintQueue();
   const { data: cafeSettings } = useCafeSettings();
   const { data: activeTemplate } = useActiveReceiptTemplate();
   const { data: customer } = useCustomer(order.customer_id || undefined);
@@ -96,19 +96,21 @@ export function OrderDetailsModal({ order, open, onClose, onOpenChange }: OrderD
     setIsPrinting(true);
     setPrintFeedback(null);
     try {
-      const success = await printOrder(order, cafeSettings);
-      if (success) {
-        setPrintFeedback('Thermal receipt printed successfully!');
-        toast.add({
-          title: 'Printed',
-          description: `Order #${order.order_number} sent to thermal printer.`,
-          type: 'success',
-        });
-      } else {
-        setPrintFeedback('Bluetooth print failed. You can use Browser/PDF print fallback below.');
-      }
-    } catch {
-      setPrintFeedback('Bluetooth printer disconnected. Use browser print fallback.');
+      await enqueueReprint(order, activeTemplate?.template_config, cafeSettings);
+      setPrintFeedback('Reprint added to queue.');
+      toast.add({
+        title: 'Reprint Queued',
+        description: `Order #${order.order_number} added to background print queue.`,
+        type: 'success',
+      });
+      openQueue();
+    } catch (err: any) {
+      setPrintFeedback('Failed to enqueue reprint.');
+      toast.add({
+        title: 'Reprint Failed',
+        description: err?.message || 'Unable to enqueue reprint.',
+        type: 'error',
+      });
     } finally {
       setIsPrinting(false);
     }
@@ -179,6 +181,22 @@ export function OrderDetailsModal({ order, open, onClose, onOpenChange }: OrderD
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
+              {order.created_offline && !order.synced_at && (
+                <Badge
+                  variant="outline"
+                  className="bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/40 text-[10px] font-bold gap-1 rounded-md"
+                >
+                  Saved Offline · Pending Sync
+                </Badge>
+              )}
+              {order.created_offline && order.synced_at && (
+                <Badge
+                  variant="outline"
+                  className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 text-[10px] font-bold gap-1 rounded-md"
+                >
+                  Synced ({order.offline_reference})
+                </Badge>
+              )}
               <PaymentStatusBadge status={order.payment_status} dueAmount={dueAmount} />
               <OrderStatusBadge status={order.status} />
               {order.is_printed && (

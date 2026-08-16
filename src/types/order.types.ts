@@ -40,6 +40,11 @@ export interface OrderItem {
 export interface Order {
   id: string;
   order_number: string;
+  client_order_id?: string | null;
+  created_offline?: boolean;
+  offline_reference?: string | null;
+  offline_created_at?: string | null;
+  synced_at?: string | null;
   customer_id?: string | null;
   customer_name?: string | null;
   status: OrderStatus;
@@ -70,6 +75,7 @@ export interface CreateOrderPayload {
   payment_method: PaymentMethod;
   tax_amount: number;
   discount_amount: number;
+  client_order_id?: string | null;
   items: {
     menu_item_id: string;
     item_name: string;

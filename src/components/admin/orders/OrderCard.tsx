@@ -54,10 +54,18 @@ export function OrderCard({
       {/* Top Header Row: Order Number, Date, Status Badges */}
       <div className="flex justify-between items-start gap-2 border-b border-border/60 pb-2.5">
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="font-mono font-bold text-xs sm:text-sm text-primary truncate">
               {order.order_number}
             </span>
+            {order.created_offline && !order.synced_at && (
+              <Badge
+                variant="outline"
+                className="text-[9px] font-bold px-1.5 py-0 h-4 border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-300 rounded"
+              >
+                Pending Sync
+              </Badge>
+            )}
             <button
               type="button"
               onClick={handleCopyOrderNumber}

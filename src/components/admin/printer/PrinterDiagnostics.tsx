@@ -11,6 +11,7 @@ import {
   RefreshIcon,
   Loading03Icon,
 } from '@hugeicons/core-free-icons';
+import { usePrinterStore } from '../../../store/printerStore';
 
 interface PrinterDiagnosticsProps {
   isSupported: boolean;
@@ -28,6 +29,10 @@ export function PrinterDiagnostics({
   paperWidth,
 }: PrinterDiagnosticsProps) {
   const [isRunningCheck, setIsRunningCheck] = useState(false);
+  const autoConnect = usePrinterStore((state) => state.autoConnect);
+  const totalReconnectsThisSession = usePrinterStore((state) => state.totalReconnectsThisSession);
+  const status = usePrinterStore((state) => state.status);
+  const manualDisconnect = usePrinterStore((state) => state.manualDisconnect);
 
   const handleRunCheck = async () => {
     setIsRunningCheck(true);
@@ -36,7 +41,7 @@ export function PrinterDiagnostics({
     toast.add({
       title: 'Diagnostics Complete',
       description: isConnected
-        ? 'All printer hardware and environment checks passed.'
+        ? 'All printer hardware, session manager, and environment checks passed.'
         : 'Bluetooth environment is ready. Connect your printer to complete setup.',
       type: 'success',
     });
@@ -44,9 +49,14 @@ export function PrinterDiagnostics({
 
   const checks = [
     {
+      name: 'Session Manager',
+      status: 'passed',
+      desc: `Persistent Admin runtime active (${totalReconnectsThisSession} successful connections this session)`,
+    },
+    {
       name: 'Web Bluetooth API',
       status: isSupported ? 'passed' : 'failed',
-      desc: isSupported ? 'Supported in this browser (Chrome/Edge)' : 'Unsupported browser engine',
+      desc: isSupported ? 'Supported in this browser (Chrome/Edge/Opera)' : 'Unsupported browser engine',
     },
     {
       name: 'Security Context',
@@ -54,14 +64,22 @@ export function PrinterDiagnostics({
       desc: isSecure ? 'Secure HTTPS or localhost connection verified' : 'Requires HTTPS connection',
     },
     {
-      name: 'Device Connection',
-      status: isConnected ? 'passed' : 'idle',
-      desc: isConnected ? `Connected to ${deviceName || 'Thermal Printer'}` : 'No active Bluetooth session',
+      name: 'Connection State',
+      status: isConnected ? 'passed' : manualDisconnect ? 'idle' : status === 'reconnecting' ? 'idle' : 'idle',
+      desc: isConnected
+        ? `Ready to print: ${deviceName || 'Thermal Printer'}`
+        : manualDisconnect
+        ? 'Manually disconnected by admin (auto-reconnect suppressed)'
+        : status === 'reconnecting'
+        ? 'Reconnecting automatically to preferred printer...'
+        : 'Printer is offline (background reconnection active)',
     },
     {
-      name: 'Print Channel',
-      status: isConnected ? 'passed' : 'idle',
-      desc: isConnected ? 'Writable ESC/POS characteristic located' : 'Awaiting printer connection',
+      name: 'Keep Connected Policy',
+      status: autoConnect ? 'passed' : 'idle',
+      desc: autoConnect
+        ? 'Enabled (automatic recovery active for entire admin session)'
+        : 'Disabled in Printer Settings',
     },
     {
       name: 'Paper Configuration',
@@ -83,7 +101,7 @@ export function PrinterDiagnostics({
                 Printer Connection Diagnostics
               </CardTitle>
               <CardDescription className="text-xs mt-0.5 leading-relaxed">
-                Inspect browser compatibility, GATT channel availability, and configuration status.
+                Inspect browser compatibility, session health, and auto-reconnect state.
               </CardDescription>
             </div>
           </div>

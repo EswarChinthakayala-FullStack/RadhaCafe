@@ -89,6 +89,7 @@ const navGroups: NavGroup[] = [
       { title: "Cafe Analytics", url: ROUTES.ADMIN.ANALYTICS, icon: Analytics01Icon },
       { title: "Printer", url: ROUTES.ADMIN.PRINTER, icon: PrinterIcon },
       { title: "Receipt Templates", url: "/admin/settings/receipts", icon: InvoiceIcon },
+      { title: "What's New", url: ROUTES.ADMIN.CHANGELOG, icon: SparklesIcon },
       { title: "Settings", url: ROUTES.ADMIN.SETTINGS, icon: Settings01Icon },
     ],
   },
@@ -104,6 +105,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const { data: reviewSummary } = useAdminReviewSummary()
   const pendingReviewsCount = reviewSummary?.pending_count || 0
+
+  const [hasUnseenChangelog, setHasUnseenChangelog] = React.useState(false)
+
+  React.useEffect(() => {
+    try {
+      const lastSeen = localStorage.getItem('radhacafe_last_seen_changelog_id')
+      setHasUnseenChangelog(!lastSeen)
+    } catch {
+      // Ignored
+    }
+  }, [location.pathname])
 
   const handleNavClick = () => {
     if (isMobile) {
@@ -154,6 +166,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   return false
                 })()
                 const isReviewsItem = item.url === ROUTES.ADMIN.DISCUSSIONS
+                const isChangelogItem = item.url === ROUTES.ADMIN.CHANGELOG
+
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
@@ -182,6 +196,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white group-data-[collapsible=icon]:hidden shrink-0">
                           {pendingReviewsCount}
                         </span>
+                      )}
+                      {isChangelogItem && hasUnseenChangelog && !isActive && (
+                        <span className="w-2 h-2 rounded-full bg-cinnamon animate-pulse group-data-[collapsible=icon]:hidden shrink-0" />
                       )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>

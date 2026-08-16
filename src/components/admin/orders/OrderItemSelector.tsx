@@ -4,6 +4,7 @@ import { useCategories } from '../../../hooks/useCategories';
 import { useTodaysSpecials, useBestSellingItems } from '../../../hooks/useMenuRecommendations';
 import { useCart } from '../../../hooks/useCart';
 import { formatCurrency } from '../../../lib/utils/formatCurrency';
+import { idbGetCatalogSnapshot } from '../../../lib/offline/db';
 import { Input } from '../../ui/input';
 import { Loader } from '../../shared/Loader';
 import { LazyImage } from '../../ui/lazy-image';
@@ -71,10 +72,31 @@ export function OrderItemSelector() {
   const { data: menuItems, isLoading: isMenuItemsLoading } = useMenuItems(true);
   const { data: categories, isLoading: isCategoriesLoading } = useCategories();
   const { data: todaysSpecials } = useTodaysSpecials();
-  const { data: bestSellers, isLoading: isBestSellersLoading } = useBestSellingItems(6);
+  const { data: bestSellers, isLoading: isBestSellersLoading } = useBestSellingItems(7);
   const { addItem, updateQuantity, items: cartItems } = useCart();
 
-  const categoryMap = new Map(categories?.map((c) => [c.id, c]));
+  const [offlineCatalog, setOfflineCatalog] = useState<{ items: any[]; categories: any[] } | null>(null);
+
+  // Load offline catalog snapshot from IndexedDB when network is offline
+  useEffect(() => {
+    if (!menuItems || menuItems.length === 0) {
+      idbGetCatalogSnapshot()
+        .then((snapshot) => {
+          if (snapshot.items.length > 0) {
+            setOfflineCatalog({
+              items: snapshot.items,
+              categories: snapshot.categories,
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [menuItems]);
+
+  const activeMenuItems = (menuItems && menuItems.length > 0) ? menuItems : (offlineCatalog?.items || []);
+  const activeCategories = (categories && categories.length > 0) ? categories : (offlineCatalog?.categories || []);
+
+  const categoryMap = new Map(activeCategories.map((c: any) => [c.id, c]));
   const topBestSellerIds = new Set((bestSellers || []).slice(0, 3).map((b) => b.id));
   const popularSellerIds = new Set((bestSellers || []).slice(3, 8).map((b) => b.id));
   const todayStr = new Date().toISOString().split('T')[0];
@@ -110,7 +132,7 @@ export function OrderItemSelector() {
     updateScrollButtons();
     window.addEventListener('resize', updateScrollButtons);
     return () => window.removeEventListener('resize', updateScrollButtons);
-  }, [categories]);
+  }, [activeCategories]);
 
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (e.deltaY !== 0 && scrollContainerRef.current) {
@@ -143,11 +165,11 @@ export function OrderItemSelector() {
   };
 
   // Multi-field search across Name, Description, Category Name, and Item Tags
-  const filteredItems = menuItems
-    ?.filter((item) => {
+  const filteredItems = activeMenuItems
+    .filter((item: any) => {
       const matchesCategory = !selectedCategoryId || item.category_id === selectedCategoryId;
       const category = categoryMap.get(item.category_id);
-      const categoryName = category?.name || '';
+      const categoryName = category?.name || item.category_name || '';
       const tagsStr = (item.tags || []).join(' ');
 
       const query = search.trim().toLowerCase();
@@ -160,7 +182,7 @@ export function OrderItemSelector() {
 
       return matchesCategory && matchesSearch;
     })
-    ?.sort((a, b) => {
+    .sort((a: any, b: any) => {
       // Prioritize Today's Special -> Best Seller -> Popular -> Alphabetical
       const aIsSpecial = a.daily_special_date === todayStr;
       const bIsSpecial = b.daily_special_date === todayStr;
@@ -191,13 +213,13 @@ export function OrderItemSelector() {
 
   const isSearching = Boolean(search.trim());
 
-  if (isMenuItemsLoading || isCategoriesLoading) {
+  if ((isMenuItemsLoading || isCategoriesLoading) && activeMenuItems.length === 0) {
     return <Loader label="Loading POS menu catalog..." />;
   }
 
   // Calculate available item counts per category for the chips
   const categoryCounts = new Map<string, number>();
-  (menuItems || []).forEach((item) => {
+  activeMenuItems.forEach((item: any) => {
     if (item.category_id) {
       categoryCounts.set(item.category_id, (categoryCounts.get(item.category_id) || 0) + 1);
     }
@@ -356,7 +378,7 @@ export function OrderItemSelector() {
         </div>
       )}
 
-      {/* ── Main Menu Item Grid — 8 cols laptop, 6 cols tablet, 4 cols mobile ── */}
+      {/* ── Main Menu Item Grid — 7 cols desktop, 6 cols tablet, 4 cols tablet-sm, 3 cols mobile ── */}
       {!filteredItems || filteredItems.length === 0 ? (
         <div className="p-8 sm:p-10 text-center bg-card rounded-xl border border-dashed border-border/80 space-y-2">
           <div className="w-10 h-10 mx-auto rounded-full bg-secondary flex items-center justify-center text-muted-foreground/50">
@@ -366,7 +388,7 @@ export function OrderItemSelector() {
           <p className="text-[11px] text-muted-foreground">Try adjusting your search query or category filter.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-1.5 sm:gap-2 lg:gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-7 gap-1.5 sm:gap-2">
           {filteredItems.map((item) => {
             const qty = getCartQuantity(item.id);
             const hasImage = item.image_url && !failedImages[item.id];
@@ -382,109 +404,94 @@ export function OrderItemSelector() {
               <div
                 key={item.id}
                 onClick={() => addItem(item)}
-                className={`group/card rounded-lg border bg-card p-1 sm:p-1.5 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden relative cursor-pointer active:scale-[0.99] select-none ${
+                className={`group/card rounded-lg border bg-card p-1 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden relative cursor-pointer active:scale-[0.99] select-none ${
                   qty > 0 ? 'border-cinnamon/60 ring-1 ring-cinnamon/20 bg-cinnamon/[0.02]' : 'border-border/80 hover:border-cinnamon/40'
                 }`}
               >
                 <div>
-                  {/* Item Image Container */}
-                  <div className="relative aspect-square w-full overflow-hidden rounded-md bg-white border border-border/40 flex items-center justify-center">
+                  {/* Item Image — compact 4:3 ratio */}
+                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-white border border-border/40 flex items-center justify-center">
                     {hasImage ? (
                       <LazyImage
                         src={item.image_url!}
                         alt={item.name}
                         containerClassName="bg-white"
-                        className="h-full w-full object-contain p-1"
+                        className="h-full w-full object-contain p-0.5"
                         onError={() => handleImageError(item.id)}
                       />
                     ) : (
                       <div className="h-full w-full flex flex-col items-center justify-center bg-secondary/40 text-muted-foreground/40 gap-0.5">
-                        <HugeiconsIcon icon={Coffee02Icon} size={18} />
-                        <span className="text-[7.5px] font-bold uppercase tracking-wider">RadhaCafe</span>
+                        <HugeiconsIcon icon={Coffee02Icon} size={16} />
+                        <span className="text-[7px] font-bold uppercase tracking-wider">RadhaCafe</span>
                       </div>
                     )}
 
-                    {/* System Priority Badges — Micro icon on mobile (never blocks image), full label on tablet/desktop */}
-                    <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-10 pointer-events-none">
+                    {/* System Priority Badges — Icon only */}
+                    <div className="absolute top-0.5 left-0.5 flex flex-col gap-0.5 z-10 pointer-events-none">
                       {isTodaySpec && (
                         <div
-                          className="h-4 w-4 sm:h-auto sm:w-auto sm:px-1.5 sm:py-0.5 rounded-full sm:rounded bg-amber-600/95 text-white flex items-center justify-center gap-0.5 shadow-xs"
+                          className="w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full bg-amber-600/95 text-white flex items-center justify-center shadow-xs border border-white/20"
                           title="Today's Special"
                         >
-                          <HugeiconsIcon icon={StarIcon} size={8.5} className="shrink-0" />
-                          <span className="hidden sm:inline text-[8px] font-bold truncate leading-tight">Special</span>
+                          <HugeiconsIcon icon={StarIcon} size={9} className="shrink-0" />
                         </div>
                       )}
                       {isBestSell && !isTodaySpec && (
                         <div
-                          className="h-4 w-4 sm:h-auto sm:w-auto sm:px-1.5 sm:py-0.5 rounded-full sm:rounded bg-orange-600/95 text-white flex items-center justify-center gap-0.5 shadow-xs"
+                          className="w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full bg-orange-600/95 text-white flex items-center justify-center shadow-xs border border-white/20"
                           title="Best Seller"
                         >
-                          <HugeiconsIcon icon={Award01Icon} size={8.5} className="shrink-0" />
-                          <span className="hidden sm:inline text-[8px] font-bold truncate leading-tight">Best Seller</span>
+                          <HugeiconsIcon icon={Award01Icon} size={9} className="shrink-0" />
                         </div>
                       )}
                       {isPopular && !isTodaySpec && !isBestSell && (
                         <div
-                          className="h-4 w-4 sm:h-auto sm:w-auto sm:px-1.5 sm:py-0.5 rounded-full sm:rounded bg-cinnamon/95 text-white flex items-center justify-center gap-0.5 shadow-xs"
+                          className="w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full bg-cinnamon/95 text-white flex items-center justify-center shadow-xs border border-white/20"
                           title="Popular"
                         >
-                          <HugeiconsIcon icon={FireIcon} size={8.5} className="shrink-0" />
-                          <span className="hidden sm:inline text-[8px] font-bold truncate leading-tight">Popular</span>
+                          <HugeiconsIcon icon={FireIcon} size={9} className="shrink-0" />
                         </div>
                       )}
                     </div>
 
                     {/* Cart Quantity Overlay Badge */}
                     {qty > 0 && (
-                      <div className="absolute top-1 right-1 bg-cinnamon text-white text-[9px] font-mono font-bold h-4.5 min-w-[18px] px-0.5 rounded-full flex items-center justify-center shadow-md border border-white/30">
+                      <div className="absolute top-0.5 right-0.5 bg-cinnamon text-white text-[8px] font-mono font-bold h-4 min-w-[16px] px-0.5 rounded-full flex items-center justify-center shadow-md border border-white/30">
                         {qty}
                       </div>
                     )}
                   </div>
 
-                  {/* Item Details */}
-                  <div className="space-y-0.5 pt-1">
-                    <div className="flex items-center justify-between gap-0.5">
-                      <span className="text-[8px] sm:text-[9px] font-semibold text-muted-foreground uppercase tracking-wider truncate">
-                        {categoryName || 'Menu'}
-                      </span>
-                      {tags.length > 0 && (
-                        <span className="text-[7.5px] sm:text-[8px] font-semibold text-cinnamon/80 truncate hidden sm:inline">
-                          {tags[0]}
-                        </span>
-                      )}
-                    </div>
-
-                    <h4 className="font-bold text-[11px] sm:text-xs text-foreground line-clamp-1 leading-tight group-hover/card:text-cinnamon transition-colors" title={item.name}>
+                  {/* Item Details — compact with 2-line name */}
+                  <div className="pt-0.5 px-0.5">
+                    <span className="text-[7px] sm:text-[8px] font-semibold text-muted-foreground uppercase tracking-wider truncate block leading-tight">
+                      {categoryName || 'Menu'}
+                    </span>
+                    <h4 className="font-bold text-[10px] sm:text-[11px] text-foreground line-clamp-2 leading-snug group-hover/card:text-cinnamon transition-colors min-h-[2lh]" title={item.name}>
                       {item.name}
                     </h4>
-
-                    {/* Price Tag */}
-                    <div>
-                      <span className="font-extrabold text-[11px] sm:text-xs text-cinnamon font-heading">
-                        {formatCurrency(item.price)}
-                      </span>
-                    </div>
+                    <span className="font-extrabold text-[10px] sm:text-[11px] text-cinnamon font-heading leading-none">
+                      {formatCurrency(item.price)}
+                    </span>
                   </div>
                 </div>
 
-                {/* Dedicated Compact Action Row */}
-                <div className="pt-1 mt-1 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
+                {/* Compact Action Row */}
+                <div className="pt-0.5 mt-0.5 border-t border-border/40 px-0.5 pb-0.5" onClick={(e) => e.stopPropagation()}>
                   {qty > 0 ? (
-                    <div className="w-full h-6 sm:h-6.5 bg-cinnamon text-white rounded-md flex items-center justify-between px-0.5 shadow-2xs">
+                    <div className="w-full h-5.5 sm:h-6 bg-cinnamon text-white rounded flex items-center justify-between px-0.5 shadow-2xs">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           updateQuantity(item.id, qty - 1);
                         }}
-                        className="h-5 w-5 sm:w-6 rounded flex items-center justify-center text-white hover:bg-black/20 active:scale-90 transition-all"
+                        className="h-4.5 w-4.5 sm:w-5 rounded flex items-center justify-center text-white hover:bg-black/20 active:scale-90 transition-all"
                         aria-label={`Decrease ${item.name}`}
                       >
-                        <HugeiconsIcon icon={MinusSignIcon} size={11} />
+                        <HugeiconsIcon icon={MinusSignIcon} size={10} />
                       </button>
-                      <span className="text-[11px] sm:text-xs font-bold font-mono text-white select-none leading-none">
+                      <span className="text-[10px] sm:text-[11px] font-bold font-mono text-white select-none leading-none">
                         {qty}
                       </span>
                       <button
@@ -493,10 +500,10 @@ export function OrderItemSelector() {
                           e.stopPropagation();
                           updateQuantity(item.id, qty + 1);
                         }}
-                        className="h-5 w-5 sm:w-6 rounded flex items-center justify-center text-white hover:bg-black/20 active:scale-90 transition-all"
+                        className="h-4.5 w-4.5 sm:w-5 rounded flex items-center justify-center text-white hover:bg-black/20 active:scale-90 transition-all"
                         aria-label={`Increase ${item.name}`}
                       >
-                        <HugeiconsIcon icon={PlusSignIcon} size={11} />
+                        <HugeiconsIcon icon={PlusSignIcon} size={10} />
                       </button>
                     </div>
                   ) : (
@@ -506,9 +513,9 @@ export function OrderItemSelector() {
                         e.stopPropagation();
                         addItem(item);
                       }}
-                      className="w-full h-6 sm:h-6.5 bg-cinnamon/10 hover:bg-cinnamon text-cinnamon hover:text-white font-bold text-[10px] sm:text-[11px] rounded-md transition-all flex items-center justify-center gap-0.5 active:scale-[0.98] border border-cinnamon/20 hover:border-cinnamon"
+                      className="w-full h-5.5 sm:h-6 bg-cinnamon/10 hover:bg-cinnamon text-cinnamon hover:text-white font-bold text-[9px] sm:text-[10px] rounded transition-all flex items-center justify-center gap-0.5 active:scale-[0.98] border border-cinnamon/20 hover:border-cinnamon"
                     >
-                      <HugeiconsIcon icon={PlusSignIcon} size={11} />
+                      <HugeiconsIcon icon={PlusSignIcon} size={10} />
                       <span>Add</span>
                     </button>
                   )}

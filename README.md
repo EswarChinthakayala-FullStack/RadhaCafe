@@ -77,6 +77,37 @@
 
 ---
 
+## 📝 Changelog Commit Guidelines
+
+RadhaCafe automatically generates a polished, human-readable release timeline for the admin at `/admin/changelog` from the project's Git commit history.
+
+### Commit Format
+
+Use Conventional Commits for all user-facing changes:
+
+```
+feat(scope): meaningful feature subject
+fix(scope): clear bugfix description
+```
+
+### Optional Commit Body Metadata
+
+For enhanced changelog clarity, you can provide metadata in the commit body:
+
+```
+feat(printer): improve connection lifecycle
+
+changelog-title: Reliable Bluetooth Printer Auto-Connect
+changelog-description: RadhaCafe now keeps the saved thermal printer connected and recovers automatically from interruptions.
+changelog-area: Printer
+changelog-group: printer-reliability
+```
+
+- `[skip-changelog]`: Excludes an internal commit from the visible release notes.
+- `[changelog]`: Forces inclusion of a refactoring/performance commit.
+
+---
+
 ## 📄 License
 
 This project is open source and available under the [MIT License](LICENSE).

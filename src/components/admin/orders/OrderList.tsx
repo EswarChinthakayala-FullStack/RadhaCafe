@@ -26,6 +26,8 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 import { CancelCircleIcon } from '@hugeicons/core-free-icons';
 import { toast } from '../../ui/toast';
+import { idbGetPendingOfflineOrders } from '../../../lib/offline/db';
+import { cancelLocalOfflineOrder } from '../../../lib/offline/offlineOrderService';
 import type { Order, OrderSort } from '../../../types';
 
 function getDateRangeForPreset(preset: OrderFiltersState['datePreset'], customDate: string) {
@@ -114,7 +116,58 @@ export function OrderList() {
     sort: filters.sort,
   });
 
-  const totalPages = Math.ceil((data?.count || 0) / 20) || 1;
+  const [offlineOrders, setOfflineOrders] = useState<Order[]>([]);
+
+  // Load pending offline orders from IndexedDB
+  useEffect(() => {
+    let isMounted = true;
+    idbGetPendingOfflineOrders()
+      .then((pending) => {
+        if (!isMounted) return;
+        const mapped: Order[] = pending.map((po) => ({
+          id: po.client_order_id,
+          order_number: po.offline_reference,
+          client_order_id: po.client_order_id,
+          customer_name: po.customer_name,
+          customer_id: po.customer_id,
+          status: po.status as any,
+          subtotal: po.subtotal,
+          tax_amount: po.tax_amount,
+          discount_amount: po.discount_amount,
+          total_amount: po.total_amount,
+          payment_method: po.payment_method,
+          payment_status: po.payment_status,
+          paid_amount: po.payment_status === 'paid' ? po.total_amount : 0,
+          due_amount: po.payment_status === 'unpaid' ? po.total_amount : 0,
+          is_printed: po.is_printed,
+          created_at: po.offline_created_at,
+          created_offline: true,
+          offline_reference: po.offline_reference,
+          items: po.items.map((it) => ({
+            item_name: it.item_name,
+            unit_price: it.unit_price,
+            quantity: it.quantity,
+            total_price: it.total_price,
+          })),
+        }));
+        setOfflineOrders(mapped);
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [data]);
+
+  // Combine offline pending orders with server orders (offline orders shown at top)
+  const combinedOrders = [
+    ...offlineOrders.filter(
+      (off) => !data?.orders?.some((o) => o.client_order_id === off.id || o.id === off.id)
+    ),
+    ...(data?.orders || []),
+  ];
+
+  const totalPages = Math.ceil(((data?.count || 0) + offlineOrders.length) / 20) || 1;
 
   const handleFilterChange = (newFilters: OrderFiltersState) => {
     setFilters(newFilters);
@@ -137,12 +190,24 @@ export function OrderList() {
   const handleConfirmCancel = async () => {
     if (!cancelOrderTarget) return;
     try {
-      await cancelOrderMutation.mutateAsync(cancelOrderTarget.id);
-      toast.add({
-        title: 'Order Cancelled',
-        description: `Order #${cancelOrderTarget.order_number} marked as cancelled.`,
-        type: 'info',
-      });
+      if (cancelOrderTarget.created_offline) {
+        await cancelLocalOfflineOrder(cancelOrderTarget.id);
+        setOfflineOrders((prev) =>
+          prev.map((o) => (o.id === cancelOrderTarget.id ? { ...o, status: 'cancelled' } : o))
+        );
+        toast.add({
+          title: 'Offline Order Cancelled',
+          description: `Order #${cancelOrderTarget.order_number} marked as cancelled locally.`,
+          type: 'info',
+        });
+      } else {
+        await cancelOrderMutation.mutateAsync(cancelOrderTarget.id);
+        toast.add({
+          title: 'Order Cancelled',
+          description: `Order #${cancelOrderTarget.order_number} marked as cancelled.`,
+          type: 'info',
+        });
+      }
       setCancelOrderTarget(null);
     } catch (err: any) {
       toast.add({
@@ -175,18 +240,18 @@ export function OrderList() {
       />
 
       {/* Order List View State */}
-      {isLoading ? (
+      {isLoading && offlineOrders.length === 0 ? (
         <OrderSkeleton />
-      ) : isError ? (
+      ) : isError && offlineOrders.length === 0 ? (
         <OrderErrorState errorMsg={(error as any)?.message} onRetry={() => refetch()} />
-      ) : !data?.orders || data.orders.length === 0 ? (
+      ) : combinedOrders.length === 0 ? (
         <OrderEmptyState isFiltered={isFiltered} onResetFilters={handleResetFilters} />
       ) : (
         <div className="space-y-4">
           {/* Desktop Table View (>= 768px) */}
           <div className="hidden md:block">
             <OrderTable
-              orders={data.orders}
+              orders={combinedOrders}
               onSelectOrder={(ord) => setSelectedOrder(ord)}
               onPrintOrder={(ord) => printOrder(ord)}
               onReceivePayment={(ord) => setPaymentOrder(ord)}
@@ -196,7 +261,7 @@ export function OrderList() {
 
           {/* Mobile Cards View (< 768px) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:hidden gap-3">
-            {data.orders.map((ord) => (
+            {combinedOrders.map((ord) => (
               <OrderCard
                 key={ord.id}
                 order={ord}
@@ -211,7 +276,7 @@ export function OrderList() {
           <OrderPagination
             page={page}
             totalPages={totalPages}
-            totalCount={data.count || 0}
+            totalCount={(data?.count || 0) + offlineOrders.length}
             onPageChange={(p) => setPage(p)}
           />
         </div>

@@ -125,7 +125,7 @@ export function PrinterAdvancedSettings({
           <div className="space-y-1.5">
             <span className="font-bold text-foreground block">Configured Thermal Printer Service UUIDs</span>
             <div className="p-3 rounded-xl bg-background border border-border/60 font-mono text-[10px] space-y-1 text-muted-foreground">
-              {DEFAULT_PRINTER_SERVICE_UUIDS.map((uuid, i) => (
+              {DEFAULT_PRINTER_SERVICE_UUIDS.map((uuid: string, i: number) => (
                 <div key={i} className="truncate">
                   {uuid}
                 </div>

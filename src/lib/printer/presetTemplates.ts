@@ -8,7 +8,7 @@ export const CLASSIC_PRESET_CONFIG: ReceiptTemplateConfig = {
   paperWidth: 32,
   dividerStyle: 'dashed',
   previewFont: 'JetBrains Mono',
-  feedLines: 3,
+  feedLines: 1,
   header: {
     logoVisible: true,
     cafeNameVisible: true,
@@ -78,7 +78,7 @@ export const MODERN_PRESET_CONFIG: ReceiptTemplateConfig = {
   paperWidth: 32,
   dividerStyle: 'double',
   previewFont: 'JetBrains Mono',
-  feedLines: 3,
+  feedLines: 1,
   header: {
     logoVisible: true,
     cafeNameVisible: true,
@@ -148,7 +148,7 @@ export const COMPACT_PRESET_CONFIG: ReceiptTemplateConfig = {
   paperWidth: 32,
   dividerStyle: 'solid',
   previewFont: 'JetBrains Mono',
-  feedLines: 2,
+  feedLines: 1,
   header: {
     logoVisible: false,
     cafeNameVisible: true,
@@ -218,7 +218,7 @@ export const DETAILED_PRESET_CONFIG: ReceiptTemplateConfig = {
   paperWidth: 48,
   dividerStyle: 'dashed',
   previewFont: 'JetBrains Mono',
-  feedLines: 3,
+  feedLines: 1,
   header: {
     logoVisible: true,
     cafeNameVisible: true,

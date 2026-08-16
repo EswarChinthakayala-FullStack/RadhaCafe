@@ -11,8 +11,8 @@ function buildReceiptHtml(order: Order, cafeSettings?: any, templateConfig?: any
     .map(
       (item) => `
     <tr>
-      <td style="padding: 4px 0; font-weight: 600; word-break: break-word;">${item.name} x${item.quantity}</td>
-      <td style="padding: 4px 0; text-align: right; font-weight: 700; white-space: nowrap;">Rs. ${item.amount.toFixed(2)}</td>
+      <td style="padding: 2px 0; font-weight: 600; word-break: break-word;">${item.name} x${item.quantity}</td>
+      <td style="padding: 2px 0; text-align: right; font-weight: 700; white-space: nowrap;">Rs. ${item.amount.toFixed(2)}</td>
     </tr>
   `
     )
@@ -25,33 +25,47 @@ function buildReceiptHtml(order: Order, cafeSettings?: any, templateConfig?: any
         <title>Receipt - ${receipt.orderNumber}</title>
         <meta charset="utf-8" />
         <style>
-          @page { size: 80mm auto; margin: 4mm 0; }
-          * { box-sizing: border-box; }
-          body {
+          @page {
+            size: 80mm auto;
+            margin: 0;
+          }
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          html, body {
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            width: 290px;
+            width: 280px;
             margin: 0 auto;
-            padding: 12px 8px;
-            font-size: 11.5px;
+            padding: 4px 6px 0 6px;
+            font-size: 11px;
             color: #000;
             background: #fff;
-            line-height: 1.4;
+            line-height: 1.35;
+          }
+          @media print {
+            html, body {
+              width: 100%;
+              margin: 0 !important;
+              padding: 2px 4px 0 4px !important;
+            }
           }
           .center { text-align: center; }
           .right { text-align: right; }
           .bold { font-weight: bold; }
-          .divider { border-top: 1px dashed #000; margin: 7px 0; }
+          .divider { border-top: 1px dashed #000; margin: 4px 0; }
           table { width: 100%; border-collapse: collapse; }
-          h2 { margin: 0 0 3px 0; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; }
-          p { margin: 2px 0; }
+          h2 { margin: 0 0 2px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+          p { margin: 1.5px 0; }
         </style>
       </head>
       <body>
         <div class="center">
           <h2>${receipt.cafeName}</h2>
-          ${receipt.tagline ? `<p style="font-size: 10px;">${receipt.tagline}</p>` : ''}
-          ${receipt.address ? `<p style="font-size: 10px;">${receipt.address}</p>` : ''}
-          ${receipt.phone ? `<p style="font-size: 10px;">Tel: ${receipt.phone}</p>` : ''}
+          ${receipt.tagline ? `<p style="font-size: 9.5px;">${receipt.tagline}</p>` : ''}
+          ${receipt.address ? `<p style="font-size: 9.5px;">${receipt.address}</p>` : ''}
+          ${receipt.phone ? `<p style="font-size: 9.5px;">Tel: ${receipt.phone}</p>` : ''}
         </div>
         <div class="divider"></div>
         <div>
@@ -63,8 +77,8 @@ function buildReceiptHtml(order: Order, cafeSettings?: any, templateConfig?: any
         <table>
           <thead>
             <tr style="border-bottom: 1px solid #000;">
-              <th style="text-align: left; padding-bottom: 4px;">Item (Qty)</th>
-              <th style="text-align: right; padding-bottom: 4px;">Amount</th>
+              <th style="text-align: left; padding-bottom: 2px;">Item (Qty)</th>
+              <th style="text-align: right; padding-bottom: 2px;">Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -79,18 +93,20 @@ function buildReceiptHtml(order: Order, cafeSettings?: any, templateConfig?: any
           </tr>
           ${receipt.tax > 0 ? `<tr><td>GST Tax</td><td class="right">Rs. ${receipt.tax.toFixed(2)}</td></tr>` : ''}
           ${receipt.discount > 0 ? `<tr><td>Discount</td><td class="right">-Rs. ${receipt.discount.toFixed(2)}</td></tr>` : ''}
-          <tr class="bold" style="font-size: 13.5px;">
-            <td style="padding-top: 6px;">TOTAL</td>
-            <td class="right" style="padding-top: 6px;">Rs. ${receipt.total.toFixed(2)}</td>
+          <tr class="bold" style="font-size: 12.5px;">
+            <td style="padding-top: 4px;">TOTAL</td>
+            <td class="right" style="padding-top: 4px;">Rs. ${receipt.total.toFixed(2)}</td>
           </tr>
           <tr>
-            <td style="padding-top: 3px;">Payment</td>
-            <td class="right" style="padding-top: 3px;">${(receipt.paymentMethod || 'cash').toUpperCase()}</td>
+            <td style="padding-top: 2px;">Payment</td>
+            <td class="right" style="padding-top: 2px;">${(receipt.paymentMethod || 'cash').toUpperCase()}</td>
           </tr>
         </table>
         <div class="divider"></div>
-        <div class="center" style="margin-top: 10px; font-size: 10.5px;">
-          <p>${receipt.footerMessage || 'Thank You For Your Visit!'}</p>
+        <div class="center" style="margin-top: 4px; margin-bottom: 0; padding-bottom: 0; font-size: 10px;">
+          <p style="margin: 0; padding: 0;">${receipt.footerMessage || 'Thank You For Your Visit!'}</p>
+          ${receipt.secondaryFooter ? `<p style="margin: 1px 0 0 0; font-size: 9px;">${receipt.secondaryFooter}</p>` : ''}
+          ${receipt.contactFooter ? `<p style="margin: 1px 0 0 0; font-size: 9px;">${receipt.contactFooter}</p>` : ''}
         </div>
       </body>
     </html>

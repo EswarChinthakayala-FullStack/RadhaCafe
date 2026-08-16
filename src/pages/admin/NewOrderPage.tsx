@@ -15,9 +15,7 @@ import {
 } from '@hugeicons/core-free-icons';
 
 export function NewOrderPage() {
-  const { status: printerStatus, connect } = useBluetoothPrinter();
-  const isPrinterConnected = printerStatus === 'connected';
-  const isPrinterConnecting = printerStatus === 'connecting';
+  const { isConnected, isConnecting, isReconnecting, reconnectNow, savedPrinterName } = useBluetoothPrinter();
 
   return (
     <div className="space-y-3 sm:space-y-4 max-w-[1680px] mx-auto min-w-0 w-full pb-8">
@@ -35,8 +33,8 @@ export function NewOrderPage() {
               POS
             </Badge>
           </div>
-          <p className="text-[11px] sm:text-xs text-muted-foreground font-medium line-clamp-1">
-            Select items from the catalog and place orders with instant thermal receipt printing.
+          <p className="text-xs text-muted-foreground hidden sm:block">
+            Quick Counter Point-of-Sale · Select menu items, customize, and generate instant receipts.
           </p>
         </div>
 
@@ -47,35 +45,37 @@ export function NewOrderPage() {
             <HugeiconsIcon
               icon={PrinterIcon}
               size={14}
-              className={isPrinterConnected ? 'text-emerald-600' : 'text-amber-600'}
+              className={isConnected ? 'text-emerald-600' : 'text-amber-600'}
             />
-            <span className="font-semibold text-foreground text-[11px] sm:text-xs hidden xs:inline">Printer:</span>
+            <span className="font-semibold text-foreground text-[11px] sm:text-xs hidden xs:inline">
+              {savedPrinterName ? `${savedPrinterName}:` : 'Printer:'}
+            </span>
             <span
               className={`font-bold inline-flex items-center gap-1 text-[11px] sm:text-xs ${
-                isPrinterConnected ? 'text-emerald-600' : 'text-amber-600'
+                isConnected ? 'text-emerald-600' : 'text-amber-600'
               }`}
             >
               <HugeiconsIcon
-                icon={isPrinterConnected ? CheckmarkCircle01Icon : AlertCircleIcon}
+                icon={isConnected ? CheckmarkCircle01Icon : AlertCircleIcon}
                 size={11}
               />
-              {isPrinterConnected
+              {isConnected
                 ? 'Ready'
-                : isPrinterConnecting
-                ? 'Connecting...'
+                : isConnecting || isReconnecting
+                ? 'Reconnecting...'
                 : 'Offline'}
             </span>
 
-            {!isPrinterConnected && (
+            {!isConnected && (
               <Button
                 type="button"
                 size="sm"
-                onClick={connect}
-                disabled={isPrinterConnecting}
+                onClick={() => reconnectNow()}
+                disabled={isConnecting || isReconnecting}
                 className="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] font-bold bg-primary hover:bg-primary/90 text-primary-foreground ml-1 gap-1 rounded"
               >
-                <HugeiconsIcon icon={BluetoothIcon} size={10} className={isPrinterConnecting ? 'animate-pulse' : ''} />
-                <span>Pair</span>
+                <HugeiconsIcon icon={BluetoothIcon} size={10} className={isConnecting || isReconnecting ? 'animate-pulse' : ''} />
+                <span>Reconnect</span>
               </Button>
             )}
           </div>

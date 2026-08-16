@@ -1,10 +1,13 @@
+import { useNavigate } from 'react-router-dom';
 import { SettingsSection } from './SettingsSection';
 import { SettingsRow } from './SettingsRow';
 import { Button } from '../../ui/button';
+import { ROUTES } from '../../../constants/routes';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Coffee01Icon, LinkSquare01Icon } from '@hugeicons/core-free-icons';
+import { Coffee01Icon, LinkSquare01Icon, SparklesIcon } from '@hugeicons/core-free-icons';
 
 export function AboutSettings() {
+  const navigate = useNavigate();
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -57,6 +60,21 @@ export function AboutSettings() {
           >
             <HugeiconsIcon icon={LinkSquare01Icon} size={13} className="text-cinnamon" />
             <span>Open Landing Page</span>
+          </Button>
+        </SettingsRow>
+        <SettingsRow
+          title="What's New & Release History"
+          description="View recent improvements, bug fixes, and feature updates."
+        >
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(ROUTES.ADMIN.CHANGELOG)}
+            className="h-8 text-xs font-semibold rounded-xl border-border/80 bg-card hover:bg-secondary gap-1.5 shadow-2xs"
+          >
+            <HugeiconsIcon icon={SparklesIcon} size={13} className="text-cinnamon" />
+            <span>View Changelog</span>
           </Button>
         </SettingsRow>
       </SettingsSection>

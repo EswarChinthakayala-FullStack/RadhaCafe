@@ -84,8 +84,16 @@ export function OrderTable({
                 >
                   {/* Order Number & Time */}
                   <td className="p-3 pl-4 whitespace-nowrap">
-                    <div className="font-bold font-mono text-primary text-xs flex items-center gap-1.5">
+                    <div className="font-bold font-mono text-primary text-xs flex items-center gap-1.5 flex-wrap">
                       <span>{order.order_number}</span>
+                      {order.created_offline && !order.synced_at && (
+                        <Badge
+                          variant="outline"
+                          className="text-[9px] font-bold px-1.5 py-0 h-4 border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-300 rounded"
+                        >
+                          Pending Sync
+                        </Badge>
+                      )}
                       <button
                         type="button"
                         onClick={(e) => handleCopyOrderNumber(order.order_number, e)}

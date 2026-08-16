@@ -132,6 +132,11 @@ export interface Database {
         Row: {
           id: string
           order_number: string
+          client_order_id: string | null
+          created_offline: boolean
+          offline_reference: string | null
+          offline_created_at: string | null
+          synced_at: string | null
           customer_id: string | null
           customer_name: string | null
           status: string
@@ -150,7 +155,12 @@ export interface Database {
         }
         Insert: {
           id?: string
-          order_number: string
+          order_number?: string
+          client_order_id?: string | null
+          created_offline?: boolean
+          offline_reference?: string | null
+          offline_created_at?: string | null
+          synced_at?: string | null
           customer_id?: string | null
           customer_name?: string | null
           status?: string
@@ -170,6 +180,11 @@ export interface Database {
         Update: {
           id?: string
           order_number?: string
+          client_order_id?: string | null
+          created_offline?: boolean
+          offline_reference?: string | null
+          offline_created_at?: string | null
+          synced_at?: string | null
           customer_id?: string | null
           customer_name?: string | null
           status?: string
@@ -642,6 +657,7 @@ export interface Database {
       printer_settings: {
         Row: {
           id: string
+          preferred_printer_id: string | null
           printer_name: string | null
           device_id: string | null
           paper_width: number
@@ -650,6 +666,7 @@ export interface Database {
         }
         Insert: {
           id?: string
+          preferred_printer_id?: string | null
           printer_name?: string | null
           device_id?: string | null
           paper_width?: number
@@ -658,10 +675,67 @@ export interface Database {
         }
         Update: {
           id?: string
+          preferred_printer_id?: string | null
           printer_name?: string | null
           device_id?: string | null
           paper_width?: number
           auto_connect?: boolean
+          updated_at?: string
+        }
+      }
+      saved_printers: {
+        Row: {
+          id: string
+          device_id: string
+          device_name: string | null
+          friendly_name: string | null
+          profile_key: string
+          service_uuid: string | null
+          characteristic_uuid: string | null
+          write_mode: string | null
+          chunk_size: number | null
+          paper_width: number
+          is_enabled: boolean
+          last_connected_at: string | null
+          last_connection_failed_at: string | null
+          last_error_code: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          device_id: string
+          device_name?: string | null
+          friendly_name?: string | null
+          profile_key?: string
+          service_uuid?: string | null
+          characteristic_uuid?: string | null
+          write_mode?: string | null
+          chunk_size?: number | null
+          paper_width?: number
+          is_enabled?: boolean
+          last_connected_at?: string | null
+          last_connection_failed_at?: string | null
+          last_error_code?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          device_id?: string
+          device_name?: string | null
+          friendly_name?: string | null
+          profile_key?: string
+          service_uuid?: string | null
+          characteristic_uuid?: string | null
+          write_mode?: string | null
+          chunk_size?: number | null
+          paper_width?: number
+          is_enabled?: boolean
+          last_connected_at?: string | null
+          last_connection_failed_at?: string | null
+          last_error_code?: string | null
+          created_at?: string
           updated_at?: string
         }
       }

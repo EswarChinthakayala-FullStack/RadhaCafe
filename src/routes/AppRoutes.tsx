@@ -26,6 +26,7 @@ import { SettingsPage } from '../pages/admin/SettingsPage';
 import { ReceiptsPage } from '../pages/admin/ReceiptsPage';
 import { ReceiptTemplateEditorPage } from '../pages/admin/ReceiptTemplateEditorPage';
 import { ReceiptTemplatePreviewPage } from '../pages/admin/ReceiptTemplatePreviewPage';
+import { ChangelogPage } from '../pages/admin/ChangelogPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 
 // RadhaWater Admin Modules
@@ -73,6 +74,7 @@ export function AppRoutes() {
                 <Route path="discussions" element={<DiscussionPage />} />
                 <Route path="discussions/:reviewId" element={<AdminReviewViewerPage />} />
                 <Route path="printer" element={<PrinterPage />} />
+                <Route path="changelog" element={<ChangelogPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="settings/receipts" element={<ReceiptsPage />} />
                 <Route path="settings/receipts/new" element={<ReceiptTemplateEditorPage />} />

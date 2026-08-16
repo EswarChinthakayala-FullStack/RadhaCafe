@@ -1,6 +1,14 @@
 {
+  "name": "RadhaCafe Point of Sale",
   "short_name": "RadhaCafe",
-  "name": "RadhaCafe — Modern POS & Cafe Management System",
+  "description": "Offline-First Modern Cafe Point of Sale & Thermal Receipt Billing System",
+  "start_url": "/admin/orders/new",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#180C06",
+  "theme_color": "#D97706",
+  "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
       "src": "/favicon.png",
@@ -8,23 +16,16 @@
       "type": "image/png"
     },
     {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png"
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/logo.png",
       "sizes": "512x512",
-      "type": "image/png"
-    },
-    {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ],
-  "start_url": "/",
-  "display": "standalone",
-  "theme_color": "#3E2318",
-  "background_color": "#170B06"
+  ]
 }

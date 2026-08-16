@@ -59,9 +59,9 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
         </div>
       </div>
 
-      {/* Responsive Product Grid — 8 cols laptop, 6 cols tablet, 4 cols mobile */}
-      <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-1.5 sm:gap-2 lg:gap-2">
-        {bestSellers.slice(0, 8).map((item, index) => {
+      {/* Responsive Product Grid — 7 cols desktop, 6 cols tablet, 4 cols tablet-sm, 3 cols mobile */}
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-7 gap-1.5 sm:gap-2">
+        {bestSellers.slice(0, 7).map((item, index) => {
           const qtyInCart = getItemQuantityInCart(item.id);
           const hasImage = Boolean(item.image_url);
           const isTopBest = index < 3;
@@ -70,85 +70,81 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
             <div
               key={item.id}
               onClick={() => addItem(item)}
-              className={`group/card rounded-lg border bg-card p-1 sm:p-1.5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden cursor-pointer active:scale-[0.99] select-none ${
+              className={`group/card rounded-lg border bg-card p-1 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden cursor-pointer active:scale-[0.99] select-none ${
                 qtyInCart > 0 ? 'border-cinnamon/60 ring-1 ring-cinnamon/20 bg-cinnamon/[0.02]' : 'border-border/80 hover:border-cinnamon/40'
               }`}
             >
               <div>
-                {/* Image */}
-                <div className="relative aspect-square w-full overflow-hidden rounded-md bg-white border border-border/40 flex items-center justify-center">
+                {/* Image — compact 4:3 ratio */}
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-white border border-border/40 flex items-center justify-center">
                   {hasImage ? (
                     <LazyImage
                       src={item.image_url!}
                       alt={item.name}
                       containerClassName="bg-white"
-                      className="h-full w-full object-contain p-1"
+                      className="h-full w-full object-contain p-0.5"
                     />
                   ) : (
                     <div className="h-full w-full flex flex-col items-center justify-center bg-secondary/40 text-muted-foreground/40 gap-0.5">
-                      <HugeiconsIcon icon={Coffee02Icon} size={18} />
-                      <span className="text-[7.5px] font-bold uppercase tracking-wider">RadhaCafe</span>
+                      <HugeiconsIcon icon={Coffee02Icon} size={16} />
+                      <span className="text-[7px] font-bold uppercase tracking-wider">RadhaCafe</span>
                     </div>
                   )}
-                  {/* System Priority Badges — Micro icon on mobile (never blocks image), full label on tablet/desktop */}
-                  <div className="absolute top-1 left-1 z-10 pointer-events-none">
+                  {/* System Priority Badges — Icon only */}
+                  <div className="absolute top-0.5 left-0.5 z-10 pointer-events-none">
                     {isTopBest ? (
                       <div
-                        className="h-4 w-4 sm:h-auto sm:w-auto sm:px-1.5 sm:py-0.5 rounded-full sm:rounded bg-orange-600/95 text-white flex items-center justify-center gap-0.5 shadow-xs"
+                        className="w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full bg-orange-600/95 text-white flex items-center justify-center shadow-xs border border-white/20"
                         title="Best Seller"
                       >
-                        <HugeiconsIcon icon={Award01Icon} size={8.5} className="shrink-0" />
-                        <span className="hidden sm:inline text-[8px] font-bold truncate leading-tight">Best Seller</span>
+                        <HugeiconsIcon icon={Award01Icon} size={9} className="shrink-0" />
                       </div>
                     ) : (
                       <div
-                        className="h-4 w-4 sm:h-auto sm:w-auto sm:px-1.5 sm:py-0.5 rounded-full sm:rounded bg-cinnamon/95 text-white flex items-center justify-center gap-0.5 shadow-xs"
+                        className="w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full bg-cinnamon/95 text-white flex items-center justify-center shadow-xs border border-white/20"
                         title="Popular"
                       >
-                        <HugeiconsIcon icon={FireIcon} size={8.5} className="shrink-0" />
-                        <span className="hidden sm:inline text-[8px] font-bold truncate leading-tight">Popular</span>
+                        <HugeiconsIcon icon={FireIcon} size={9} className="shrink-0" />
                       </div>
                     )}
                   </div>
                   {qtyInCart > 0 && (
-                    <div className="absolute top-1 right-1 bg-cinnamon text-white text-[9px] font-mono font-bold h-4.5 min-w-[18px] px-0.5 rounded-full flex items-center justify-center shadow-md border border-white/30">
+                    <div className="absolute top-0.5 right-0.5 bg-cinnamon text-white text-[8px] font-mono font-bold h-4 min-w-[16px] px-0.5 rounded-full flex items-center justify-center shadow-md border border-white/30">
                       {qtyInCart}
                     </div>
                   )}
                 </div>
 
-                {/* Info */}
-                <div className="space-y-0.5 pt-1">
-                  <span className="text-[8px] sm:text-[9px] font-semibold text-muted-foreground uppercase tracking-wider truncate block">
+                {/* Info — compact with 2-line name */}
+                <div className="pt-0.5 px-0.5">
+                  <span className="text-[7px] sm:text-[8px] font-semibold text-muted-foreground uppercase tracking-wider truncate block leading-tight">
                     {item.category?.name || 'Best Seller'}
                   </span>
-                  <h4 className="font-bold text-[11px] sm:text-xs text-foreground line-clamp-1 leading-tight group-hover/card:text-cinnamon transition-colors" title={item.name}>
+                  <h4 className="font-bold text-[10px] sm:text-[11px] text-foreground line-clamp-2 leading-snug group-hover/card:text-cinnamon transition-colors min-h-[2lh]" title={item.name}>
                     {item.name}
                   </h4>
-                  <div>
-                    <span className="font-extrabold text-[11px] sm:text-xs text-cinnamon font-heading">
-                      {formatCurrency(item.price)}
-                    </span>
-                  </div>
+                  <span className="font-extrabold text-[10px] sm:text-[11px] text-cinnamon font-heading leading-none">
+                    {formatCurrency(item.price)}
+                  </span>
                 </div>
               </div>
 
-              {/* Dedicated Compact Action Row */}
-              <div className="pt-1 mt-1 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
+              {/* Compact Action Row */}
+              <div className="pt-0.5 mt-0.5 border-t border-border/40 px-0.5 pb-0.5" onClick={(e) => e.stopPropagation()}>
                 {qtyInCart > 0 ? (
-                  <div className="w-full h-6 sm:h-6.5 bg-cinnamon text-white rounded-md flex items-center justify-between px-0.5 shadow-2xs">
+                  <div className="w-full h-5.5 sm:h-6 bg-cinnamon text-white rounded flex items-center justify-between px-0.5 shadow-2xs">
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         updateQuantity(item.id, qtyInCart - 1);
                       }}
-                      className="h-5 w-5 sm:w-6 rounded flex items-center justify-center text-white hover:bg-black/20 active:scale-90 transition-all"
+                      className="h-4.5 w-4.5 sm:w-5 rounded flex items-center justify-center text-white hover:bg-black/20 active:scale-90 transition-all"
                       aria-label={`Decrease ${item.name}`}
                     >
-                      <HugeiconsIcon icon={MinusSignIcon} size={11} />
+                      <HugeiconsIcon icon={MinusSignIcon} size={10} />
                     </button>
-                    <span className="text-[11px] sm:text-xs font-bold font-mono text-white select-none leading-none">
+                    <span className="text-[10px] sm:text-[11px] font-bold font-mono text-white select-none leading-none">
                       {qtyInCart}
                     </span>
                     <button
@@ -157,10 +153,10 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
                         e.stopPropagation();
                         updateQuantity(item.id, qtyInCart + 1);
                       }}
-                      className="h-5 w-5 sm:w-6 rounded flex items-center justify-center text-white hover:bg-black/20 active:scale-90 transition-all"
+                      className="h-4.5 w-4.5 sm:w-5 rounded flex items-center justify-center text-white hover:bg-black/20 active:scale-90 transition-all"
                       aria-label={`Increase ${item.name}`}
                     >
-                      <HugeiconsIcon icon={PlusSignIcon} size={11} />
+                      <HugeiconsIcon icon={PlusSignIcon} size={10} />
                     </button>
                   </div>
                 ) : (
@@ -170,9 +166,9 @@ export function BestSellersSection({ bestSellers, isLoading }: BestSellersSectio
                       e.stopPropagation();
                       addItem(item);
                     }}
-                    className="w-full h-6 sm:h-6.5 bg-cinnamon/10 hover:bg-cinnamon text-cinnamon hover:text-white font-bold text-[10px] sm:text-[11px] rounded-md transition-all flex items-center justify-center gap-0.5 active:scale-[0.98] border border-cinnamon/20 hover:border-cinnamon"
+                    className="w-full h-5.5 sm:h-6 bg-cinnamon/10 hover:bg-cinnamon text-cinnamon hover:text-white font-bold text-[9px] sm:text-[10px] rounded transition-all flex items-center justify-center gap-0.5 active:scale-[0.98] border border-cinnamon/20 hover:border-cinnamon"
                   >
-                    <HugeiconsIcon icon={PlusSignIcon} size={11} />
+                    <HugeiconsIcon icon={PlusSignIcon} size={10} />
                     <span>Add</span>
                   </button>
                 )}
