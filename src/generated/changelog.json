@@ -1,14 +1,27 @@
 {
-  "generatedAt": "2026-08-16T22:34:21.460Z",
-  "latestCommit": "1d3c806",
-  "totalEntries": 122,
+  "generatedAt": "2026-08-16T22:36:04.865Z",
+  "latestCommit": "27f8ced",
+  "totalEntries": 123,
   "releases": [
     {
       "id": "rel-2026-08-17",
       "title": "17 Aug 2026",
-      "date": "2026-08-17T03:58:37+05:30",
+      "date": "2026-08-17T04:04:45+05:30",
       "isLatest": true,
       "entries": [
+        {
+          "id": "27f8ced",
+          "title": "Tighten Bottom Receipt Spacing to 1 Line Feed",
+          "description": "Resolved an issue with tighten Bottom Receipt Spacing to 1 Line Feed to ensure consistent behavior throughout Receipts.",
+          "category": "fixed",
+          "area": "Receipts",
+          "date": "17 Aug 2026",
+          "commitHash": "27f8ced0beff657164f0dc1e5a5914020be4011e",
+          "shortHash": "27f8ced",
+          "isBreaking": false,
+          "rawType": "fix",
+          "rawScope": "receipts"
+        },
         {
           "id": "1d3c806",
           "title": "Add Watermark, Anti-Copy Branding, and Calibration Test",

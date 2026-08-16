@@ -364,7 +364,6 @@ export function encodeTemplateReceiptToEscPos(
 
       if (wmPosition === 'upper') {
         renderWatermarkBlock();
-        if (dividerLine) addText(`${dividerLine}\n`);
       }
     } else if (sec === 'orderInfo') {
       applyAlignment(config.orderInfo.alignment);
@@ -438,19 +437,19 @@ export function encodeTemplateReceiptToEscPos(
         }
       });
 
-      if (config.items.dividerAfter && dividerLine) {
+      if (config.items.dividerAfter && dividerLine && wmPosition !== 'center') {
         addText(`${dividerLine}\n`);
       }
 
       // Center watermark positioned directly between items and totals
       if (wmPosition === 'center') {
-        renderWatermarkBlock();
         if (dividerLine) addText(`${dividerLine}\n`);
+        renderWatermarkBlock();
       }
     } else if (sec === 'summary') {
       applyAlignment('left');
 
-      if (config.summary.dividerBeforeTotal && dividerLine) {
+      if (config.summary.dividerBeforeTotal && dividerLine && wmPosition !== 'center' && !config.items.dividerAfter) {
         addText(`${dividerLine}\n`);
       }
 
@@ -488,7 +487,6 @@ export function encodeTemplateReceiptToEscPos(
 
       if (wmPosition === 'lower') {
         renderWatermarkBlock();
-        if (dividerLine) addText(`${dividerLine}\n`);
       }
     } else if (sec === 'footer') {
       applyAlignment(config.footer.alignment);

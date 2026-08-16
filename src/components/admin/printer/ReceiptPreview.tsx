@@ -258,10 +258,7 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
 
                   {/* Upper Position Watermark */}
                   {wmPosition === 'upper' && (
-                    <>
-                      <WatermarkPreviewBlock watermark={branding.watermark} logoUrl={logoUrl} />
-                      <ReceiptDivider style={config.dividerStyle} />
-                    </>
+                    <WatermarkPreviewBlock watermark={branding.watermark} logoUrl={logoUrl} />
                   )}
                 </section>
               );
@@ -365,7 +362,7 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
                 <section key={`${sectionKey}-${index}`} className="w-full space-y-1">
                   {/* Table Column Headers */}
                   {config.items.showHeaders && (
-                    <div className="flex items-baseline justify-between gap-1 pb-0.5 text-[10.5px] font-black uppercase text-black border-b border-black/30">
+                    <div className="flex items-baseline justify-between gap-1 pb-0.5 text-[10.5px] font-black uppercase text-black">
                       <span className="flex-1 text-left">Item</span>
                       <span className="w-8 text-center shrink-0">Qty</span>
                       {showUnitPrice && isWide && (
@@ -424,13 +421,15 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
                     ))}
                   </div>
 
-                  {config.items.dividerAfter && <ReceiptDivider style={config.dividerStyle} />}
+                  {config.items.dividerAfter && wmPosition !== 'center' && (
+                    <ReceiptDivider style={config.dividerStyle} />
+                  )}
 
                   {/* Center Position Watermark (Between Items and Totals) */}
                   {wmPosition === 'center' && (
                     <>
-                      <WatermarkPreviewBlock watermark={branding.watermark} logoUrl={logoUrl} />
                       <ReceiptDivider style={config.dividerStyle} />
+                      <WatermarkPreviewBlock watermark={branding.watermark} logoUrl={logoUrl} />
                     </>
                   )}
                 </section>
@@ -441,9 +440,16 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
             // SECTION: SUMMARY & TOTALS (Immune to clipping / misalignments)
             // -------------------------------------------------------------
             if (sectionKey === 'summary') {
+              const hasBreakdownRows =
+                (config.summary.subtotalVisible && data.subtotal > 0) ||
+                (config.summary.taxVisible && data.tax > 0) ||
+                (config.summary.discountVisible && data.discount > 0);
+
               return (
                 <section key={`${sectionKey}-${index}`} className="w-full space-y-1">
-                  {config.summary.dividerBeforeTotal && <ReceiptDivider style={config.dividerStyle} />}
+                  {config.summary.dividerBeforeTotal && wmPosition !== 'center' && !config.items.dividerAfter && (
+                    <ReceiptDivider style={config.dividerStyle} />
+                  )}
 
                   {/* Subtotal */}
                   {config.summary.subtotalVisible && (
@@ -471,7 +477,9 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
 
                   {/* Grand Total */}
                   <div
-                    className={`flex items-baseline justify-between gap-2 border-t border-black/20 pt-1.5 mt-1 ${
+                    className={`flex items-baseline justify-between gap-2 pt-1 ${
+                      hasBreakdownRows ? 'border-t border-black/20 pt-1.5 mt-1' : ''
+                    } ${
                       config.summary.doubleSizeTotal
                         ? 'text-sm sm:text-[15px] font-black tracking-tight'
                         : config.summary.grandTotalBold
@@ -517,10 +525,7 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
 
                   {/* Lower Position Watermark */}
                   {wmPosition === 'lower' && (
-                    <>
-                      <WatermarkPreviewBlock watermark={branding.watermark} logoUrl={logoUrl} />
-                      <ReceiptDivider style={config.dividerStyle} />
-                    </>
+                    <WatermarkPreviewBlock watermark={branding.watermark} logoUrl={logoUrl} />
                   )}
                 </section>
               );
