@@ -1,13 +1,34 @@
 {
-  "generatedAt": "2026-08-16T21:07:28.007Z",
-  "latestCommit": "4c27115",
-  "totalEntries": 116,
+  "generatedAt": "2026-08-16T21:51:10.763Z",
+  "latestCommit": "823cb31",
+  "totalEntries": 117,
   "releases": [
+    {
+      "id": "rel-2026-08-17",
+      "title": "17 Aug 2026",
+      "date": "2026-08-17T02:40:31+05:30",
+      "isLatest": true,
+      "entries": [
+        {
+          "id": "823cb31",
+          "title": "Background Receipt Queue with Configurable Tear Delay, Paper Gaps, and Changelog V2 Release Timeline",
+          "description": "Added background Receipt Queue with Configurable Tear Delay, Paper Gaps, and Changelog V2 Release Timeline to provide enhanced capabilities and visibility across Printer.",
+          "category": "new",
+          "area": "Printer",
+          "date": "17 Aug 2026",
+          "commitHash": "823cb3194a2963009b7d38155483dac30aa8083c",
+          "shortHash": "823cb31",
+          "isBreaking": false,
+          "rawType": "feat",
+          "rawScope": "printer"
+        }
+      ]
+    },
     {
       "id": "rel-2026-08-15",
       "title": "15 Aug 2026",
       "date": "2026-08-15T23:01:54+05:30",
-      "isLatest": true,
+      "isLatest": false,
       "entries": [
         {
           "id": "4c27115",

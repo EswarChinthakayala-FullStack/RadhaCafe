@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
 import {
@@ -53,7 +53,6 @@ export function ChangelogToolbar({
   onJumpToRelease,
 }: ChangelogToolbarProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
   // Global '/' keyboard shortcut to focus search
   useEffect(() => {
@@ -75,12 +74,13 @@ export function ChangelogToolbar({
   return (
     <nav
       aria-label="Changelog filters and search"
-      className="sticky -top-4 md:-top-6 z-20 -mx-4 md:-mx-6 px-4 md:px-6 py-2.5 bg-white/95 dark:bg-card/95 backdrop-blur-xl border-y border-border/80 shadow-xs w-[calc(100%+2rem)] md:w-[calc(100%+3rem)] transition-all"
+      className="sticky -top-4 md:-top-6 z-20 -mx-4 md:-mx-6 px-4 md:px-6 py-2 bg-white/95 dark:bg-card/95 backdrop-blur-xl border-y border-border/80 shadow-xs w-[calc(100%+2rem)] md:w-[calc(100%+3rem)] transition-all"
     >
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 w-full min-w-0 max-w-7xl mx-auto">
-        {/* Left: Search Bar & Mobile Toggle */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 w-full min-w-0 max-w-7xl mx-auto">
+        {/* ── Top Bar on Mobile / Left Side on Desktop ── */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="relative flex-1 max-w-sm">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-0 max-w-full sm:max-w-xs md:max-w-sm">
             <HugeiconsIcon
               icon={Search01Icon}
               size={14}
@@ -91,7 +91,7 @@ export function ChangelogToolbar({
               value={filters.search}
               onChange={(e) => onFilterChange({ ...filters, search: e.target.value })}
               placeholder="Search updates..."
-              className="h-8.5 pl-8.5 pr-14 text-xs rounded-xl bg-card border-border/80 shadow-2xs focus-visible:ring-cinnamon/20"
+              className="h-8 pl-8 pr-12 text-xs rounded-xl bg-secondary/30 sm:bg-card border-border/80 shadow-2xs focus-visible:ring-cinnamon/20"
               aria-label="Search changelog updates"
             />
 
@@ -103,7 +103,7 @@ export function ChangelogToolbar({
                   onFilterChange({ ...filters, search: '' });
                   searchInputRef.current?.focus();
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors cursor-pointer"
                 aria-label="Clear search"
               >
                 <HugeiconsIcon icon={Cancel01Icon} size={12} />
@@ -115,25 +115,37 @@ export function ChangelogToolbar({
             )}
           </div>
 
-          {/* Mobile Search Toggle Icon */}
-          <div className="sm:hidden flex items-center">
-            <button
-              type="button"
-              onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
-              className={`p-1.5 rounded-lg border text-muted-foreground ${
-                isMobileSearchOpen ? 'bg-secondary text-foreground' : 'border-border/60'
-              }`}
-              aria-label="Toggle mobile search"
+          {/* Area Filter on Mobile (Inline next to search) */}
+          <div className="sm:hidden w-28 shrink-0">
+            <Select
+              value={filters.area}
+              onValueChange={(val: any) => onFilterChange({ ...filters, area: val || 'all' })}
             >
-              <HugeiconsIcon icon={Search01Icon} size={15} />
-            </button>
+              <SelectTrigger
+                className="h-8 text-xs font-medium rounded-xl bg-secondary/30 border-border/80 shadow-2xs px-2"
+                aria-label="Filter by product area"
+              >
+                <div className="flex items-center gap-1 truncate">
+                  <HugeiconsIcon icon={FilterIcon} size={11} className="text-muted-foreground shrink-0" />
+                  <span className="truncate">{filters.area === 'all' ? 'All Areas' : filters.area}</span>
+                </div>
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border/80 rounded-xl text-xs shadow-xl max-h-60">
+                <SelectItem value="all">All Areas</SelectItem>
+                {availableAreas.map((area) => (
+                  <SelectItem key={area} value={area}>
+                    {area}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        {/* Right: Category Tabs + Area Filter + Release Jump + Clear */}
-        <div className="flex items-center gap-2 flex-wrap justify-between md:justify-end">
-          {/* Category Segmented Control */}
-          <div className="flex items-center p-0.5 rounded-xl bg-secondary/60 border border-border/70 text-xs font-semibold shadow-2xs overflow-x-auto max-w-full">
+        {/* ── Category Chips & Desktop Filters ── */}
+        <div className="flex items-center gap-2 justify-between sm:justify-end overflow-x-auto no-scrollbar py-0.5 sm:py-0">
+          {/* Category Segmented Bar */}
+          <div className="flex items-center p-0.5 rounded-xl bg-secondary/50 border border-border/70 text-xs font-semibold shadow-2xs shrink-0">
             {CATEGORY_TABS.map((tab) => {
               const isSelected = filters.category === tab.id;
               const Icon = tab.icon;
@@ -142,21 +154,21 @@ export function ChangelogToolbar({
                   key={tab.id}
                   type="button"
                   onClick={() => onFilterChange({ ...filters, category: tab.id })}
-                  className={`h-7 px-2.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                  className={`h-7 px-2.5 sm:px-3 rounded-lg text-xs transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap ${
                     isSelected
                       ? 'bg-card text-foreground shadow-xs font-bold border border-border/60'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {Icon && <HugeiconsIcon icon={Icon} size={12} className="shrink-0" />}
+                  {Icon && <HugeiconsIcon icon={Icon} size={11} className="shrink-0" />}
                   <span>{tab.label}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* Area Filter Dropdown */}
-          <div className="w-32 sm:w-36">
+          {/* Area Filter Dropdown on Tablet & Desktop */}
+          <div className="hidden sm:block w-32 md:w-36 shrink-0">
             <Select
               value={filters.area}
               onValueChange={(val: any) => onFilterChange({ ...filters, area: val || 'all' })}
@@ -170,7 +182,7 @@ export function ChangelogToolbar({
                   <SelectValue placeholder="All Areas" />
                 </div>
               </SelectTrigger>
-              <SelectContent className="bg-card border-border/80 rounded-xl text-xs shadow-xl">
+              <SelectContent className="bg-card border-border/80 rounded-xl text-xs shadow-xl max-h-60">
                 <SelectItem value="all">All Areas</SelectItem>
                 {availableAreas.map((area) => (
                   <SelectItem key={area} value={area}>
@@ -181,9 +193,9 @@ export function ChangelogToolbar({
             </Select>
           </div>
 
-          {/* Jump to Date Selector */}
+          {/* Jump to Date Selector (Desktop Only) */}
           {availableReleases.length > 1 && (
-            <div className="w-32 hidden xl:block">
+            <div className="hidden lg:block w-32 shrink-0">
               <Select
                 onValueChange={(val: any) => {
                   if (typeof val === 'string' && val) {
@@ -197,7 +209,7 @@ export function ChangelogToolbar({
                     <span>Jump to Date</span>
                   </div>
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border/80 rounded-xl text-xs shadow-xl">
+                <SelectContent className="bg-card border-border/80 rounded-xl text-xs shadow-xl max-h-60">
                   {availableReleases.map((rel) => (
                     <SelectItem key={rel.id} value={rel.id}>
                       {rel.title} ({rel.count})
@@ -213,12 +225,13 @@ export function ChangelogToolbar({
             <Button
               type="button"
               variant="ghost"
-              size="sm"
+              size="xs"
               onClick={onResetFilters}
-              className="h-8 text-xs font-semibold text-muted-foreground hover:text-foreground px-2 gap-1 rounded-xl"
+              className="h-7 text-xs font-semibold text-muted-foreground hover:text-foreground px-2 gap-1 rounded-lg shrink-0 cursor-pointer"
             >
-              <HugeiconsIcon icon={Cancel01Icon} size={12} />
-              <span>Clear ({activeFilterCount})</span>
+              <HugeiconsIcon icon={Cancel01Icon} size={11} />
+              <span className="hidden sm:inline">Clear</span>
+              <span>({activeFilterCount})</span>
             </Button>
           )}
         </div>
@@ -226,8 +239,8 @@ export function ChangelogToolbar({
 
       {/* Live Filter Sub-Bar */}
       {isFiltered && (
-        <div className="pt-2 mt-1 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground max-w-7xl mx-auto">
-          <span>
+        <div className="pt-1.5 mt-1 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground max-w-7xl mx-auto">
+          <span className="truncate pr-2">
             {filters.search
               ? `${totalFilteredEntries} result${totalFilteredEntries === 1 ? '' : 's'} for "${filters.search}"`
               : `${totalFilteredEntries} of ${totalEntries} updates match filters`}
@@ -235,9 +248,9 @@ export function ChangelogToolbar({
           <button
             type="button"
             onClick={onResetFilters}
-            className="text-cinnamon hover:underline font-semibold"
+            className="text-cinnamon hover:underline font-semibold shrink-0 cursor-pointer"
           >
-            Reset all filters
+            Reset
           </button>
         </div>
       )}

@@ -88,7 +88,7 @@ export function ChangelogTimeline({ releases }: ChangelogTimelineProps) {
             {/* ── Mobile Layout (< 768px) ── */}
             <div className="md:hidden space-y-3 w-full min-w-0">
               {/* Mobile Release Group Header */}
-              <div className="sticky top-14 z-10 bg-white/95 dark:bg-card/95 backdrop-blur-md py-2 border-b border-border/50 flex items-center justify-between gap-2">
+              <div className="py-2 border-b border-border/60 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                   <HugeiconsIcon icon={Calendar01Icon} size={14} className="text-cinnamon" />
                   <h2
