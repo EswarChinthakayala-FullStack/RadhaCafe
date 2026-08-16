@@ -18,6 +18,8 @@ import type {
   EmphasisType,
   DividerStyleType,
   SectionType,
+  LogoAlignment,
+  BrandingConfig,
 } from '../../types';
 import { ReceiptPreview } from '../../components/admin/printer/ReceiptPreview';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -76,6 +78,9 @@ import {
   ArrowUp01Icon,
   ArrowDown01Icon,
   Loading03Icon,
+  SparklesIcon,
+  AlertCircleIcon,
+  ArrowRight01Icon,
 } from '@hugeicons/core-free-icons';
 
 export function ReceiptTemplateEditorPage() {
@@ -422,6 +427,31 @@ export function ReceiptTemplateEditorPage() {
       ? SAMPLE_DATASETS.walkIn
       : SAMPLE_DATASETS.paid;
 
+  const branding: BrandingConfig = draftConfig.branding || {
+    showLogo: true,
+    logoAlignment: 'center',
+    logoSize: 'medium',
+    showAuthenticityMark: true,
+    authenticityText: 'Official RadhaCafe Receipt',
+    showReceiptReference: true,
+  };
+
+  const updateBranding = (updates: Partial<BrandingConfig>) => {
+    updateDraft((prev) => ({
+      ...prev,
+      branding: {
+        showLogo: true,
+        logoAlignment: 'center',
+        logoSize: 'medium',
+        showAuthenticityMark: true,
+        authenticityText: 'Official RadhaCafe Receipt',
+        showReceiptReference: true,
+        ...(prev.branding || {}),
+        ...updates,
+      },
+    }));
+  };
+
   return (
     <div className="space-y-5 pb-20 w-full min-w-0">
       {/* 1. STICKY TOP BAR */}
@@ -640,10 +670,10 @@ export function ReceiptTemplateEditorPage() {
               <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-cinnamon">Customize template</p>
               <h2 className="font-heading text-base font-bold text-foreground">Receipt content & layout</h2>
             </div>
-            <Badge variant="outline" className="bg-card text-[10px] font-semibold text-muted-foreground">9 sections</Badge>
+            <Badge variant="outline" className="bg-card text-[10px] font-semibold text-muted-foreground">10 sections</Badge>
           </div>
 
-          <Accordion defaultValue={['paper']} className="space-y-3 w-full">
+          <Accordion defaultValue={['paper', 'branding-authenticity']} className="space-y-3 w-full">
             {/* Section 1: Template & Paper Setup */}
             <AccordionItem value="paper" className="border border-border/80 rounded-2xl bg-card px-4 sm:px-5 shadow-xs overflow-hidden">
               <AccordionTrigger className="hover:no-underline py-4">
@@ -733,7 +763,191 @@ export function ReceiptTemplateEditorPage() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Section 2: Cafe Header & Branding */}
+            {/* Section 2: Branding & Authenticity */}
+            <AccordionItem value="branding-authenticity" className="border border-border/80 rounded-2xl bg-card px-4 sm:px-5 shadow-xs overflow-hidden">
+              <AccordionTrigger className="hover:no-underline py-4">
+                <div className="flex items-center gap-2.5 text-left">
+                  <div className="p-2 rounded-xl bg-cinnamon/10 text-cinnamon border border-cinnamon/20 shadow-2xs shrink-0">
+                    <HugeiconsIcon icon={SparklesIcon} size={16} />
+                  </div>
+                  <div>
+                    <span className="font-bold text-sm font-heading text-foreground block">
+                      2. Branding & Authenticity
+                    </span>
+                    <span className="text-[11px] text-muted-foreground font-normal">
+                      RadhaCafe logo, alignment, authenticity seal, and order reference
+                    </span>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-1 pb-5 text-xs">
+                {/* 1. Show Logo Switch */}
+                <div className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-secondary/20">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="toggle-branding-logo" className="text-xs font-semibold text-foreground cursor-pointer block">
+                      Show RadhaCafe Logo
+                    </Label>
+                    <p className="text-[10px] text-muted-foreground">
+                      Display the official Cafe logo at the top of this receipt slip.
+                    </p>
+                  </div>
+                  <Switch
+                    id="toggle-branding-logo"
+                    checked={branding.showLogo}
+                    onCheckedChange={(val: boolean) => updateBranding({ showLogo: val })}
+                  />
+                </div>
+
+                {/* Logo Options (if showLogo is true) */}
+                {branding.showLogo && (
+                  <div className="space-y-3.5 pl-3 border-l-2 border-cinnamon/40 ml-1 py-1">
+                    {/* Logo Source Check */}
+                    {cafeSettings?.receipt_logo_url || cafeSettings?.logo_url ? (
+                      <div className="flex items-center gap-3 p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                        <img
+                          src={(cafeSettings.receipt_logo_url || cafeSettings.logo_url) ?? undefined}
+                          alt="Configured Cafe Logo"
+                          className="h-9 w-16 object-contain rounded bg-white p-1 border border-border/60 shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
+                            Using Official Cafe Logo
+                          </p>
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            Source: {cafeSettings.receipt_logo_url ? 'Thermal Receipt Logo' : 'Cafe Settings Logo'}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10">
+                        <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                          <HugeiconsIcon icon={AlertCircleIcon} size={16} className="shrink-0" />
+                          <span className="text-[11px] font-semibold">No Cafe logo configured yet.</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(ROUTES.ADMIN.SETTINGS)}
+                          className="h-7 text-[10px] font-bold rounded-lg border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+                        >
+                          <span>Add in Settings</span>
+                          <HugeiconsIcon icon={ArrowRight01Icon} size={11} className="ml-1" />
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Logo Position / Alignment */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-foreground">Logo Position</Label>
+                      <div className="flex items-center bg-secondary/40 p-1 rounded-xl border border-border/70">
+                        {(['left', 'center', 'right'] as LogoAlignment[]).map((pos) => (
+                          <button
+                            key={pos}
+                            type="button"
+                            onClick={() => updateBranding({ logoAlignment: pos })}
+                            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg capitalize transition-all ${
+                              branding.logoAlignment === pos
+                                ? 'bg-card text-foreground shadow-2xs font-bold ring-1 ring-border/50'
+                                : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            {pos}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Logo Size */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-foreground">Logo Size</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {(
+                          [
+                            { key: 'small', label: 'Small', desc: '35% width' },
+                            { key: 'medium', label: 'Medium', desc: '55% width' },
+                            { key: 'large', label: 'Large', desc: '75% width' },
+                          ] as const
+                        ).map((s) => (
+                          <button
+                            key={s.key}
+                            type="button"
+                            onClick={() => updateBranding({ logoSize: s.key })}
+                            className={`p-2 rounded-xl border text-center transition-all ${
+                              branding.logoSize === s.key
+                                ? 'bg-cinnamon/10 border-cinnamon text-cinnamon font-bold ring-1 ring-cinnamon shadow-2xs'
+                                : 'bg-card border-border/80 text-foreground hover:bg-secondary/60'
+                            }`}
+                          >
+                            <span className="block text-xs">{s.label}</span>
+                            <span className="text-[9px] text-muted-foreground font-normal">{s.desc}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Official Receipt Authenticity Mark */}
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-secondary/20">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="toggle-branding-mark" className="text-xs font-semibold text-foreground cursor-pointer block">
+                        Official Receipt Mark
+                      </Label>
+                      <p className="text-[10px] text-muted-foreground">
+                        Add an official RadhaCafe identifier to help distinguish genuine receipts.
+                      </p>
+                    </div>
+                    <Switch
+                      id="toggle-branding-mark"
+                      checked={branding.showAuthenticityMark}
+                      onCheckedChange={(val: boolean) => updateBranding({ showAuthenticityMark: val })}
+                    />
+                  </div>
+
+                  {branding.showAuthenticityMark && (
+                    <div className="pl-3 border-l-2 border-cinnamon/40 ml-1 py-1 space-y-1.5">
+                      <Label htmlFor="branding-authenticity-text" className="text-xs font-semibold text-foreground">
+                        Authenticity Identifier Text
+                      </Label>
+                      <Input
+                        id="branding-authenticity-text"
+                        value={branding.authenticityText}
+                        maxLength={120}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                          updateBranding({ authenticityText: e.target.value })
+                        }
+                        placeholder="Official RadhaCafe Receipt"
+                        className="h-9 text-xs rounded-xl"
+                      />
+                      <p className="text-[10px] text-muted-foreground">
+                        Printed beneath the Cafe brand heading to certify transaction authenticity.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Show Receipt Reference Switch */}
+                <div className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-secondary/20">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="toggle-branding-ref" className="text-xs font-semibold text-foreground cursor-pointer block">
+                      Show Receipt Reference
+                    </Label>
+                    <p className="text-[10px] text-muted-foreground">
+                      Include the unique order verification reference on the receipt slip.
+                    </p>
+                  </div>
+                  <Switch
+                    id="toggle-branding-ref"
+                    checked={branding.showReceiptReference}
+                    onCheckedChange={(val: boolean) => updateBranding({ showReceiptReference: val })}
+                  />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Section 3: Cafe Header & Business Info */}
             <AccordionItem value="branding" className="border border-border/80 rounded-2xl bg-card px-4 sm:px-5 shadow-xs overflow-hidden">
               <AccordionTrigger className="hover:no-underline py-4">
                 <div className="flex items-center gap-2.5 text-left">
@@ -742,10 +956,10 @@ export function ReceiptTemplateEditorPage() {
                   </div>
                   <div>
                     <span className="font-bold text-sm font-heading text-foreground block">
-                      2. Cafe Header & Branding
+                      3. Cafe Header & Business Details
                     </span>
                     <span className="text-[11px] text-muted-foreground font-normal">
-                      Cafe name, alignment, tagline, address, and phone details
+                      Cafe display name, tagline, address, phone, and typography
                     </span>
                   </div>
                 </div>
@@ -917,7 +1131,7 @@ export function ReceiptTemplateEditorPage() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Section 3: Order Details */}
+            {/* Section 4: Order Details */}
             <AccordionItem value="orderInfo" className="border border-border/80 rounded-2xl bg-card px-4 sm:px-5 shadow-xs overflow-hidden">
               <AccordionTrigger className="hover:no-underline py-4">
                 <div className="flex items-center gap-2.5 text-left">
@@ -926,7 +1140,7 @@ export function ReceiptTemplateEditorPage() {
                   </div>
                   <div>
                     <span className="font-bold text-sm font-heading text-foreground block">
-                      3. Order Information Metadata
+                      4. Order Information Metadata
                     </span>
                     <span className="text-[11px] text-muted-foreground font-normal">
                       Order number, timestamp, cashier name, and order status
@@ -979,7 +1193,7 @@ export function ReceiptTemplateEditorPage() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Section 4: Customer Details & Pay Later */}
+            {/* Section 5: Customer Details & Pay Later */}
             <AccordionItem value="customer" className="border border-border/80 rounded-2xl bg-card px-4 sm:px-5 shadow-xs overflow-hidden">
               <AccordionTrigger className="hover:no-underline py-4">
                 <div className="flex items-center gap-2.5 text-left">
@@ -988,7 +1202,7 @@ export function ReceiptTemplateEditorPage() {
                   </div>
                   <div>
                     <span className="font-bold text-sm font-heading text-foreground block">
-                      4. Customer Details & Credit Ledger
+                      5. Customer Details & Credit Ledger
                     </span>
                     <span className="text-[11px] text-muted-foreground font-normal">
                       Customer name, phone, and Pay Later account indicator
@@ -1040,7 +1254,7 @@ export function ReceiptTemplateEditorPage() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Section 5: Items Presentation */}
+            {/* Section 6: Items Presentation */}
             <AccordionItem value="items" className="border border-border/80 rounded-2xl bg-card px-4 sm:px-5 shadow-xs overflow-hidden">
               <AccordionTrigger className="hover:no-underline py-4">
                 <div className="flex items-center gap-2.5 text-left">
@@ -1049,7 +1263,7 @@ export function ReceiptTemplateEditorPage() {
                   </div>
                   <div>
                     <span className="font-bold text-sm font-heading text-foreground block">
-                      5. Items Table & Wrapping
+                      6. Items Table & Wrapping
                     </span>
                     <span className="text-[11px] text-muted-foreground font-normal">
                       Table headers, unit rates, two-line wrapping, and item dividers
@@ -1102,7 +1316,7 @@ export function ReceiptTemplateEditorPage() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Section 6: Totals Breakdown */}
+            {/* Section 7: Totals Breakdown */}
             <AccordionItem value="totals" className="border border-border/80 rounded-2xl bg-card px-4 sm:px-5 shadow-xs overflow-hidden">
               <AccordionTrigger className="hover:no-underline py-4">
                 <div className="flex items-center gap-2.5 text-left">
@@ -1111,7 +1325,7 @@ export function ReceiptTemplateEditorPage() {
                   </div>
                   <div>
                     <span className="font-bold text-sm font-heading text-foreground block">
-                      6. Totals Breakdown & Emphasis
+                      7. Totals Breakdown & Emphasis
                     </span>
                     <span className="text-[11px] text-muted-foreground font-normal">
                       Subtotal, GST Tax, Discount, Grand Total size, and Pay Later balance
@@ -1210,7 +1424,7 @@ export function ReceiptTemplateEditorPage() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Section 7: Dividers & Feed Spacing */}
+            {/* Section 8: Dividers & Feed Spacing */}
             <AccordionItem value="dividers" className="border border-border/80 rounded-2xl bg-card px-4 sm:px-5 shadow-xs overflow-hidden">
               <AccordionTrigger className="hover:no-underline py-4">
                 <div className="flex items-center gap-2.5 text-left">
@@ -1219,7 +1433,7 @@ export function ReceiptTemplateEditorPage() {
                   </div>
                   <div>
                     <span className="font-bold text-sm font-heading text-foreground block">
-                      7. Dividers & Paper Feed
+                      8. Dividers & Paper Feed
                     </span>
                     <span className="text-[11px] text-muted-foreground font-normal">
                       Separator characters and blank paper feed lines before cut
@@ -1279,7 +1493,7 @@ export function ReceiptTemplateEditorPage() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Section 8: Footer Messages */}
+            {/* Section 9: Footer Messages */}
             <AccordionItem value="footer" className="border border-border/80 rounded-2xl bg-card px-4 sm:px-5 shadow-xs overflow-hidden">
               <AccordionTrigger className="hover:no-underline py-4">
                 <div className="flex items-center gap-2.5 text-left">
@@ -1288,7 +1502,7 @@ export function ReceiptTemplateEditorPage() {
                   </div>
                   <div>
                     <span className="font-bold text-sm font-heading text-foreground block">
-                      8. Receipt Footer Messages
+                      9. Receipt Footer Messages
                     </span>
                     <span className="text-[11px] text-muted-foreground font-normal">
                       Thank-you note, visit again, and catering / water contacts
@@ -1382,7 +1596,7 @@ export function ReceiptTemplateEditorPage() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Section 9: Section Reordering */}
+            {/* Section 10: Section Reordering */}
             <AccordionItem value="sequence" className="border border-border/80 rounded-2xl bg-card px-4 sm:px-5 shadow-xs overflow-hidden">
               <AccordionTrigger className="hover:no-underline py-4">
                 <div className="flex items-center gap-2.5 text-left">

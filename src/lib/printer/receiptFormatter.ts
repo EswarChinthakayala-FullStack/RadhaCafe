@@ -108,6 +108,14 @@ export function formatReceiptFromTemplate(
     dividerStyle: 'dashed',
     previewFont: 'JetBrains Mono',
     feedLines: 1,
+    branding: {
+      showLogo: true,
+      logoAlignment: 'center',
+      logoSize: 'medium',
+      showAuthenticityMark: true,
+      authenticityText: 'Official RadhaCafe Receipt',
+      showReceiptReference: true,
+    },
     header: {
       logoVisible: true,
       cafeNameVisible: true,
@@ -172,6 +180,7 @@ export function formatReceiptFromTemplate(
   const config: ReceiptTemplateConfig = {
     ...DEFAULT_CONFIG,
     ...(templateConfig || {}),
+    branding: { ...DEFAULT_CONFIG.branding!, ...(templateConfig?.branding || {}) },
     header: { ...DEFAULT_CONFIG.header, ...(templateConfig?.header || {}) },
     orderInfo: { ...DEFAULT_CONFIG.orderInfo, ...(templateConfig?.orderInfo || {}) },
     customerInfo: { ...DEFAULT_CONFIG.customerInfo, ...(templateConfig?.customerInfo || {}) },

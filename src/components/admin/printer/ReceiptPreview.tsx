@@ -74,7 +74,15 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
     'footer',
   ];
 
-  const logoUrl = cafeSettings?.logo_url || (data as any)?.logoUrl || null;
+  const logoUrl = cafeSettings?.receipt_logo_url || cafeSettings?.logo_url || (data as any)?.logoUrl || null;
+  const branding = config.branding || {
+    showLogo: true,
+    logoAlignment: 'center',
+    logoSize: 'medium',
+    showAuthenticityMark: true,
+    authenticityText: 'Official RadhaCafe Receipt',
+    showReceiptReference: true,
+  };
 
   return (
     <div className="flex w-full min-w-0 justify-center py-2 px-1">
@@ -100,21 +108,27 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
                   key={`${sectionKey}-${index}`}
                   className={`space-y-0.5 w-full ${alignmentClass(config.header.alignment)}`}
                 >
-                  {/* Optional Brand Logo */}
-                  {config.header.logoVisible && logoUrl && (
+                  {/* Official RadhaCafe Brand Logo with Size & Alignment */}
+                  {branding.showLogo && logoUrl && (
                     <div
                       className={`mb-2 flex ${
-                        config.header.alignment === 'center'
+                        branding.logoAlignment === 'center'
                           ? 'justify-center'
-                          : config.header.alignment === 'right'
+                          : branding.logoAlignment === 'right'
                           ? 'justify-end'
                           : 'justify-start'
                       }`}
                     >
                       <img
                         src={logoUrl}
-                        alt="Cafe Logo"
-                        className="h-10 max-w-[120px] object-contain grayscale contrast-125"
+                        alt="RadhaCafe logo"
+                        className={`object-contain grayscale contrast-125 transition-all ${
+                          branding.logoSize === 'small'
+                            ? 'h-8 max-w-[90px]'
+                            : branding.logoSize === 'large'
+                            ? 'h-14 max-w-[170px]'
+                            : 'h-11 max-w-[130px]'
+                        }`}
                       />
                     </div>
                   )}
@@ -123,6 +137,13 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
                     <h3 className={`uppercase tracking-tight ${emphasisClass(config.header.emphasis)}`}>
                       {config.header.cafeNameText}
                     </h3>
+                  )}
+
+                  {/* Official Receipt Authenticity Mark */}
+                  {branding.showAuthenticityMark && (
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-black/80 pt-0.5">
+                      {branding.authenticityText || 'Official RadhaCafe Receipt'}
+                    </p>
                   )}
 
                   {config.header.taglineVisible && config.header.taglineText && (

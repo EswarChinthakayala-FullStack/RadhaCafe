@@ -12,6 +12,27 @@ export type EmphasisType = 'normal' | 'bold' | 'double_size';
 export type DividerStyleType = 'solid' | 'double' | 'dashed' | 'dotted' | 'none';
 export type PreviewFontType = 'JetBrains Mono' | 'Consolas' | 'Inter' | 'System Mono';
 
+export type LogoAlignment = 'left' | 'center' | 'right';
+export type LogoSize = 'small' | 'medium' | 'large';
+
+export interface BrandingConfig {
+  showLogo: boolean;
+  logoAlignment: LogoAlignment;
+  logoSize: LogoSize;
+  showAuthenticityMark: boolean;
+  authenticityText: string;
+  showReceiptReference: boolean;
+}
+
+export const DEFAULT_BRANDING_CONFIG: BrandingConfig = {
+  showLogo: true,
+  logoAlignment: 'center',
+  logoSize: 'medium',
+  showAuthenticityMark: true,
+  authenticityText: 'Official RadhaCafe Receipt',
+  showReceiptReference: true,
+};
+
 export interface HeaderConfig {
   logoVisible: boolean;
   cafeNameVisible: boolean;
@@ -82,6 +103,7 @@ export interface ReceiptTemplateConfig {
   dividerStyle: DividerStyleType;
   previewFont: PreviewFontType;
   feedLines: number;
+  branding?: BrandingConfig;
   header: HeaderConfig;
   orderInfo: OrderInfoConfig;
   customerInfo: CustomerInfoConfig;
@@ -116,6 +138,8 @@ export interface NormalizedReceiptData {
   address: string;
   phone: string;
   email: string;
+  logoUrl?: string | null;
+  branding: BrandingConfig;
   orderNumber: string;
   dateTime: string;
   dateStr: string;

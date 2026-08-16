@@ -3,6 +3,7 @@ import { usePrinterStore } from '../store/printerStore';
 import { printerSessionManager } from '../lib/printer/printerSessionManager';
 import { executePrintJob } from '../lib/printer/printQueue';
 import { encodeTestReceiptToEscPos, encodeTemplateReceiptToEscPos } from '../lib/printer/escpos';
+import { convertImageToEscPosRaster } from '../lib/printer/rasterLogo';
 import { printOrderViaBrowser } from '../lib/printer/browserPrint';
 import { markOrderAsPrinted } from '../lib/supabase/queries/printer';
 import { fetchActiveReceiptTemplate } from '../lib/supabase/queries/receiptTemplates';
@@ -146,14 +147,30 @@ export function useBluetoothPrinter() {
     try {
       const activeTemplate = await fetchActiveReceiptTemplate().catch(() => null);
       const targetWidth = store.connectedPrinter?.paper_width || store.paperWidth || 32;
+      const templateCfg = activeTemplate?.template_config
+        ? { ...activeTemplate.template_config, paperWidth: targetWidth }
+        : { paperWidth: targetWidth };
 
-      const escposBytes = encodeTemplateReceiptToEscPos(
-        order,
-        activeTemplate?.template_config
-          ? { ...activeTemplate.template_config, paperWidth: targetWidth }
-          : { paperWidth: targetWidth },
-        cafeSettings
-      );
+      const logoUrl = cafeSettings?.receipt_logo_url || cafeSettings?.logo_url || null;
+      let rasterLogoBuffer: Uint8Array | null = null;
+      if (
+        logoUrl &&
+        store.activeProfile?.supportsImages !== false &&
+        (templateCfg as any)?.branding?.showLogo !== false
+      ) {
+        rasterLogoBuffer = await convertImageToEscPosRaster(logoUrl, {
+          paperWidth: targetWidth,
+          logoSize: (templateCfg as any)?.branding?.logoSize || 'medium',
+          logoAlignment: (templateCfg as any)?.branding?.logoAlignment || 'center',
+        }).catch(() => null);
+      }
+
+      const escposBytes = encodeTemplateReceiptToEscPos(order, {
+        templateConfig: templateCfg,
+        cafeSettings,
+        supportsImages: store.activeProfile?.supportsImages !== false,
+        rasterLogoBuffer,
+      });
 
       const chunkSize = store.activeProfile?.defaultChunkSize || 20;
       const writeMode = store.activeProfile?.defaultWriteMode || 'without-response';
@@ -223,6 +240,9 @@ export function useBluetoothPrinter() {
     try {
       const activeTemplate = await fetchActiveReceiptTemplate().catch(() => null);
       const targetWidth = store.connectedPrinter?.paper_width || store.paperWidth || 32;
+      const templateCfg = activeTemplate?.template_config
+        ? { ...activeTemplate.template_config, paperWidth: targetWidth }
+        : { paperWidth: targetWidth };
 
       const sampleOrder: Order = {
         id: 'sample-test-01',
@@ -242,13 +262,10 @@ export function useBluetoothPrinter() {
         ],
       } as any;
 
-      const escposBytes = encodeTemplateReceiptToEscPos(
-        sampleOrder,
-        activeTemplate?.template_config
-          ? { ...activeTemplate.template_config, paperWidth: targetWidth }
-          : { paperWidth: targetWidth },
-        { cafe_name: cafeName }
-      );
+      const escposBytes = encodeTemplateReceiptToEscPos(sampleOrder, {
+        templateConfig: templateCfg,
+        cafeSettings: { cafe_name: cafeName },
+      });
 
       const chunkSize = store.activeProfile?.defaultChunkSize || 20;
       const writeMode = store.activeProfile?.defaultWriteMode || 'without-response';
@@ -281,7 +298,28 @@ export function useBluetoothPrinter() {
 
     store.setStatus('printing');
     try {
-      const escposBytes = encodeTemplateReceiptToEscPos(order, templateConfig, cafeSettings);
+      const targetWidth = store.connectedPrinter?.paper_width || store.paperWidth || templateConfig?.paperWidth || 32;
+      const logoUrl = cafeSettings?.receipt_logo_url || cafeSettings?.logo_url || null;
+      let rasterLogoBuffer: Uint8Array | null = null;
+
+      if (
+        logoUrl &&
+        store.activeProfile?.supportsImages !== false &&
+        templateConfig?.branding?.showLogo !== false
+      ) {
+        rasterLogoBuffer = await convertImageToEscPosRaster(logoUrl, {
+          paperWidth: targetWidth,
+          logoSize: templateConfig?.branding?.logoSize || 'medium',
+          logoAlignment: templateConfig?.branding?.logoAlignment || 'center',
+        }).catch(() => null);
+      }
+
+      const escposBytes = encodeTemplateReceiptToEscPos(order, {
+        templateConfig,
+        cafeSettings,
+        supportsImages: store.activeProfile?.supportsImages !== false,
+        rasterLogoBuffer,
+      });
       const chunkSize = store.activeProfile?.defaultChunkSize || 20;
       const writeMode = store.activeProfile?.defaultWriteMode || 'without-response';
 

@@ -66,6 +66,8 @@ export async function syncOnlineCafeSettingsToIndexedDB(settings: any): Promise<
     tagline: settings.tagline || null,
     address: settings.address || null,
     phone: settings.phone || null,
+    logo_url: settings.logo_url || null,
+    receipt_logo_url: settings.receipt_logo_url || null,
     tax_percentage: Number(settings.tax_percentage ?? 5),
     currency: settings.currency || 'INR',
     last_synced_at: new Date().toISOString(),

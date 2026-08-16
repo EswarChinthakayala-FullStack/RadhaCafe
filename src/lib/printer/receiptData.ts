@@ -48,6 +48,7 @@ export function normalizeOrderToReceiptData(
   const isPayLater = order?.payment_method === 'pay_later';
 
   const thankYouMessage = cafeSettings?.receipt_footer || 'Thank You! Visit RadhaCafe Again.';
+  const logoUrl = cafeSettings?.receipt_logo_url || cafeSettings?.logo_url || null;
 
   return {
     cafeName,
@@ -55,6 +56,15 @@ export function normalizeOrderToReceiptData(
     address,
     phone,
     email,
+    logoUrl,
+    branding: {
+      showLogo: true,
+      logoAlignment: 'center',
+      logoSize: 'medium',
+      showAuthenticityMark: true,
+      authenticityText: 'Official RadhaCafe Receipt',
+      showReceiptReference: true,
+    },
     orderNumber: orderNum,
     dateTime: formattedDateTime,
     dateStr,

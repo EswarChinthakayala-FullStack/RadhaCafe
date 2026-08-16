@@ -12,6 +12,27 @@ export const receiptTemplateSchema = z.object({
     dividerStyle: z.enum(['solid', 'double', 'dashed', 'dotted', 'none']),
     previewFont: z.enum(['JetBrains Mono', 'Consolas', 'Inter', 'System Mono']),
     feedLines: z.number().min(1).max(10),
+    branding: z
+      .object({
+        showLogo: z.boolean().default(true),
+        logoAlignment: z.enum(['left', 'center', 'right']).default('center'),
+        logoSize: z.enum(['small', 'medium', 'large']).default('medium'),
+        showAuthenticityMark: z.boolean().default(true),
+        authenticityText: z
+          .string()
+          .max(120, 'Authenticity text must be at most 120 characters')
+          .trim()
+          .default('Official RadhaCafe Receipt'),
+        showReceiptReference: z.boolean().default(true),
+      })
+      .default({
+        showLogo: true,
+        logoAlignment: 'center',
+        logoSize: 'medium',
+        showAuthenticityMark: true,
+        authenticityText: 'Official RadhaCafe Receipt',
+        showReceiptReference: true,
+      }),
     header: z.object({
       logoVisible: z.boolean(),
       cafeNameVisible: z.boolean(),

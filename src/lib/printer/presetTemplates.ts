@@ -9,6 +9,14 @@ export const CLASSIC_PRESET_CONFIG: ReceiptTemplateConfig = {
   dividerStyle: 'dashed',
   previewFont: 'JetBrains Mono',
   feedLines: 1,
+  branding: {
+    showLogo: true,
+    logoAlignment: 'center',
+    logoSize: 'medium',
+    showAuthenticityMark: true,
+    authenticityText: 'Official RadhaCafe Receipt',
+    showReceiptReference: true,
+  },
   header: {
     logoVisible: true,
     cafeNameVisible: true,
@@ -79,6 +87,14 @@ export const MODERN_PRESET_CONFIG: ReceiptTemplateConfig = {
   dividerStyle: 'double',
   previewFont: 'JetBrains Mono',
   feedLines: 1,
+  branding: {
+    showLogo: true,
+    logoAlignment: 'center',
+    logoSize: 'medium',
+    showAuthenticityMark: true,
+    authenticityText: 'Official RadhaCafe Receipt',
+    showReceiptReference: true,
+  },
   header: {
     logoVisible: true,
     cafeNameVisible: true,
@@ -149,6 +165,14 @@ export const COMPACT_PRESET_CONFIG: ReceiptTemplateConfig = {
   dividerStyle: 'solid',
   previewFont: 'JetBrains Mono',
   feedLines: 1,
+  branding: {
+    showLogo: true,
+    logoAlignment: 'center',
+    logoSize: 'small',
+    showAuthenticityMark: true,
+    authenticityText: 'Official RadhaCafe Receipt',
+    showReceiptReference: true,
+  },
   header: {
     logoVisible: false,
     cafeNameVisible: true,
@@ -219,6 +243,14 @@ export const DETAILED_PRESET_CONFIG: ReceiptTemplateConfig = {
   dividerStyle: 'dashed',
   previewFont: 'JetBrains Mono',
   feedLines: 1,
+  branding: {
+    showLogo: true,
+    logoAlignment: 'center',
+    logoSize: 'medium',
+    showAuthenticityMark: true,
+    authenticityText: 'Official RadhaCafe Receipt',
+    showReceiptReference: true,
+  },
   header: {
     logoVisible: true,
     cafeNameVisible: true,

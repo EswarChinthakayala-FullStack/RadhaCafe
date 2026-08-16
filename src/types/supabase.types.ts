@@ -528,6 +528,7 @@ export interface Database {
           email: string | null
           opening_hours: string | null
           logo_url: string | null
+          receipt_logo_url: string | null
           tax_percentage: number
           currency: string
           updated_at: string
@@ -542,6 +543,7 @@ export interface Database {
           email?: string | null
           opening_hours?: string | null
           logo_url?: string | null
+          receipt_logo_url?: string | null
           tax_percentage?: number
           currency?: string
           updated_at?: string
@@ -556,6 +558,7 @@ export interface Database {
           email?: string | null
           opening_hours?: string | null
           logo_url?: string | null
+          receipt_logo_url?: string | null
           tax_percentage?: number
           currency?: string
           updated_at?: string

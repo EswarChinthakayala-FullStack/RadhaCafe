@@ -14,6 +14,7 @@ import {
   encodeTemplateReceiptToEscPos,
   encodeTestReceiptToEscPos,
 } from './escpos';
+import { convertImageToEscPosRaster } from './rasterLogo';
 import { getPrinterProfile } from './printerProfiles';
 import { usePrinterStore } from '../../store/printerStore';
 import { BLE_CHUNK_SIZE } from '../../constants/printerCommands';
@@ -482,12 +483,33 @@ class PrintQueueWorker {
           nextJob.data.settingsSnapshot?.cafe_name || 'RadhaCafe'
         );
       } else {
+        const logoUrl =
+          nextJob.data.settingsSnapshot?.receipt_logo_url ||
+          nextJob.data.settingsSnapshot?.logo_url ||
+          null;
+        const templateCfg = nextJob.data.templateSnapshot;
+        let rasterLogoBuffer: Uint8Array | null = null;
+
+        if (
+          logoUrl &&
+          printerProfile?.supportsImages !== false &&
+          templateCfg?.branding?.showLogo !== false
+        ) {
+          rasterLogoBuffer = await convertImageToEscPosRaster(logoUrl, {
+            paperWidth: templateCfg?.paperWidth || 32,
+            logoSize: templateCfg?.branding?.logoSize || 'medium',
+            logoAlignment: templateCfg?.branding?.logoAlignment || 'center',
+          }).catch(() => null);
+        }
+
         payloadBytes = encodeTemplateReceiptToEscPos(nextJob.data, {
           templateConfig: nextJob.data.templateSnapshot,
           cafeSettings: nextJob.data.settingsSnapshot,
           finishingMode: queueSettings.finishingMode,
           tearGap: queueSettings.tearGap,
           supportsCut,
+          supportsImages: printerProfile?.supportsImages !== false,
+          rasterLogoBuffer,
         });
       }
 

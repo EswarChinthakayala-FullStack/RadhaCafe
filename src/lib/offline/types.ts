@@ -61,6 +61,8 @@ export interface OfflineCafeSettings {
   tagline?: string | null;
   address?: string | null;
   phone?: string | null;
+  logo_url?: string | null;
+  receipt_logo_url?: string | null;
   tax_percentage: number;
   currency: string;
   last_synced_at: string;

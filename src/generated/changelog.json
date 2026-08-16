@@ -1,14 +1,27 @@
 {
-  "generatedAt": "2026-08-16T21:54:16.144Z",
-  "latestCommit": "f8aadb8",
-  "totalEntries": 119,
+  "generatedAt": "2026-08-16T22:12:26.788Z",
+  "latestCommit": "8c4ed7c",
+  "totalEntries": 120,
   "releases": [
     {
       "id": "rel-2026-08-17",
       "title": "17 Aug 2026",
-      "date": "2026-08-17T03:23:38+05:30",
+      "date": "2026-08-17T03:25:09+05:30",
       "isLatest": true,
       "entries": [
+        {
+          "id": "8c4ed7c",
+          "title": "Harmonize Search Input and Dropdown Control Heights to H-9",
+          "description": "Resolved an issue with harmonize Search Input and Dropdown Control Heights to H-9 to ensure consistent behavior throughout General.",
+          "category": "fixed",
+          "area": "General",
+          "date": "17 Aug 2026",
+          "commitHash": "8c4ed7cb46203f0afcfe20efff414543ef85ed3e",
+          "shortHash": "8c4ed7c",
+          "isBreaking": false,
+          "rawType": "fix",
+          "rawScope": "changelog"
+        },
         {
           "id": "f8aadb8",
           "title": "Prevent Search Bar Auto-Focus Jump After Order Placement",

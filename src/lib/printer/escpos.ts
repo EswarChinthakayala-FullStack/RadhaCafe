@@ -202,6 +202,8 @@ export interface TemplateReceiptPrintOptions {
   finishingMode?: 'continuous' | 'manual-tear' | 'auto-cut';
   tearGap?: 'compact' | 'normal' | 'extra';
   supportsCut?: boolean;
+  supportsImages?: boolean;
+  rasterLogoBuffer?: Uint8Array | null;
 }
 
 /**
@@ -275,6 +277,16 @@ export function encodeTemplateReceiptToEscPos(
 
   sections.forEach((sec: string) => {
     if (sec === 'header') {
+      // 1. Raster Logo Bit Image (if supported and provided)
+      if (
+        options.rasterLogoBuffer &&
+        options.rasterLogoBuffer.length > 0 &&
+        options.supportsImages !== false &&
+        config.branding?.showLogo
+      ) {
+        addBytes(options.rasterLogoBuffer);
+      }
+
       applyAlignment(config.header.alignment);
       applyEmphasis(config.header.emphasis);
 
@@ -282,6 +294,14 @@ export function encodeTemplateReceiptToEscPos(
         addText(`${config.header.cafeNameText}\n`);
       }
       resetEmphasis();
+
+      // 2. Official Authenticity Mark
+      if (config.branding?.showAuthenticityMark) {
+        applyAlignment(config.header.alignment);
+        addBytes(ESC_POS_COMMANDS.TEXT_BOLD_ON);
+        addText(`${config.branding.authenticityText || 'OFFICIAL RADHACAFE RECEIPT'}\n`);
+        resetEmphasis();
+      }
 
       if (config.header.taglineVisible && config.header.taglineText) {
         addText(`${config.header.taglineText}\n`);
@@ -300,7 +320,9 @@ export function encodeTemplateReceiptToEscPos(
       applyAlignment(config.orderInfo.alignment);
       applyEmphasis(config.orderInfo.emphasis);
 
-      if (config.orderInfo.orderNumberVisible) {
+      if (config.branding?.showReceiptReference && config.orderInfo.orderNumberVisible) {
+        addText(`Order Ref: ${data.orderNumber}\n`);
+      } else if (config.orderInfo.orderNumberVisible) {
         addText(`Order #: ${data.orderNumber}\n`);
       }
       if (config.orderInfo.dateVisible) {
