@@ -179,7 +179,7 @@ export function ReceiptPreview({ order, templateConfig, cafeSettings }: ReceiptP
       <article
         aria-label={`${isWide ? '80' : '58'} mm thermal receipt slip preview`}
         style={{ maxWidth: isWide ? '420px' : '320px' }}
-        className="receipt-preview relative h-fit w-full min-w-0 overflow-hidden border border-black/15 bg-[#fffef9] px-4 sm:px-5.5 pt-6 pb-9 font-mono text-[11px] sm:text-[11.5px] leading-[1.45] text-[#141414] shadow-[0_20px_50px_-20px_rgba(46,34,24,0.35),0_3px_12px_rgba(46,34,24,0.08)] select-text"
+        className="receipt-preview relative h-fit w-full min-w-0 overflow-hidden border border-black/15 bg-[#fffef9] px-4 sm:px-5.5 pt-5 pb-3.5 font-mono text-[11px] sm:text-[11.5px] leading-[1.45] text-[#141414] shadow-[0_20px_50px_-20px_rgba(46,34,24,0.35),0_3px_12px_rgba(46,34,24,0.08)] select-text"
       >
         {/* Top Paper Perforation Border */}
         <div

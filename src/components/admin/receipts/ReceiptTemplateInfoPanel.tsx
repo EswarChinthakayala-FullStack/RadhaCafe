@@ -87,7 +87,7 @@ export function ReceiptTemplateInfoPanel({
               <SummaryRow label="Paper" value={is80mm ? '80 mm · 48 columns' : '58 mm · 32 columns'} />
               <SummaryRow label="Header" value={`${config.header.alignment} aligned`} />
               <SummaryRow label="Divider" value={config.dividerStyle} />
-              <SummaryRow label="Feed after print" value={`${config.feedLines || 3} lines`} />
+              <SummaryRow label="Feed after print" value={`${config.feedLines ?? 1} line${(config.feedLines ?? 1) === 1 ? '' : 's'}`} />
             </section>
 
             <Separator />

@@ -224,7 +224,6 @@ export function encodeTemplateReceiptToEscPos(
   const effectiveConfig = options.templateConfig;
   const effectiveSettings = options.cafeSettings || cafeSettings;
   const finishingMode = options.finishingMode || 'continuous';
-  const tearGap = options.tearGap || 'extra';
   const supportsCut = options.supportsCut ?? false;
 
   const { data, config, dividerLine } = formatReceiptFromTemplate(rawOrder, effectiveConfig, effectiveSettings);
@@ -509,21 +508,14 @@ export function encodeTemplateReceiptToEscPos(
     }
   });
 
-  // Paper finishing: Auto Cut vs Manual Tear Feed Gap
+  // Paper finishing: Exactly 1 line of spacing after bottom last content
+  const linesToFeed = Math.max(1, config.feedLines ?? 1);
+  for (let i = 0; i < linesToFeed; i++) {
+    addBytes(ESC_POS_COMMANDS.FEED_LINE);
+  }
+
   if (finishingMode === 'auto-cut' && supportsCut) {
-    addBytes(ESC_POS_COMMANDS.FEED_LINE);
-    addBytes(ESC_POS_COMMANDS.FEED_LINE);
     addBytes(ESC_POS_COMMANDS.CUT_PAPER);
-  } else {
-    // Manual tear or continuous queue: provide blank feed lines so operator can comfortably grasp and tear
-    const gapLines = tearGap === 'compact' ? 2 : tearGap === 'normal' ? 3 : 5;
-    if (gapLines === 3) {
-      addBytes(ESC_POS_COMMANDS.FEED_PAPER_3_LINES);
-    } else {
-      for (let i = 0; i < gapLines; i++) {
-        addBytes(ESC_POS_COMMANDS.FEED_LINE);
-      }
-    }
   }
 
   return new Uint8Array(buffer);
@@ -604,7 +596,7 @@ export function encodeWatermarkTestToEscPos(
 
   addBytes(ESC_POS_COMMANDS.ALIGN_CENTER);
   addText('Select the clearest level that\npreserves text readability.\n');
-  addBytes(ESC_POS_COMMANDS.FEED_PAPER_3_LINES);
+  addBytes(ESC_POS_COMMANDS.FEED_LINE);
   addBytes(ESC_POS_COMMANDS.CUT_PAPER);
 
   return new Uint8Array(buffer);

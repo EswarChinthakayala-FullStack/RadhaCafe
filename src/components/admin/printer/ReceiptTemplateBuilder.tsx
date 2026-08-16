@@ -567,7 +567,7 @@ export function ReceiptTemplateBuilder() {
                   <div>
                     <Label className="text-xs font-semibold">Paper Feed Lines After Cut</Label>
                     <Select
-                      value={String(draftConfig.feedLines || 3)}
+                      value={String(draftConfig.feedLines ?? 1)}
                       onValueChange={(val) =>
                         updateDraft((prev) => ({ ...prev, feedLines: Number(val) }))
                       }
@@ -576,8 +576,9 @@ export function ReceiptTemplateBuilder() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="1">1 Line Feed (Recommended)</SelectItem>
                         <SelectItem value="2">2 Lines Feed</SelectItem>
-                        <SelectItem value="3">3 Lines Feed (Recommended)</SelectItem>
+                        <SelectItem value="3">3 Lines Feed</SelectItem>
                         <SelectItem value="4">4 Lines Feed</SelectItem>
                         <SelectItem value="5">5 Lines Feed</SelectItem>
                       </SelectContent>

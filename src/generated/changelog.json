@@ -1,14 +1,27 @@
 {
-  "generatedAt": "2026-08-16T22:25:43.834Z",
-  "latestCommit": "c84a036",
-  "totalEntries": 121,
+  "generatedAt": "2026-08-16T22:34:21.460Z",
+  "latestCommit": "1d3c806",
+  "totalEntries": 122,
   "releases": [
     {
       "id": "rel-2026-08-17",
       "title": "17 Aug 2026",
-      "date": "2026-08-17T03:45:27+05:30",
+      "date": "2026-08-17T03:58:37+05:30",
       "isLatest": true,
       "entries": [
+        {
+          "id": "1d3c806",
+          "title": "Add Watermark, Anti-Copy Branding, and Calibration Test",
+          "description": "Added watermark, Anti-Copy Branding, and Calibration Test to provide enhanced capabilities and visibility across Receipts.",
+          "category": "new",
+          "area": "Receipts",
+          "date": "17 Aug 2026",
+          "commitHash": "1d3c80620d9221972941e5aa6ce614845e67292d",
+          "shortHash": "1d3c806",
+          "isBreaking": false,
+          "rawType": "feat",
+          "rawScope": "receipts"
+        },
         {
           "id": "c84a036",
           "title": "Add Logo, Authenticity Branding, and Thermal Raster Engine",

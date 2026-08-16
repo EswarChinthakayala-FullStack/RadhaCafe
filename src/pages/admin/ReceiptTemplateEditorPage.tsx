@@ -1748,7 +1748,7 @@ export function ReceiptTemplateEditorPage() {
                         type="button"
                         onClick={() => updateDraft((prev) => ({ ...prev, feedLines: lines }))}
                         className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                          (draftConfig.feedLines || 3) === lines
+                          (draftConfig.feedLines ?? 1) === lines
                             ? 'bg-card text-foreground shadow-2xs'
                             : 'text-muted-foreground hover:text-foreground'
                         }`}
