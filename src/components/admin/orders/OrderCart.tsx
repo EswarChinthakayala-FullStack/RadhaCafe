@@ -168,12 +168,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
           description: autoPrint ? 'Receipt queued in background.' : 'Offline order stored successfully.',
           type: 'success',
         });
-
-        // Fast re-focus on product search
-        setTimeout(() => {
-          const searchInput = document.querySelector<HTMLInputElement>('input[placeholder*="Search menu"]');
-          searchInput?.focus();
-        }, 50);
       } catch (err: any) {
         setErrorMsg(err.message || 'Failed to save offline order. Please try again.');
       } finally {
@@ -240,12 +234,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
       if (selectedCustomer) {
         queryClient.invalidateQueries({ queryKey: ['customers'] });
       }
-
-      // Fast re-focus on product search
-      setTimeout(() => {
-        const searchInput = document.querySelector<HTMLInputElement>('input[placeholder*="Search menu"]');
-        searchInput?.focus();
-      }, 50);
     } catch (err: any) {
       const isNetworkErr =
         err?.message?.includes('Failed to fetch') ||
@@ -306,10 +294,6 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
             type: 'success',
           });
 
-          setTimeout(() => {
-            const searchInput = document.querySelector<HTMLInputElement>('input[placeholder*="Search menu"]');
-            searchInput?.focus();
-          }, 50);
           return;
         } catch (saveErr: any) {
           setErrorMsg(saveErr.message || 'Failed to save offline order.');

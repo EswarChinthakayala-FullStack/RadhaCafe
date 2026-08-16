@@ -1,14 +1,27 @@
 {
-  "generatedAt": "2026-08-16T21:51:10.763Z",
-  "latestCommit": "823cb31",
-  "totalEntries": 117,
+  "generatedAt": "2026-08-16T21:53:12.854Z",
+  "latestCommit": "158712b",
+  "totalEntries": 118,
   "releases": [
     {
       "id": "rel-2026-08-17",
       "title": "17 Aug 2026",
-      "date": "2026-08-17T02:40:31+05:30",
+      "date": "2026-08-17T03:21:43+05:30",
       "isLatest": true,
       "entries": [
+        {
+          "id": "158712b",
+          "title": "Responsive Mobile Layout and Compact Sticky Toolbar",
+          "description": "Resolved an issue with responsive Mobile Layout and Compact Sticky Toolbar to ensure consistent behavior throughout General.",
+          "category": "fixed",
+          "area": "General",
+          "date": "17 Aug 2026",
+          "commitHash": "158712b27a7b548a9e745804d5c3fd54f53363ec",
+          "shortHash": "158712b",
+          "isBreaking": false,
+          "rawType": "fix",
+          "rawScope": "changelog"
+        },
         {
           "id": "823cb31",
           "title": "Background Receipt Queue with Configurable Tear Delay, Paper Gaps, and Changelog V2 Release Timeline",
