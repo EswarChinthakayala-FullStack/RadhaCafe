@@ -83,14 +83,14 @@ describe('ESC/POS Finishing Modes & Paper Gaps', () => {
   const sampleOrder = {
     orderNumber: 'RC-0042',
     dateTime: '2026-08-17 12:30',
-    items: [{ name: 'Espresso', quantity: 1, unitPrice: 80, totalPrice: 80 }],
-    subtotal: 80,
-    tax: 0,
-    discount: 0,
-    total: 80,
-    paidAmount: 80,
+    items: [{ name: 'Espresso', quantity: 2, unitPrice: 80, totalPrice: 160 }],
+    subtotal: 160,
+    taxAmount: 8,
+    discountAmount: 10,
+    totalAmount: 158,
+    paidAmount: 158,
     dueAmount: 0,
-    paymentMethod: 'CASH',
+    paymentMethod: 'UPI',
     status: 'COMPLETED',
   };
 
@@ -126,6 +126,67 @@ describe('ESC/POS Finishing Modes & Paper Gaps', () => {
     // ESC/POS Cut command is [0x1D, 0x56, 0x00]
     const hasCut = bytes.some((b, i) => b === 0x1d && bytes[i + 1] === 0x56);
     expect(hasCut).toBe(true);
+  });
+
+  it('should format accurate item amounts and totals without all zeroes for print queue camelCase snapshot data', () => {
+    const queueSnapshot = {
+      orderNumber: 'RC-20260817-5501',
+      createdAt: '2026-08-17T12:00:00.000Z',
+      customerName: 'Suresh Kumar',
+      items: [
+        { name: 'Special Bellam Tea', quantity: 3, unitPrice: 20, totalPrice: 60 },
+        { name: 'Samosa', quantity: 2, unitPrice: 15, totalPrice: 30 },
+      ],
+      subtotal: 90,
+      taxAmount: 0,
+      discountAmount: 5,
+      totalAmount: 85,
+      paidAmount: 85,
+      dueAmount: 0,
+      paymentMethod: 'cash',
+      paymentStatus: 'paid',
+      isOffline: false,
+    };
+
+    const bytes = encodeTemplateReceiptToEscPos(queueSnapshot, {
+      finishingMode: 'continuous',
+      supportsCut: false,
+    });
+
+    const textOutput = new TextDecoder().decode(bytes);
+    expect(textOutput).toContain('RC-20260817-5501');
+    expect(textOutput).toContain('Special Bellam Tea');
+    expect(textOutput).toContain('x3');
+    expect(textOutput).toContain('Rs. 60.00');
+    expect(textOutput).toContain('Samosa');
+    expect(textOutput).toContain('x2');
+    expect(textOutput).toContain('Rs. 30.00');
+    expect(textOutput).toContain('Subtotal');
+    expect(textOutput).toContain('Rs. 90.00');
+    expect(textOutput).toContain('Discount');
+    expect(textOutput).toContain('-Rs. 5.00');
+    expect(textOutput).toContain('TOTAL');
+    expect(textOutput).toContain('Rs. 85.00');
+    expect(textOutput).toContain('Paid');
+    expect(textOutput).toContain('Rs. 85.00');
+  });
+
+  it('should format fallback calculated amounts when order only has unit prices', () => {
+    const rawOrderWithoutPrecomputedTotals = {
+      order_number: 'RC-9988',
+      items: [
+        { item_name: 'Filter Coffee', quantity: 2, unit_price: 35 },
+      ],
+    };
+
+    const bytes = encodeTemplateReceiptToEscPos(rawOrderWithoutPrecomputedTotals);
+    const textOutput = new TextDecoder().decode(bytes);
+
+    expect(textOutput).toContain('Filter Coffee');
+    expect(textOutput).toContain('x2');
+    expect(textOutput).toContain('Rs. 70.00');
+    expect(textOutput).toContain('TOTAL');
+    expect(textOutput).toContain('Rs. 70.00');
   });
 });
 

@@ -112,7 +112,10 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
           item_name: i.product.name,
           name: i.product.name,
           unit_price: i.product.price,
+          price: i.product.price,
           quantity: i.quantity,
+          total_price: i.product.price * i.quantity,
+          amount: i.product.price * i.quantity,
         })),
       };
       setCreatedOrder(fullOrder);

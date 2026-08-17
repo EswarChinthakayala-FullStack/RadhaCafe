@@ -202,7 +202,10 @@ export function OrderCart({ onCloseMobileCart }: OrderCartProps) {
           item_name: i.menuItem.name,
           name: i.menuItem.name,
           unit_price: i.menuItem.price,
+          price: i.menuItem.price,
           quantity: i.quantity,
+          total_price: i.menuItem.price * i.quantity,
+          amount: i.menuItem.price * i.quantity,
         })),
       };
 

@@ -118,31 +118,79 @@ export function ReceiptPrintQueueProvider({ children }: { children: React.ReactN
    */
   const buildOrderSnapshot = useCallback(
     (order: any, templateConfig?: any, cafeSettings?: any): PrintJobDataSnapshot => {
-      const items = (order.items || []).map((i: any) => ({
-        name: i.name || i.item_name || 'Item',
-        quantity: Number(i.quantity || 1),
-        unitPrice: Number(i.unit_price || i.price || 0),
-        totalPrice: Number(i.total_price || (i.unit_price || i.price || 0) * (i.quantity || 1)),
-        notes: i.notes || null,
-      }));
+      const rawItems = order.items || order.order_items || order.orderItems || [];
+      const items = rawItems.map((i: any) => {
+        const quantity = Number(i.quantity ?? i.qty ?? 1) || 1;
+        const unitPrice = Number(i.unit_price ?? i.unitPrice ?? i.price ?? 0) || 0;
+        const rawTotal = i.total_price ?? i.totalPrice ?? i.amount;
+        const totalPrice = rawTotal !== undefined && rawTotal !== null && !isNaN(Number(rawTotal)) && Number(rawTotal) !== 0
+          ? Number(rawTotal)
+          : unitPrice * quantity;
+        const name = i.name || i.item_name || i.itemName || 'Item';
+
+        return {
+          name,
+          quantity,
+          unitPrice,
+          totalPrice,
+          unit_price: unitPrice,
+          total_price: totalPrice,
+          item_name: name,
+          notes: i.notes || null,
+        };
+      });
+
+      const calculatedItemsSubtotal = items.reduce((sum: number, it: any) => sum + (it.totalPrice || 0), 0);
+      const rawSubtotal = order.subtotal ?? order.subTotal;
+      const subtotal = rawSubtotal !== undefined && rawSubtotal !== null && !isNaN(Number(rawSubtotal)) && Number(rawSubtotal) !== 0
+        ? Number(rawSubtotal)
+        : calculatedItemsSubtotal;
+
+      const taxAmount = Number(order.tax_amount ?? order.taxAmount ?? order.tax ?? 0) || 0;
+      const discountAmount = Number(order.discount_amount ?? order.discountAmount ?? order.discount ?? 0) || 0;
+
+      const rawTotal = order.total_amount ?? order.totalAmount ?? order.total;
+      let totalAmount = rawTotal !== undefined && rawTotal !== null && !isNaN(Number(rawTotal))
+        ? Number(rawTotal)
+        : 0;
+
+      if (totalAmount === 0 && (subtotal > 0 || calculatedItemsSubtotal > 0)) {
+        totalAmount = Math.max(0, (subtotal || calculatedItemsSubtotal) - discountAmount + taxAmount);
+      }
+
+      const rawPaymentMethod = order.payment_method || order.paymentMethod || 'cash';
+      const isPayLater = String(rawPaymentMethod).toLowerCase() === 'pay_later' || Boolean(order.isPayLater);
+
+      const rawDue = order.due_amount ?? order.dueAmount ?? order.amount_due ?? order.amountDue;
+      const dueAmount = rawDue !== undefined && rawDue !== null && !isNaN(Number(rawDue))
+        ? Number(rawDue)
+        : (isPayLater ? totalAmount : 0);
+
+      const rawPaid = order.paid_amount ?? order.paidAmount ?? order.amount_paid ?? order.amountPaid;
+      const paidAmount = rawPaid !== undefined && rawPaid !== null && !isNaN(Number(rawPaid))
+        ? Number(rawPaid)
+        : (dueAmount === 0 ? totalAmount : Math.max(0, totalAmount - dueAmount));
+
+      const paymentMethod = rawPaymentMethod;
+      const paymentStatus = order.payment_status || order.paymentStatus || (isPayLater ? 'pending' : 'paid');
 
       return {
-        orderNumber: order.order_number || order.offline_reference || 'RECEIPT',
-        clientOrderId: order.client_order_id || order.id,
-        serverOrderId: order.created_offline ? undefined : order.id,
-        offlineReference: order.offline_reference,
-        customerName: order.customer_name || (order.customer ? order.customer.name : undefined),
-        customerPhone: order.customer_phone || (order.customer ? order.customer.phone : undefined),
-        subtotal: Number(order.subtotal || order.total_amount || 0),
-        taxAmount: Number(order.tax_amount || 0),
-        discountAmount: Number(order.discount_amount || 0),
-        totalAmount: Number(order.total_amount || 0),
-        paidAmount: Number(order.amount_paid || order.total_amount || 0),
-        dueAmount: Number(order.amount_due || (order.payment_method === 'pay_later' ? order.total_amount : 0)),
-        paymentMethod: order.payment_method || 'cash',
-        paymentStatus: order.payment_status || (order.payment_method === 'pay_later' ? 'pending' : 'paid'),
-        createdAt: order.created_at || order.offline_created_at || new Date().toISOString(),
-        isOffline: Boolean(order.created_offline),
+        orderNumber: order.order_number || order.orderNumber || order.offline_reference || order.offlineReference || 'RECEIPT',
+        clientOrderId: order.client_order_id || order.clientOrderId || order.id,
+        serverOrderId: order.created_offline || order.isOffline ? undefined : order.id,
+        offlineReference: order.offline_reference || order.offlineReference,
+        customerName: order.customer_name || order.customerName || (order.customer ? order.customer.name : undefined),
+        customerPhone: order.customer_phone || order.customerPhone || (order.customer ? order.customer.phone : undefined),
+        subtotal,
+        taxAmount,
+        discountAmount,
+        totalAmount,
+        paidAmount,
+        dueAmount,
+        paymentMethod,
+        paymentStatus,
+        createdAt: order.created_at || order.createdAt || order.offline_created_at || new Date().toISOString(),
+        isOffline: Boolean(order.created_offline || order.isOffline),
         notes: order.notes || null,
         items,
         templateSnapshot: templateConfig,
