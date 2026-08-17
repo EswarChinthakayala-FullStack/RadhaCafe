@@ -11,7 +11,6 @@ import {
   forgetBrowserDevice,
   isBluetoothSupported,
   isGetDevicesSupported,
-  isSecureContext,
   normalizePrinterError,
   logEvent,
   getCurrentConnectedDevice,

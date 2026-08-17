@@ -463,11 +463,15 @@ export async function probeDeviceConnection(
     result.deviceName = target.name || 'Bluetooth Printer';
     result.isGattConnected = Boolean(target.gatt?.connected);
 
+    if (preferredServiceUuid) {
+      result.serviceUuid = preferredServiceUuid;
+    }
+
     // If already connected at browser runtime, probe services
     if (target.gatt?.connected) {
       if (writeCharacteristic && target.id === connectedDevice?.id) {
         result.serviceFound = true;
-        result.serviceUuid = writeCharacteristic.service?.uuid;
+        result.serviceUuid = writeCharacteristic.service?.uuid || preferredServiceUuid || undefined;
         result.characteristicFound = true;
         result.characteristicUuid = writeCharacteristic.uuid;
         result.writeMode = writeCharacteristic.properties.writeWithoutResponse ? 'without-response' : 'with-response';

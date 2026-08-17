@@ -65,6 +65,22 @@ export function PrinterDiagnostics({
 
   const checks = [
     {
+      name: 'Web Bluetooth API',
+      status: isSupported ? 'passed' : 'failed',
+      badge: isSupported ? 'Supported' : 'Unsupported',
+      desc: isSupported
+        ? 'Web Bluetooth API supported (Chrome / Edge / Opera)'
+        : 'Web Bluetooth is not supported in this browser engine.',
+    },
+    {
+      name: 'Security Context',
+      status: isSecure ? 'passed' : 'failed',
+      badge: isSecure ? 'Secure' : 'Insecure',
+      desc: isSecure
+        ? 'HTTPS / localhost secure origin verified'
+        : 'Bluetooth operations require an HTTPS secure context.',
+    },
+    {
       name: 'Saved in RadhaCafe',
       status: liveDiagnostics ? (liveDiagnostics.savedInRadhaCafe ? 'passed' : 'failed') : connectedPrinter ? 'passed' : 'idle',
       badge: liveDiagnostics ? (liveDiagnostics.savedInRadhaCafe ? 'Saved' : 'Not Saved') : connectedPrinter ? 'Saved' : 'Not Set',

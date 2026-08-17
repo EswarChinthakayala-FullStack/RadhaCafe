@@ -1,14 +1,53 @@
 {
-  "generatedAt": "2026-08-16T22:36:04.865Z",
-  "latestCommit": "27f8ced",
-  "totalEntries": 123,
+  "generatedAt": "2026-08-17T12:48:39.264Z",
+  "latestCommit": "15ca209",
+  "totalEntries": 126,
   "releases": [
     {
       "id": "rel-2026-08-17",
       "title": "17 Aug 2026",
-      "date": "2026-08-17T04:04:45+05:30",
+      "date": "2026-08-17T18:14:26+05:30",
       "isLatest": true,
       "entries": [
+        {
+          "id": "15ca209",
+          "title": "Implement Persistent Bluetooth Refresh Recovery, Live Diagnostics, and Receipt Bottom Line Feed",
+          "description": "Added implement Persistent Bluetooth Refresh Recovery, Live Diagnostics, and Receipt Bottom Line Feed to provide enhanced capabilities and visibility across Printer.",
+          "category": "new",
+          "area": "Printer",
+          "date": "17 Aug 2026",
+          "commitHash": "15ca209b0fabbfb326bb7ceb9cd62759adf529ec",
+          "shortHash": "15ca209",
+          "isBreaking": false,
+          "rawType": "feat",
+          "rawScope": "printer"
+        },
+        {
+          "id": "6ce148b",
+          "title": "Resolve Zero Amounts and Totals in Thermal Receipt Slips",
+          "description": "Resolved an issue with resolve Zero Amounts and Totals in Thermal Receipt Slips to ensure consistent behavior throughout Printer.",
+          "category": "fixed",
+          "area": "Printer",
+          "date": "17 Aug 2026",
+          "commitHash": "6ce148be4de4755a724014e967a773fa48f161b5",
+          "shortHash": "6ce148b",
+          "isBreaking": false,
+          "rawType": "fix",
+          "rawScope": "printer"
+        },
+        {
+          "id": "35cdd14",
+          "title": "Eliminate Duplicate Stacked Divider and Border Lines",
+          "description": "Resolved an issue with eliminate Duplicate Stacked Divider and Border Lines to ensure consistent behavior throughout Receipts.",
+          "category": "fixed",
+          "area": "Receipts",
+          "date": "17 Aug 2026",
+          "commitHash": "35cdd146ca6939d4942dfa8ec36d623feb1b013c",
+          "shortHash": "35cdd14",
+          "isBreaking": false,
+          "rawType": "fix",
+          "rawScope": "receipts"
+        },
         {
           "id": "27f8ced",
           "title": "Tighten Bottom Receipt Spacing to 1 Line Feed",
