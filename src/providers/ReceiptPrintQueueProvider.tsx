@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useCallback } from 'react';
 import { printQueueWorker } from '../lib/printer/printQueueWorker';
 import { usePrintQueueStore } from '../store/printQueueStore';
+import { usePrinterStore } from '../store/printerStore';
 import { PrintQueueDock } from '../components/printer/PrintQueueDock';
 import { PrintQueueSheet } from '../components/printer/PrintQueueSheet';
 import type {
@@ -68,6 +69,8 @@ export function ReceiptPrintQueueProvider({ children }: { children: React.ReactN
     toggleSheet,
   } = usePrintQueueStore();
 
+  const printerStatus = usePrinterStore((state) => state.status);
+
   // Initialize background worker on mount
   useEffect(() => {
     printQueueWorker.initialize();
@@ -75,6 +78,13 @@ export function ReceiptPrintQueueProvider({ children }: { children: React.ReactN
       printQueueWorker.shutdown();
     };
   }, []);
+
+  // Automatically trigger processing when printer becomes ready or reconnects
+  useEffect(() => {
+    if (printerStatus === 'ready' || printerStatus === 'connected') {
+      printQueueWorker.processNextJob();
+    }
+  }, [printerStatus]);
 
   // Compute queue statistics
   const activeJob = useMemo(() => {

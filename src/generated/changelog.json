@@ -1,14 +1,27 @@
 {
-  "generatedAt": "2026-08-17T12:57:03.076Z",
-  "latestCommit": "49a3dbf",
-  "totalEntries": 127,
+  "generatedAt": "2026-08-17T13:02:13.288Z",
+  "latestCommit": "f45f122",
+  "totalEntries": 128,
   "releases": [
     {
       "id": "rel-2026-08-17",
       "title": "17 Aug 2026",
-      "date": "2026-08-17T18:19:12+05:30",
+      "date": "2026-08-17T18:27:37+05:30",
       "isLatest": true,
       "entries": [
+        {
+          "id": "f45f122",
+          "title": "Implement Standalone POS App Mode, App Scale Protection, and Trim Receipt Bottom Spacing",
+          "description": "Added implement Standalone POS App Mode, App Scale Protection, and Trim Receipt Bottom Spacing to provide enhanced capabilities and visibility across Offline Mode.",
+          "category": "new",
+          "area": "Offline Mode",
+          "date": "17 Aug 2026",
+          "commitHash": "f45f122e73682baeff2c1a691ce6e48b5d34359c",
+          "shortHash": "f45f122",
+          "isBreaking": false,
+          "rawType": "feat",
+          "rawScope": "pwa"
+        },
         {
           "id": "49a3dbf",
           "title": "Resolve Unused Parameter Warnings and Verify Clean Production Build",

@@ -197,16 +197,16 @@ export function PrinterSettings() {
                     <p className="font-bold text-foreground text-xs">Connection Status</p>
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge
-                        variant={status === 'connected' ? 'default' : 'outline'}
+                        variant={status === 'connected' || status === 'ready' ? 'default' : 'outline'}
                         className={
-                          status === 'connected'
+                          status === 'connected' || status === 'ready'
                             ? 'bg-success text-white font-bold capitalize rounded-lg px-2.5 py-0.5'
                             : status === 'connecting'
                               ? 'bg-cinnamon/10 text-cinnamon font-bold capitalize rounded-lg px-2.5 py-0.5 border-cinnamon/30'
                               : 'capitalize text-muted-foreground border-border/80 rounded-lg px-2.5 py-0.5'
                         }
                       >
-                        {status}
+                        {status === 'ready' ? 'Connected' : status}
                       </Badge>
                       {device?.name && (
                         <span className="font-mono text-cinnamon font-bold truncate max-w-[160px]">
@@ -217,7 +217,7 @@ export function PrinterSettings() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {status === 'connected' ? (
+                    {status === 'connected' || status === 'ready' ? (
                       <Button
                         size="sm"
                         variant="outline"

@@ -157,7 +157,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
     setPrintMessage(null);
 
     // 1. First check if Bluetooth thermal printer is connected
-    if (printerStatus === 'connected') {
+    if (printerStatus === 'connected' || printerStatus === 'ready') {
       try {
         const success = await printOrder(targetOrder as any);
         setIsPrinting(false);
@@ -638,7 +638,7 @@ export function WaterOrderCart({ onCloseMobileCart }: WaterOrderCartProps) {
                   <span>
                     {isPrinting
                       ? 'Printing Thermal Receipt...'
-                      : printerStatus === 'connected'
+                      : printerStatus === 'connected' || printerStatus === 'ready'
                         ? 'Print Thermal Receipt (Bluetooth Connected)'
                         : 'Connect & Print Thermal Receipt (Bluetooth)'}
                   </span>

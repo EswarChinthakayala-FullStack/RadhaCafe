@@ -65,7 +65,9 @@ export function SettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const printerConnected = usePrinterStore((state) => state.status === 'connected');
+  const printerConnected = usePrinterStore(
+    (state) => state.status === 'connected' || state.status === 'ready'
+  );
   const contentHeadingRef = useRef<HTMLDivElement>(null);
 
   const initialLocationState = location.state as SettingsLocationState | null;

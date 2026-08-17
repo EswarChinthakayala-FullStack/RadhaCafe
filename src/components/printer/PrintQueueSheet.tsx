@@ -50,7 +50,7 @@ export function PrintQueueSheet() {
     return null;
   }
 
-  const isPrinterReady = printerStatus === 'connected';
+  const isPrinterReady = printerStatus === 'connected' || printerStatus === 'ready';
   const isPrinterReconnecting =
     printerStatus === 'reconnecting' || printerStatus === 'restoring';
 
