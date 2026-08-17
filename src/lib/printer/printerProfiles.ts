@@ -18,19 +18,40 @@ export interface PrinterProfile {
   supportsImages: boolean;
 }
 
+export function normalizeBluetoothUuid(uuid: string): string {
+  if (!uuid) return '';
+  const clean = uuid.toLowerCase().trim();
+  if (/^[0-9a-f]{4}$/.test(clean)) {
+    return `0000${clean}-0000-1000-8000-00805f9b34fb`;
+  }
+  if (/^0x[0-9a-f]{4}$/.test(clean)) {
+    return `0000${clean.slice(2)}-0000-1000-8000-00805f9b34fb`;
+  }
+  return clean;
+}
+
 export const PRINTER_PROFILES: Record<string, PrinterProfile> = {
   'generic-ble-escpos': {
     key: 'generic-ble-escpos',
     name: 'Generic ESC/POS Thermal Printer',
     description: 'Standard Bluetooth Low Energy ESC/POS receipt printer profile supporting standard 58mm / 80mm printers.',
     serviceUuids: [
-      '000018f0-0000-1000-8000-00805f9b34fb', // Standard ESC/POS Service
-      '0000ff00-0000-1000-8000-00805f9b34fb', // General Thermal Printer Service
+      '000018f0-0000-1000-8000-00805f9b34fb', // Standard ESC/POS Service (18f0)
+      '0000ff00-0000-1000-8000-00805f9b34fb', // General Thermal Printer Service (ff00)
+      '0000fff0-0000-1000-8000-00805f9b34fb', // Transparent Serial Service (fff0)
+      '0000ffe0-0000-1000-8000-00805f9b34fb', // HM-10 / CC2541 Serial Service (ffe0)
+      '0000fee7-0000-1000-8000-00805f9b34fb', // Tencent / POS Serial Service (fee7)
+      '000018f1-0000-1000-8000-00805f9b34fb', // Alternate ESC/POS Service (18f1)
     ],
     characteristicUuids: [
       '00002af1-0000-1000-8000-00805f9b34fb',
       '0000ff01-0000-1000-8000-00805f9b34fb',
       '0000ff02-0000-1000-8000-00805f9b34fb',
+      '0000fff1-0000-1000-8000-00805f9b34fb',
+      '0000fff2-0000-1000-8000-00805f9b34fb',
+      '0000ffe1-0000-1000-8000-00805f9b34fb',
+      '0000fec7-0000-1000-8000-00805f9b34fb',
+      '0000fec8-0000-1000-8000-00805f9b34fb',
     ],
     defaultWriteMode: 'without-response',
     defaultChunkSize: 20,
@@ -62,10 +83,14 @@ export const PRINTER_PROFILES: Record<string, PrinterProfile> = {
     serviceUuids: [
       '0000e7b0-0000-1000-8000-00805f9b34fb',
       'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+      '0000ae30-0000-1000-8000-00805f9b34fb',
+      '0000af30-0000-1000-8000-00805f9b34fb',
     ],
     characteristicUuids: [
       '0000e7b1-0000-1000-8000-00805f9b34fb',
       'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f',
+      '0000ae01-0000-1000-8000-00805f9b34fb',
+      '0000af01-0000-1000-8000-00805f9b34fb',
     ],
     defaultWriteMode: 'without-response',
     defaultChunkSize: 20,
@@ -80,6 +105,14 @@ export const PRINTER_PROFILES: Record<string, PrinterProfile> = {
     serviceUuids: [
       '000018f0-0000-1000-8000-00805f9b34fb',
       'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+      '0000fe59-0000-1000-8000-00805f9b34fb',
+      '0000ff12-0000-1000-8000-00805f9b34fb',
+    ],
+    characteristicUuids: [
+      '00002af1-0000-1000-8000-00805f9b34fb',
+      'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f',
+      '0000fe01-0000-1000-8000-00805f9b34fb',
+      '0000ff02-0000-1000-8000-00805f9b34fb',
     ],
     defaultWriteMode: 'without-response',
     defaultChunkSize: 20,
@@ -95,7 +128,9 @@ export const PRINTER_PROFILES: Record<string, PrinterProfile> = {
 export function getAllSupportedServiceUuids(): string[] {
   const uuidSet = new Set<string>();
   Object.values(PRINTER_PROFILES).forEach((profile) => {
-    profile.serviceUuids.forEach((uuid) => uuidSet.add(uuid.toLowerCase()));
+    profile.serviceUuids.forEach((uuid) => {
+      uuidSet.add(normalizeBluetoothUuid(uuid));
+    });
   });
   return Array.from(uuidSet);
 }
@@ -104,9 +139,9 @@ export function getAllSupportedServiceUuids(): string[] {
  * Matches a discovered GATT service UUID to a registered profile key
  */
 export function matchProfileByServiceUuid(serviceUuid: string): PrinterProfile {
-  const normalized = serviceUuid.toLowerCase();
+  const normalized = normalizeBluetoothUuid(serviceUuid);
   for (const profile of Object.values(PRINTER_PROFILES)) {
-    if (profile.serviceUuids.some((uuid) => uuid.toLowerCase() === normalized)) {
+    if (profile.serviceUuids.some((uuid) => normalizeBluetoothUuid(uuid) === normalized)) {
       return profile;
     }
   }

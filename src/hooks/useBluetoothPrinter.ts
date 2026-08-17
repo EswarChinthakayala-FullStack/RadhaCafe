@@ -447,6 +447,26 @@ export function useBluetoothPrinter() {
     return printOrderViaBrowser(order, cafeSettings);
   };
 
+  /**
+   * Re-authorization & repair flow for missing service permissions
+   */
+  const repairConnection = async (): Promise<boolean> => {
+    const success = await printerSessionManager.repairPrinterConnection();
+    if (success) {
+      queryClient.invalidateQueries({ queryKey: PRINTER_QUERY_KEYS.savedPrinters });
+      queryClient.invalidateQueries({ queryKey: PRINTER_QUERY_KEYS.preferred });
+      queryClient.invalidateQueries({ queryKey: PRINTER_QUERY_KEYS.settings });
+    }
+    return success;
+  };
+
+  /**
+   * Deep live diagnostics without printing or opening browser dialogs
+   */
+  const runConnectionDiagnostics = async () => {
+    return printerSessionManager.runLiveDiagnostics();
+  };
+
   return {
     status,
     connectionStage,
@@ -479,6 +499,8 @@ export function useBluetoothPrinter() {
     connectSaved,
     reconnectNow,
     reconnectPreferred: reconnectNow,
+    repairConnection,
+    runConnectionDiagnostics,
     disconnect,
     forgetPrinter,
     renamePrinter,

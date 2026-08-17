@@ -43,8 +43,11 @@ export function PrinterStatusHero({
   isTestPrinting,
 }: PrinterStatusHeroProps) {
   const isConnected = status === 'connected' || status === 'ready';
+  const isRestoring = status === 'restoring';
   const isConnecting = status === 'connecting';
   const isReconnecting = status === 'reconnecting';
+  const isPermissionRequired = status === 'permission-required';
+  const isOffline = status === 'offline';
 
   // Connecting Stage Label
   const getStageLabel = () => {
@@ -54,13 +57,16 @@ export function PrinterStatusHero({
       case 'connecting_gatt':
         return 'Connecting to printer GATT server...';
       case 'discovering_service':
-        return 'Discovering thermal printer services...';
+        return 'Preparing print service...';
       case 'preparing_channel':
         return 'Locating ESC/POS writable characteristic...';
       case 'ready':
         return 'Printer ready for receipts!';
       default:
-        return isReconnecting ? 'Reconnecting to preferred printer...' : 'Connecting...';
+        if (isRestoring) return `Restoring ${displayName}...`;
+        if (isReconnecting) return `Reconnecting to ${displayName}...`;
+        if (isConnecting) return 'Connecting...';
+        return '';
     }
   };
 
@@ -70,7 +76,7 @@ export function PrinterStatusHero({
     device?.name ||
     preferredPrinter?.friendly_name ||
     preferredPrinter?.device_name ||
-    'Bluetooth Thermal Printer';
+    'Counter Printer';
 
   return (
     <div className="rounded-2xl border border-border/80 bg-card p-4 sm:p-7 shadow-xs space-y-5 w-full min-w-0 overflow-hidden">
@@ -81,8 +87,10 @@ export function PrinterStatusHero({
             className={`p-2.5 sm:p-3.5 rounded-2xl shrink-0 border shadow-2xs transition-colors ${
               isConnected
                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                : isConnecting || isReconnecting
+                : isRestoring || isConnecting || isReconnecting
                 ? 'bg-cinnamon/10 border-cinnamon/30 text-cinnamon animate-pulse'
+                : isPermissionRequired
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-600'
                 : 'bg-secondary border-border text-muted-foreground'
             }`}
           >
@@ -112,8 +120,10 @@ export function PrinterStatusHero({
                 className={`text-[11px] sm:text-xs font-bold rounded-lg px-2.5 py-0.5 capitalize shrink-0 ${
                   isConnected
                     ? 'bg-emerald-600 hover:bg-emerald-600 text-white border-emerald-600'
-                    : isConnecting || isReconnecting
+                    : isRestoring || isConnecting || isReconnecting
                     ? 'bg-cinnamon/10 text-cinnamon border-cinnamon/40 animate-pulse'
+                    : isPermissionRequired
+                    ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/40'
                     : 'bg-secondary text-muted-foreground border-border'
                 }`}
               >
@@ -121,28 +131,42 @@ export function PrinterStatusHero({
                   className={`w-1.5 h-1.5 rounded-full mr-1.5 shrink-0 ${
                     isConnected
                       ? 'bg-white'
-                      : isConnecting || isReconnecting
+                      : isRestoring || isConnecting || isReconnecting
                       ? 'bg-cinnamon animate-ping'
+                      : isPermissionRequired
+                      ? 'bg-amber-500'
                       : 'bg-muted-foreground'
                   }`}
                 />
                 {isConnected
-                  ? 'Connected & Ready'
+                  ? 'Ready to print'
+                  : isRestoring
+                  ? 'Restoring printer...'
                   : isConnecting || isReconnecting
                   ? 'Connecting...'
-                  : 'Offline / Disconnected'}
+                  : isPermissionRequired
+                  ? 'Permission Required'
+                  : isOffline
+                  ? 'Printer Offline'
+                  : 'Disconnected'}
               </Badge>
             </div>
 
             <p className="text-xs text-muted-foreground leading-relaxed break-words">
               {isConnected
                 ? 'Ready to print customer receipts for counter and takeaway orders.'
+                : isRestoring
+                ? `Restoring saved authorization for "${displayName}"...`
                 : isConnecting || isReconnecting
                 ? getStageLabel()
+                : isPermissionRequired
+                ? 'Browser authorization required for this printer origin. Click Authorize & Connect.'
+                : isOffline
+                ? `"${displayName}" is offline. Ensure printer power is ON; automatic background recovery is active.`
                 : !isSupported
                 ? 'Web Bluetooth is not supported in this browser. Browser fallback print will be used.'
                 : preferredPrinter
-                ? `Ready to connect to "${preferredPrinter.friendly_name || preferredPrinter.device_name}". Turn on the printer and click Reconnect.`
+                ? `Ready to connect to "${preferredPrinter.friendly_name || preferredPrinter.device_name}". Turn on the printer and click Reconnect Now.`
                 : 'Connect your Bluetooth thermal printer once to start printing order receipts.'}
             </p>
 
@@ -200,21 +224,21 @@ export function PrinterStatusHero({
             </>
           ) : (
             <>
-              {preferredPrinter && isSupported && (
+              {preferredPrinter && isSupported && !isPermissionRequired && (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={onReconnectPreferred}
-                  disabled={isConnecting || isReconnecting}
+                  disabled={isRestoring || isConnecting || isReconnecting}
                   className="text-xs font-bold rounded-xl h-10 px-3.5 border-cinnamon/40 bg-cinnamon/5 hover:bg-cinnamon/10 text-cinnamon gap-1.5 shadow-2xs flex-1 sm:flex-none justify-center"
                 >
                   <HugeiconsIcon
                     icon={RefreshIcon}
                     size={14}
-                    className={isConnecting || isReconnecting ? 'animate-spin' : ''}
+                    className={isRestoring || isConnecting || isReconnecting ? 'animate-spin' : ''}
                   />
-                  <span>{isConnecting || isReconnecting ? 'Reconnecting...' : 'Reconnect Preferred'}</span>
+                  <span>{isRestoring || isConnecting || isReconnecting ? 'Reconnecting...' : 'Reconnect Now'}</span>
                 </Button>
               )}
 
@@ -222,11 +246,11 @@ export function PrinterStatusHero({
                 type="button"
                 size="sm"
                 onClick={onOpenWizard}
-                disabled={isConnecting || isReconnecting || !isSupported}
+                disabled={isRestoring || isConnecting || isReconnecting || !isSupported}
                 className="bg-cinnamon hover:bg-cinnamon/90 text-white font-bold text-xs rounded-xl h-10 px-4 shadow-2xs gap-1.5 flex-1 sm:flex-none justify-center"
               >
                 <HugeiconsIcon icon={BluetoothIcon} size={15} />
-                <span>{preferredPrinter ? 'Scan & Connect' : 'Connect Thermal Printer'}</span>
+                <span>{isPermissionRequired ? 'Authorize & Connect' : preferredPrinter ? 'Scan & Connect' : 'Connect Thermal Printer'}</span>
               </Button>
             </>
           )}

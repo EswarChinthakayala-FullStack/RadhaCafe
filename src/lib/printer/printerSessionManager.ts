@@ -2,6 +2,7 @@ import { usePrinterStore } from '../../store/printerStore';
 import type {
   ConnectionStage,
   SavedPrinter,
+  PrinterConnectionStatus,
 } from '../../types/printer.types';
 import {
   connectSavedPrinter,
@@ -10,10 +11,14 @@ import {
   forgetBrowserDevice,
   isBluetoothSupported,
   isGetDevicesSupported,
+  isSecureContext,
   normalizePrinterError,
   logEvent,
   getCurrentConnectedDevice,
+  getWriteCharacteristic,
+  probeDeviceConnection,
   type VerifiedConnectionResult,
+  type PrinterProbeResult,
 } from './bluetoothPrinter';
 import {
   fetchPrinterSettings,
@@ -35,6 +40,72 @@ import {
   isRetryablePrinterError,
 } from './reconnectPolicy';
 
+const LOCAL_PREFERRED_PRINTER_KEY = 'radhacafe_preferred_printer_cache';
+const LOCAL_PRINTER_SETTINGS_KEY = 'radhacafe_printer_settings_cache';
+
+function getLocalPreferredPrinter(): SavedPrinter | null {
+  if (typeof window === 'undefined' || !window.localStorage) return null;
+  try {
+    const raw = localStorage.getItem(LOCAL_PREFERRED_PRINTER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveLocalPreferredPrinter(printer: SavedPrinter | null): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    if (printer) {
+      localStorage.setItem(LOCAL_PREFERRED_PRINTER_KEY, JSON.stringify(printer));
+    } else {
+      localStorage.removeItem(LOCAL_PREFERRED_PRINTER_KEY);
+    }
+  } catch {
+    // Non-blocking storage error
+  }
+}
+
+function getLocalPrinterSettings(): any {
+  if (typeof window === 'undefined' || !window.localStorage) return null;
+  try {
+    const raw = localStorage.getItem(LOCAL_PRINTER_SETTINGS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveLocalPrinterSettings(settings: any): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    if (settings) {
+      localStorage.setItem(LOCAL_PRINTER_SETTINGS_KEY, JSON.stringify(settings));
+    } else {
+      localStorage.removeItem(LOCAL_PRINTER_SETTINGS_KEY);
+    }
+  } catch {
+    // Non-blocking storage error
+  }
+}
+
+export interface DetailedConnectionDiagnostics {
+  savedInRadhaCafe: boolean;
+  savedPrinterName: string | null;
+  isPreferred: boolean;
+  browserAuthorization: 'granted' | 'required' | 'unsupported';
+  bluetoothDevice: 'found' | 'not-found' | 'unsupported';
+  bluetoothDeviceName: string | null;
+  gattConnection: 'connected' | 'disconnected' | 'connecting';
+  printerService: 'ready' | 'not-found';
+  serviceUuid: string | null;
+  writeChannel: 'ready' | 'not-found';
+  characteristicUuid: string | null;
+  writeMode: 'with-response' | 'without-response' | null;
+  sessionState: PrinterConnectionStatus;
+  summary: string;
+}
+
 class PrinterSessionManager {
   private sessionGeneration = 0;
   private activeConnectionPromise: Promise<boolean> | null = null;
@@ -46,7 +117,9 @@ class PrinterSessionManager {
   private fastRetryIndex = 0;
 
   /**
-   * Initializes the session manager once when authenticated admin logs in
+   * Initializes the session manager once when authenticated admin logs in.
+   * Full browser refresh restarts from a clean runtime (device = null, status = 'restoring')
+   * and reconstructs connection from browser-granted devices via navigator.bluetooth.getDevices().
    */
   public initializeSession(): void {
     if (this.isInitialized) return;
@@ -86,7 +159,8 @@ class PrinterSessionManager {
   }
 
   /**
-   * Startup sequence: reads settings & preferred printer, and silently reconnects via getDevices()
+   * Startup sequence: reads settings & preferred printer (offline cache + Supabase sync),
+   * and silently reconnects via getDevices() without showing a browser chooser.
    */
   private async bootstrapStartupConnection(): Promise<void> {
     const currentGen = this.sessionGeneration;
@@ -94,56 +168,77 @@ class PrinterSessionManager {
     store.setStatus('restoring');
     store.setConnectionStage('idle');
 
+    // 1. Instantly read local cache to support offline POS launch without Supabase network delay
+    const localCachedSettings = getLocalPrinterSettings();
+    const localCachedPrinter = getLocalPreferredPrinter();
+
+    if (localCachedSettings?.paper_width) {
+      store.setPaperWidth(localCachedSettings.paper_width);
+    }
+    if (localCachedSettings?.auto_connect !== undefined) {
+      store.setAutoConnect(localCachedSettings.auto_connect);
+    }
+
+    if (localCachedPrinter) {
+      this.cachedPreferredPrinter = localCachedPrinter;
+    }
+
+    // 2. Fetch fresh server settings & saved printers asynchronously
     try {
-      const [settings, savedPrinters] = await Promise.all([
+      const [serverSettings, serverSavedPrinters] = await Promise.all([
         fetchPrinterSettings().catch(() => null),
         fetchSavedPrinters().catch(() => []),
       ]);
 
       if (currentGen !== this.sessionGeneration) return;
 
-      if (settings?.paper_width) {
-        store.setPaperWidth(settings.paper_width);
-      }
-      if (settings?.auto_connect !== undefined) {
-        store.setAutoConnect(settings.auto_connect);
-      }
-
-      if (settings?.auto_connect === false || !savedPrinters || savedPrinters.length === 0) {
-        store.setStatus('disconnected');
-        logEvent('Auto-connect disabled or no saved printers configured.');
-        return;
+      if (serverSettings) {
+        saveLocalPrinterSettings(serverSettings);
+        if (serverSettings.paper_width) store.setPaperWidth(serverSettings.paper_width);
+        if (serverSettings.auto_connect !== undefined) store.setAutoConnect(serverSettings.auto_connect);
       }
 
-      // Determine preferred target printer
-      const preferredId = settings?.preferred_printer_id;
-      const targetPrinter =
-        (preferredId ? savedPrinters.find((p) => p.id === preferredId) : null) ||
-        savedPrinters.find((p) => p.is_enabled) ||
-        savedPrinters[0];
+      if (serverSavedPrinters && serverSavedPrinters.length > 0) {
+        const preferredId = serverSettings?.preferred_printer_id;
+        const targetServer =
+          (preferredId ? serverSavedPrinters.find((p) => p.id === preferredId) : null) ||
+          serverSavedPrinters.find((p) => p.is_enabled) ||
+          serverSavedPrinters[0];
 
-      if (!targetPrinter || !targetPrinter.device_id) {
-        store.setStatus('disconnected');
-        return;
+        if (targetServer) {
+          this.cachedPreferredPrinter = targetServer;
+          saveLocalPreferredPrinter(targetServer);
+        }
       }
-
-      this.cachedPreferredPrinter = targetPrinter;
-
-      if (!isGetDevicesSupported()) {
-        store.setStatus('disconnected');
-        logEvent('getDevices unsupported in this browser.');
-        return;
-      }
-
-      logEvent(`Restoring connection to preferred printer: ${targetPrinter.friendly_name || targetPrinter.device_name}`);
-      await this.executeConnection(targetPrinter, 'startup');
-    } catch (err: any) {
-      if (currentGen === this.sessionGeneration) {
-        const normalized = normalizePrinterError(err);
-        store.setError(normalized.message, normalized.code);
-        store.setStatus('disconnected');
-      }
+    } catch {
+      // Offline fallback: continue with localCachedPrinter
     }
+
+    if (currentGen !== this.sessionGeneration) return;
+
+    // Check if auto-connect is disabled
+    const currentAutoConnect = usePrinterStore.getState().autoConnect;
+    if (!currentAutoConnect) {
+      store.setStatus('disconnected');
+      logEvent('Auto-connect is disabled in settings.');
+      return;
+    }
+
+    const target = this.cachedPreferredPrinter || localCachedPrinter;
+    if (!target || !target.device_id) {
+      store.setStatus('disconnected');
+      logEvent('No preferred printer configured in RadhaCafe.');
+      return;
+    }
+
+    if (!isGetDevicesSupported()) {
+      store.setStatus('disconnected');
+      logEvent('navigator.bluetooth.getDevices() unsupported in this browser.');
+      return;
+    }
+
+    logEvent(`Restoring connection to preferred printer: ${target.friendly_name || target.device_name}`);
+    await this.executeConnection(target, 'startup');
   }
 
   /**
@@ -175,7 +270,9 @@ class PrinterSessionManager {
             if (currentGen === this.sessionGeneration) {
               usePrinterStore.getState().setConnectionStage(stage);
             }
-          }
+          },
+          targetPrinter.service_uuid,
+          targetPrinter.characteristic_uuid
         );
 
         if (currentGen !== this.sessionGeneration) {
@@ -189,7 +286,7 @@ class PrinterSessionManager {
         store.setConnectedDevice(
           {
             id: verified.device.id,
-            name: verified.device.name || targetPrinter.device_name || 'Bluetooth Printer',
+            name: verified.device.name || targetPrinter.friendly_name || targetPrinter.device_name || 'Bluetooth Printer',
             connected: true,
           },
           targetPrinter,
@@ -311,7 +408,7 @@ class PrinterSessionManager {
   }
 
   /**
-   * User clicks "Scan & Connect" -> Opens native browser chooser with explicit gesture
+   * User clicks "Scan & Connect" -> Opens native browser chooser with explicit user gesture
    */
   public async scanAndConnectNewPrinter(customFriendlyName?: string): Promise<boolean> {
     this.sessionGeneration++;
@@ -343,7 +440,7 @@ class PrinterSessionManager {
 
       const profile = getPrinterProfile(verified.profile?.key);
 
-      // Save verified printer to Supabase
+      // Save verified printer to Supabase and update local cache
       const saved = await saveVerifiedPrinter({
         device_id: verified.device.id,
         device_name: verified.device.name || 'Bluetooth Printer',
@@ -356,7 +453,10 @@ class PrinterSessionManager {
         paper_width: store.paperWidth || 32,
       }).catch(() => null);
 
-      this.cachedPreferredPrinter = saved;
+      if (saved) {
+        this.cachedPreferredPrinter = saved;
+        saveLocalPreferredPrinter(saved);
+      }
 
       store.setConnectedDevice(
         {
@@ -393,6 +493,17 @@ class PrinterSessionManager {
   }
 
   /**
+   * User clicks "Repair Printer Connection" -> Explicit user gesture to re-authorize device with updated optionalServices
+   */
+  public async repairPrinterConnection(): Promise<boolean> {
+    this.sessionGeneration++;
+    this.clearAllTimers();
+    disconnectBluetoothPrinter();
+
+    return this.scanAndConnectNewPrinter(this.cachedPreferredPrinter?.friendly_name || undefined);
+  }
+
+  /**
    * Connects to a specific saved printer explicitly
    */
   public async connectSaved(savedPrinter: SavedPrinter): Promise<boolean> {
@@ -403,13 +514,14 @@ class PrinterSessionManager {
     store.setManualDisconnect(false);
     store.setDisconnectReason(null);
     this.cachedPreferredPrinter = savedPrinter;
+    saveLocalPreferredPrinter(savedPrinter);
     this.fastRetryIndex = 0;
 
     return this.executeConnection(savedPrinter, 'manual');
   }
 
   /**
-   * Admin clicks "Reconnect Now"
+   * Admin clicks "Reconnect Now" -> Uses getDevices() to restore connection without native chooser
    */
   public async reconnectNow(): Promise<boolean> {
     const store = usePrinterStore.getState();
@@ -418,13 +530,18 @@ class PrinterSessionManager {
     this.clearReconnectTimer();
     this.fastRetryIndex = 0;
 
-    const target = this.cachedPreferredPrinter || (await fetchPreferredPrinter().catch(() => null));
+    let target = this.cachedPreferredPrinter || getLocalPreferredPrinter();
     if (!target) {
-      store.setError('No preferred printer configured.', 'DEVICE_NOT_FOUND');
+      target = await fetchPreferredPrinter().catch(() => null);
+    }
+    if (!target || !target.device_id) {
+      store.setStatus('permission-required');
+      store.setError('No saved printer configured. Please authorize a thermal printer.', 'DEVICE_NOT_FOUND');
       return false;
     }
 
     this.cachedPreferredPrinter = target;
+    saveLocalPreferredPrinter(target);
     return this.executeConnection(target, 'manual');
   }
 
@@ -461,6 +578,7 @@ class PrinterSessionManager {
     await removeSavedPrinter(savedPrinterId);
     if (this.cachedPreferredPrinter?.id === savedPrinterId) {
       this.cachedPreferredPrinter = null;
+      saveLocalPreferredPrinter(null);
     }
   }
 
@@ -471,6 +589,7 @@ class PrinterSessionManager {
     await updateSavedPrinter(savedPrinterId, { friendly_name: friendlyName });
     if (this.cachedPreferredPrinter?.id === savedPrinterId) {
       this.cachedPreferredPrinter = { ...this.cachedPreferredPrinter, friendly_name: friendlyName };
+      saveLocalPreferredPrinter(this.cachedPreferredPrinter);
     }
   }
 
@@ -481,6 +600,7 @@ class PrinterSessionManager {
     await setPreferredPrinter(savedPrinterId);
     const preferred = await fetchPreferredPrinter().catch(() => null);
     this.cachedPreferredPrinter = preferred;
+    saveLocalPreferredPrinter(preferred);
     if (preferred && !usePrinterStore.getState().manualDisconnect) {
       this.connectSaved(preferred);
     }
@@ -492,9 +612,10 @@ class PrinterSessionManager {
   public async ensurePrinterReady(timeoutMs = PRINT_RECOVERY_TIMEOUT_MS): Promise<{ ready: boolean; reason?: string }> {
     const store = usePrinterStore.getState();
     const currentDevice = getCurrentConnectedDevice();
+    const writeChar = getWriteCharacteristic();
 
-    // 1. If status claims ready and GATT is physically connected -> immediate ready
-    if ((store.status === 'ready' || store.status === 'connected') && currentDevice?.gatt?.connected) {
+    // 1. If status claims ready and GATT is physically connected and characteristic is active -> immediate ready
+    if ((store.status === 'ready' || store.status === 'connected') && currentDevice?.gatt?.connected && writeChar) {
       return { ready: true };
     }
 
@@ -510,7 +631,7 @@ class PrinterSessionManager {
 
     // 4. Attempt immediate short recovery window
     logEvent('Pre-print check detected disconnected printer. Initiating immediate recovery...');
-    const target = this.cachedPreferredPrinter || (await fetchPreferredPrinter().catch(() => null));
+    const target = this.cachedPreferredPrinter || getLocalPreferredPrinter() || (await fetchPreferredPrinter().catch(() => null));
     if (!target) {
       return { ready: false, reason: 'no-preferred-printer' };
     }
@@ -527,6 +648,70 @@ class PrinterSessionManager {
     } catch {
       return { ready: false, reason: 'recovery-failed' };
     }
+  }
+
+  /**
+   * Runs comprehensive live connection diagnostics without printing or opening browser dialogs
+   */
+  public async runLiveDiagnostics(): Promise<DetailedConnectionDiagnostics> {
+    const store = usePrinterStore.getState();
+    const target = this.cachedPreferredPrinter || getLocalPreferredPrinter() || (await fetchPreferredPrinter().catch(() => null));
+    const currentDevice = getCurrentConnectedDevice();
+    const writeChar = getWriteCharacteristic();
+
+    if (!target) {
+      return {
+        savedInRadhaCafe: false,
+        savedPrinterName: null,
+        isPreferred: false,
+        browserAuthorization: isGetDevicesSupported() ? 'required' : 'unsupported',
+        bluetoothDevice: 'not-found',
+        bluetoothDeviceName: null,
+        gattConnection: 'disconnected',
+        printerService: 'not-found',
+        serviceUuid: null,
+        writeChannel: 'not-found',
+        characteristicUuid: null,
+        writeMode: null,
+        sessionState: store.status,
+        summary: 'No thermal printer is currently saved in RadhaCafe. Please click Connect Thermal Printer.',
+      };
+    }
+
+    const probe: PrinterProbeResult = await probeDeviceConnection(target.device_id, target.service_uuid);
+
+    const isAuthorized = probe.deviceFoundInBrowser;
+    const isGattActive = Boolean(currentDevice?.gatt?.connected || probe.isGattConnected);
+    const isServiceActive = Boolean(probe.serviceFound || (isGattActive && writeChar));
+    const isWriteActive = Boolean(probe.characteristicFound || (isGattActive && writeChar));
+
+    let summaryText = 'Printer is ready for orders.';
+    if (!probe.isSupported) {
+      summaryText = 'Web Bluetooth is not supported in this browser. Please use Chrome, Edge, or Opera.';
+    } else if (!isAuthorized) {
+      summaryText = 'Browser authorization is missing for this printer. Click Authorize & Connect.';
+    } else if (!isGattActive) {
+      summaryText = 'Printer is currently offline. Ensure printer power is ON and click Reconnect Now.';
+    } else if (!isServiceActive || !isWriteActive) {
+      summaryText = 'Printer connected, but ESC/POS printing service was not accessible. Click Repair Printer Connection.';
+    }
+
+    return {
+      savedInRadhaCafe: true,
+      savedPrinterName: target.friendly_name || target.device_name || 'Thermal Printer',
+      isPreferred: Boolean(target.is_preferred),
+      browserAuthorization: isAuthorized ? 'granted' : 'required',
+      bluetoothDevice: isAuthorized ? 'found' : 'not-found',
+      bluetoothDeviceName: probe.deviceName || target.device_name || null,
+      gattConnection: isGattActive ? 'connected' : store.status === 'reconnecting' ? 'connecting' : 'disconnected',
+      printerService: isServiceActive ? 'ready' : 'not-found',
+      serviceUuid: probe.serviceUuid || target.service_uuid || (writeChar ? '000018f0-0000-1000-8000-00805f9b34fb' : null),
+      writeChannel: isWriteActive ? 'ready' : 'not-found',
+      characteristicUuid: probe.characteristicUuid || target.characteristic_uuid || null,
+      writeMode: probe.writeMode || (target.write_mode as any) || 'without-response',
+      sessionState: store.status,
+      summary: summaryText,
+    };
   }
 
   /**

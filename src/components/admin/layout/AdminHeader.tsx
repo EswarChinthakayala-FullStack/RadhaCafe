@@ -240,6 +240,16 @@ export function AdminHeader() {
                   )}
                   <span>{isPrinting ? 'Printing...' : 'Print Test Receipt'}</span>
                 </Button>
+              ) : isPermissionRequired ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => navigate(ROUTES.ADMIN.PRINTER)}
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl h-8.5 justify-center gap-1.5 shadow-2xs"
+                >
+                  <HugeiconsIcon icon={AlertCircleIcon} size={13} />
+                  <span>Authorize Printer</span>
+                </Button>
               ) : (
                 <Button
                   type="button"

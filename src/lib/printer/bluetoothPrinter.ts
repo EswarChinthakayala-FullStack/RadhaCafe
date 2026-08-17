@@ -141,6 +141,13 @@ export async function getPreviouslyGrantedPrinters(): Promise<{ id: string; name
   }
 }
 
+export function buildPrinterRequestOptions() {
+  return {
+    acceptAllDevices: true,
+    optionalServices: getAllSupportedServiceUuids(),
+  };
+}
+
 export interface VerifiedConnectionResult {
   device: any;
   gattServer: any;
@@ -159,7 +166,9 @@ export interface VerifiedConnectionResult {
 async function setupDeviceConnection(
   device: any,
   onDisconnect?: () => void,
-  onStageChange?: (stage: ConnectionStage) => void
+  onStageChange?: (stage: ConnectionStage) => void,
+  preferredServiceUuid?: string | null,
+  preferredCharacteristicUuid?: string | null
 ): Promise<VerifiedConnectionResult> {
   // Clean up previous disconnect listener
   if (disconnectListener && connectedDevice) {
@@ -173,7 +182,14 @@ async function setupDeviceConnection(
   onStageChange?.('connecting_gatt');
   logEvent(`Connecting GATT server to ${device.name || device.id}...`);
 
-  const server = await device.gatt.connect();
+  let server = device.gatt;
+  if (!server) {
+    throw new Error('Selected Bluetooth device does not expose GATT server.');
+  }
+
+  if (!server.connected) {
+    server = await device.gatt.connect();
+  }
   connectedDevice = device;
   activeGattServer = server;
 
@@ -192,7 +208,6 @@ async function setupDeviceConnection(
   onStageChange?.('discovering_service');
   logEvent('Discovering thermal printer GATT services...');
 
-  const services = await server.getPrimaryServices();
   let foundCharacteristic: any = null;
   let foundService: any = null;
   let detectedProfile: PrinterProfile = getPrinterProfile('generic-ble-escpos');
@@ -200,20 +215,82 @@ async function setupDeviceConnection(
   onStageChange?.('preparing_channel');
   logEvent('Locating writable ESC/POS printing characteristic...');
 
-  for (const service of services) {
+  // Strategy 1: If preferred/saved service UUID is known, attempt direct resolution
+  if (preferredServiceUuid) {
     try {
-      const chars = await service.getCharacteristics();
-      for (const char of chars) {
-        if (char.properties.write || char.properties.writeWithoutResponse) {
-          foundCharacteristic = char;
-          foundService = service;
-          detectedProfile = matchProfileByServiceUuid(service.uuid);
-          break;
+      const directService = await server.getPrimaryService(preferredServiceUuid.toLowerCase());
+      if (directService) {
+        const chars = await directService.getCharacteristics();
+        for (const char of chars) {
+          if (
+            preferredCharacteristicUuid &&
+            char.uuid.toLowerCase() === preferredCharacteristicUuid.toLowerCase() &&
+            (char.properties.write || char.properties.writeWithoutResponse)
+          ) {
+            foundCharacteristic = char;
+            foundService = directService;
+            detectedProfile = matchProfileByServiceUuid(directService.uuid);
+            break;
+          }
+          if (char.properties.write || char.properties.writeWithoutResponse) {
+            foundCharacteristic = char;
+            foundService = directService;
+            detectedProfile = matchProfileByServiceUuid(directService.uuid);
+            break;
+          }
         }
       }
-      if (foundCharacteristic) break;
     } catch {
-      // Inspect next service
+      // Fallback to broader discovery
+    }
+  }
+
+  // Strategy 2: Call getPrimaryServices() to inspect all authorized services
+  if (!foundCharacteristic || !foundService) {
+    try {
+      const services = await server.getPrimaryServices();
+      for (const service of services) {
+        try {
+          const chars = await service.getCharacteristics();
+          for (const char of chars) {
+            if (char.properties.write || char.properties.writeWithoutResponse) {
+              foundCharacteristic = char;
+              foundService = service;
+              detectedProfile = matchProfileByServiceUuid(service.uuid);
+              break;
+            }
+          }
+          if (foundCharacteristic) break;
+        } catch {
+          // Inspect next service
+        }
+      }
+    } catch {
+      // Fallback to individual service probe
+    }
+  }
+
+  // Strategy 3: Iterate through registered supported service UUIDs individually
+  if (!foundCharacteristic || !foundService) {
+    const allKnownUuids = getAllSupportedServiceUuids();
+    for (const uuid of allKnownUuids) {
+      try {
+        const directService = await server.getPrimaryService(uuid);
+        if (directService) {
+          const chars = await directService.getCharacteristics();
+          for (const char of chars) {
+            if (char.properties.write || char.properties.writeWithoutResponse) {
+              foundCharacteristic = char;
+              foundService = directService;
+              detectedProfile = matchProfileByServiceUuid(directService.uuid);
+              break;
+            }
+          }
+          if (foundCharacteristic) break;
+        }
+      } catch {
+        // Continue searching next profile UUID
+      }
     }
   }
 
@@ -264,14 +341,11 @@ export async function requestAndVerifyPrinter(
 
   const connectTask = async () => {
     onStageChange?.('requesting');
-    logEvent('Opening Web Bluetooth device chooser...');
+    logEvent('Opening Web Bluetooth device chooser with verified options...');
 
-    const allUuids = getAllSupportedServiceUuids();
+    const requestOptions = buildPrinterRequestOptions();
 
-    const device = await (navigator as any).bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: allUuids,
-    });
+    const device = await (navigator as any).bluetooth.requestDevice(requestOptions);
 
     if (!device) {
       throw new Error('User cancelled printer selection.');
@@ -297,7 +371,9 @@ export async function requestAndVerifyPrinter(
 export async function connectSavedPrinter(
   deviceId: string,
   onDisconnect?: () => void,
-  onStageChange?: (stage: ConnectionStage) => void
+  onStageChange?: (stage: ConnectionStage) => void,
+  preferredServiceUuid?: string | null,
+  preferredCharacteristicUuid?: string | null
 ): Promise<VerifiedConnectionResult> {
   if (!isGetDevicesSupported()) {
     throw new Error('Direct device reconnection is not supported in this browser.');
@@ -320,7 +396,13 @@ export async function connectSavedPrinter(
     }
 
     logEvent(`Found granted device ${targetDevice.name || targetDevice.id}. Connecting GATT...`);
-    return setupDeviceConnection(targetDevice, onDisconnect, onStageChange);
+    return setupDeviceConnection(
+      targetDevice,
+      onDisconnect,
+      onStageChange,
+      preferredServiceUuid,
+      preferredCharacteristicUuid
+    );
   };
 
   try {
@@ -330,6 +412,72 @@ export async function connectSavedPrinter(
   } finally {
     activeConnectionPromise = null;
   }
+}
+
+/**
+ * Probes the state of a device connection without disturbing ongoing print queues or emitting user errors
+ */
+export interface PrinterProbeResult {
+  isSupported: boolean;
+  isSecure: boolean;
+  isGetDevicesSupported: boolean;
+  deviceFoundInBrowser: boolean;
+  deviceName?: string;
+  isGattConnected: boolean;
+  serviceFound: boolean;
+  serviceUuid?: string;
+  characteristicFound: boolean;
+  characteristicUuid?: string;
+  writeMode?: 'with-response' | 'without-response';
+  profileKey?: string;
+  error?: string;
+}
+
+export async function probeDeviceConnection(
+  deviceId: string,
+  preferredServiceUuid?: string | null
+): Promise<PrinterProbeResult> {
+  const result: PrinterProbeResult = {
+    isSupported: isBluetoothSupported(),
+    isSecure: isSecureContext(),
+    isGetDevicesSupported: isGetDevicesSupported(),
+    deviceFoundInBrowser: false,
+    isGattConnected: false,
+    serviceFound: false,
+    characteristicFound: false,
+  };
+
+  if (!result.isSupported || !result.isGetDevicesSupported) {
+    return result;
+  }
+
+  try {
+    const devices = await (navigator as any).bluetooth.getDevices();
+    const target = (devices || []).find((d: any) => d.id === deviceId);
+
+    if (!target) {
+      return result;
+    }
+
+    result.deviceFoundInBrowser = true;
+    result.deviceName = target.name || 'Bluetooth Printer';
+    result.isGattConnected = Boolean(target.gatt?.connected);
+
+    // If already connected at browser runtime, probe services
+    if (target.gatt?.connected) {
+      if (writeCharacteristic && target.id === connectedDevice?.id) {
+        result.serviceFound = true;
+        result.serviceUuid = writeCharacteristic.service?.uuid;
+        result.characteristicFound = true;
+        result.characteristicUuid = writeCharacteristic.uuid;
+        result.writeMode = writeCharacteristic.properties.writeWithoutResponse ? 'without-response' : 'with-response';
+      }
+    }
+  } catch (err: any) {
+    result.error = err?.message;
+  }
+
+  return result;
 }
 
 /**

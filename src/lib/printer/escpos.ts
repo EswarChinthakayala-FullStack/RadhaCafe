@@ -193,6 +193,8 @@ export function encodeReceiptToEscPos(
   // 7. Footer & Paper Cut
   addBytes(ESC_POS_COMMANDS.ALIGN_CENTER);
   addText(`${data.footerMessage || 'Thank You! Visit RadhaCafe Again.'}\n`);
+  addBytes(ESC_POS_COMMANDS.FEED_LINE);
+  addBytes(ESC_POS_COMMANDS.FEED_LINE);
   return new Uint8Array(buffer);
 }
 
@@ -506,8 +508,18 @@ export function encodeTemplateReceiptToEscPos(
     }
   });
 
-  // Paper finishing: Exactly 1 line of spacing after bottom last content
-  const linesToFeed = Math.max(1, config.feedLines ?? 1);
+  // Paper finishing: padding at bottom (at least 2 feed lines / 1 extra padding line after last content)
+  let linesToFeed = Math.max(2, (config.feedLines ?? 1) + 1);
+  if (options.tearGap === 'extra') {
+    linesToFeed = 5;
+  } else if (options.tearGap === 'normal') {
+    linesToFeed = 3;
+  } else if (options.tearGap === 'compact') {
+    linesToFeed = 2;
+  } else if (options.finishingMode === 'manual-tear') {
+    linesToFeed = 3;
+  }
+
   for (let i = 0; i < linesToFeed; i++) {
     addBytes(ESC_POS_COMMANDS.FEED_LINE);
   }

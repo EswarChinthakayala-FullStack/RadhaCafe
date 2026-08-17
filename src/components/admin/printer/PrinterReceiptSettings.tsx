@@ -268,21 +268,36 @@ export function PrinterReceiptSettings({
             </div>
           </div>
 
-          {/* Keep Printer Connected Toggle */}
-          <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-3">
-            <div className="space-y-0.5 pr-2">
-              <Label htmlFor="printer-auto-conn" className="text-xs font-bold text-foreground block">
-                Keep printer connected
-              </Label>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Automatically restore the printer connection while the RadhaCafe admin is signed in.
-              </p>
+          {/* Connection Reliability & Refresh Recovery */}
+          <div className="pt-3 border-t border-border/60 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="space-y-0.5 pr-2">
+                <Label htmlFor="printer-auto-conn" className="text-xs font-bold text-foreground block">
+                  Keep printer connected
+                </Label>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Automatically restore the preferred printer while the RadhaCafe admin is signed in.
+                </p>
+              </div>
+              <Switch
+                id="printer-auto-conn"
+                checked={localAutoConnect}
+                onCheckedChange={handleToggleAutoConnect}
+              />
             </div>
-            <Switch
-              id="printer-auto-conn"
-              checked={localAutoConnect}
-              onCheckedChange={handleToggleAutoConnect}
-            />
+
+            {/* Refresh Recovery Status Note */}
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-secondary/30 border border-border/50 text-xs">
+              <div className="space-y-0.5">
+                <span className="font-semibold text-foreground text-[11px] block">Refresh Recovery</span>
+                <p className="text-[10px] text-muted-foreground">
+                  Previously authorized printers are restored automatically via browser grants after RadhaCafe reloads.
+                </p>
+              </div>
+              <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white font-bold text-[9px] px-1.5 py-0 h-4 rounded shrink-0">
+                Enabled
+              </Badge>
+            </div>
           </div>
 
           {/* Active Receipt Template Banner */}
