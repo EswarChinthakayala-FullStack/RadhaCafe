@@ -12,6 +12,7 @@ import { CafeProfileSettings } from '../../components/admin/settings/CafeProfile
 import { OrderPaymentSettings } from '../../components/admin/settings/OrderPaymentSettings';
 import { PrinterSettingsSummary } from '../../components/admin/settings/PrinterSettingsSummary';
 import { ReceiptSettingsSummary } from '../../components/admin/settings/ReceiptSettingsSummary';
+import { ApplicationSettings } from '../../components/admin/settings/ApplicationSettings';
 import { AccountSecuritySettings } from '../../components/admin/settings/AccountSecuritySettings';
 import { AboutSettings } from '../../components/admin/settings/AboutSettings';
 import { Button } from '../../components/ui/button';
@@ -55,6 +56,7 @@ function SettingsContent({ section, onDirtyChange }: SettingsContentProps) {
   if (section === 'orders') return <OrderPaymentSettings onDirtyChange={onDirtyChange} />;
   if (section === 'printer') return <PrinterSettingsSummary />;
   if (section === 'receipts') return <ReceiptSettingsSummary />;
+  if (section === 'application') return <ApplicationSettings onDirtyChange={onDirtyChange} />;
   if (section === 'account') return <AccountSecuritySettings />;
   return <AboutSettings />;
 }

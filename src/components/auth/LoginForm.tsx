@@ -26,7 +26,11 @@ export function LoginForm() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  const fromPath = (location.state as any)?.from?.pathname || ROUTES.ADMIN.DASHBOARD;
+  const defaultAdminRoute =
+    typeof window !== 'undefined' && localStorage.getItem('radhacafe_pos_start_screen') === 'new-order'
+      ? ROUTES.ADMIN.NEW_ORDER
+      : ROUTES.ADMIN.DASHBOARD;
+  const fromPath = (location.state as any)?.from?.pathname || defaultAdminRoute;
 
   useEffect(() => {
     if (initialized && isAuthenticated) {

@@ -12,6 +12,7 @@ import {
   UserIcon,
   InformationCircleIcon,
   Search01Icon,
+  ComputerIcon,
 } from '@hugeicons/core-free-icons';
 
 export type SettingsSectionKey =
@@ -20,6 +21,7 @@ export type SettingsSectionKey =
   | 'orders'
   | 'printer'
   | 'receipts'
+  | 'application'
   | 'account'
   | 'about';
 
@@ -66,6 +68,13 @@ export const SETTINGS_CATEGORIES: SettingsCategoryDef[] = [
     description: 'Active receipt layout & design templates',
     icon: InvoiceIcon,
     keywords: ['receipt', 'template', 'preview', 'slip', 'layout', 'design', 'printout'],
+  },
+  {
+    key: 'application',
+    label: 'Application & POS',
+    description: 'PWA installation, density & accidental zoom protection',
+    icon: ComputerIcon,
+    keywords: ['app', 'pwa', 'install', 'scale', 'zoom', 'density', 'fullscreen', 'focus', 'desktop', 'startup'],
   },
   {
     key: 'account',

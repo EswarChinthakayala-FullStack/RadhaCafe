@@ -1,13 +1,14 @@
 {
-  "name": "RadhaCafe Point of Sale",
+  "name": "RadhaCafe",
   "short_name": "RadhaCafe",
-  "description": "Offline-First Modern Cafe Point of Sale & Thermal Receipt Billing System",
-  "start_url": "/admin/orders/new",
+  "description": "RadhaCafe Premium POS & Counter Application",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "any",
-  "background_color": "#180C06",
-  "theme_color": "#D97706",
+  "background_color": "#FFF8F0",
+  "theme_color": "#78350F",
   "categories": ["business", "productivity", "utilities"],
   "icons": [
     {

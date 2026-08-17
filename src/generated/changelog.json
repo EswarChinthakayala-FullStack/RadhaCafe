@@ -1,14 +1,27 @@
 {
-  "generatedAt": "2026-08-17T12:48:39.264Z",
-  "latestCommit": "15ca209",
-  "totalEntries": 126,
+  "generatedAt": "2026-08-17T12:57:03.076Z",
+  "latestCommit": "49a3dbf",
+  "totalEntries": 127,
   "releases": [
     {
       "id": "rel-2026-08-17",
       "title": "17 Aug 2026",
-      "date": "2026-08-17T18:14:26+05:30",
+      "date": "2026-08-17T18:19:12+05:30",
       "isLatest": true,
       "entries": [
+        {
+          "id": "49a3dbf",
+          "title": "Resolve Unused Parameter Warnings and Verify Clean Production Build",
+          "description": "Resolved an issue with resolve Unused Parameter Warnings and Verify Clean Production Build to ensure consistent behavior throughout General.",
+          "category": "fixed",
+          "area": "General",
+          "date": "17 Aug 2026",
+          "commitHash": "49a3dbf6453882abed9ecdaee5b0886ab281fe20",
+          "shortHash": "49a3dbf",
+          "isBreaking": false,
+          "rawType": "fix",
+          "rawScope": "build"
+        },
         {
           "id": "15ca209",
           "title": "Implement Persistent Bluetooth Refresh Recovery, Live Diagnostics, and Receipt Bottom Line Feed",

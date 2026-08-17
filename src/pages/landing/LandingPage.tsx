@@ -12,10 +12,32 @@ import { GallerySection } from '../../components/landing/GallerySection';
 import { DiscussionSection } from '../../components/landing/DiscussionSection';
 import { RadhaWaterSection } from '../../components/landing/RadhaWaterSection';
 import { ContactSection } from '../../components/landing/ContactSection';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
+import { useDisplayMode } from '../../hooks/useDisplayMode';
+import { ROUTES } from '../../constants/routes';
 import { FinalCtaSection } from '../../components/landing/FinalCtaSection';
 import { Footer } from '../../components/landing/Footer';
 
 export function LandingPage() {
+  const navigate = useNavigate();
+  const { isAuthenticated, initialized } = useAuth();
+  const { isStandalone } = useDisplayMode();
+
+  // In installed Standalone POS mode, launch directly into Admin POS
+  useEffect(() => {
+    if (initialized && isStandalone) {
+      if (isAuthenticated) {
+        const startScreen = localStorage.getItem('radhacafe_pos_start_screen');
+        navigate(startScreen === 'dashboard' ? ROUTES.ADMIN.DASHBOARD : ROUTES.ADMIN.NEW_ORDER, {
+          replace: true,
+        });
+      } else {
+        navigate(ROUTES.PUBLIC.LOGIN, { replace: true });
+      }
+    }
+  }, [initialized, isAuthenticated, isStandalone, navigate]);
   return (
     <div className="min-h-screen bg-[#140A06] text-cream flex flex-col selection:bg-cinnamon selection:text-white">
       {/* Top Cinnamon Scroll Progress Indicator */}

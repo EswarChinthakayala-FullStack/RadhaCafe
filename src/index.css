@@ -521,3 +521,42 @@ section[id] {
     transition: none !important;
   }
 }
+
+/* ──────────────────────────────────────────────────
+   POS INTERFACE DENSITY & APP SHELL TOKENS
+   ────────────────────────────────────────────────── */
+[data-density="compact"] {
+  --app-padding-x: 0.75rem;
+  --app-padding-y: 0.5rem;
+  --app-row-height: 2.25rem;
+}
+
+[data-density="comfortable"] {
+  --app-padding-x: 1rem;
+  --app-padding-y: 0.75rem;
+  --app-row-height: 2.75rem;
+}
+
+[data-density="large-touch"] {
+  --app-padding-x: 1.25rem;
+  --app-padding-y: 1rem;
+  --app-row-height: 3.25rem;
+}
+
+/* Standalone PWA Safe Areas */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .pwa-safe-top {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+  .pwa-safe-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Operational UI Image Drag Prevention */
+button img,
+a img,
+.no-drag {
+  -webkit-user-drag: none;
+  user-select: none;
+}

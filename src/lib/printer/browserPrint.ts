@@ -108,7 +108,7 @@ function buildReceiptHtml(order: Order, cafeSettings?: any, templateConfig?: any
           ${receipt.secondaryFooter ? `<p style="margin: 1px 0 0 0; font-size: 9px;">${receipt.secondaryFooter}</p>` : ''}
           ${receipt.contactFooter ? `<p style="margin: 1px 0 0 0; font-size: 9px;">${receipt.contactFooter}</p>` : ''}
         </div>
-        <div style="height: 14px; margin-top: 4px;"></div>
+        <div style="height: 3px;"></div>
       </body>
     </html>
   `;

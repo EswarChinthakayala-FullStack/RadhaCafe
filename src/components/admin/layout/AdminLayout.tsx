@@ -8,6 +8,7 @@ import { PrinterSessionProvider } from '../../../providers/PrinterSessionProvide
 import { ReceiptPrintQueueProvider } from '../../../providers/ReceiptPrintQueueProvider';
 import { OfflineProvider } from '../../../providers/OfflineProvider';
 import { OfflineStatusBar } from '../offline/OfflineStatusBar';
+import { useAppScaleGuard } from '../../../hooks/useAppScaleGuard';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -15,6 +16,7 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   useRealtimeOrders();
+  useAppScaleGuard();
 
   return (
     <OfflineProvider>

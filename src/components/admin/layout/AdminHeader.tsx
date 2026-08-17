@@ -20,6 +20,7 @@ import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useOfflinePOS } from '../../../providers/OfflineProvider';
+import { useDisplayMode } from '../../../hooks/useDisplayMode';
 import {
   PrinterIcon,
   RefreshIcon,
@@ -29,9 +30,13 @@ import {
   Loading03Icon,
   WifiDisconnected01Icon,
   InvoiceIcon,
+  Maximize01Icon,
+  Minimize01Icon,
+  Download04Icon,
 } from '@hugeicons/core-free-icons';
 import { allNavItems } from '../../app-sidebar';
 import { ROUTES } from '../../../constants/routes';
+import { useEffect } from 'react';
 
 function usePageBreadcrumbs() {
   const location = useLocation();
@@ -43,6 +48,7 @@ export function AdminHeader() {
   const navigate = useNavigate();
   const { isOffline: isNetworkOffline, isSyncing, pendingCount } = useOfflinePOS();
   const { totalActiveCount, needsAttentionCount, toggleQueue } = useReceiptPrintQueue();
+  const { isFullscreen, toggleFullscreen, canInstall, isStandalone, installApp } = useDisplayMode();
   const {
     status: printerStatus,
     savedPrinterName,
@@ -58,6 +64,13 @@ export function AdminHeader() {
   } = useBluetoothPrinter();
 
   const currentPage = usePageBreadcrumbs();
+
+  // Dynamic window title for native desktop application feel
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.title = `${currentPage} — RadhaCafe`;
+    }
+  }, [currentPage]);
 
   const getStatusBadge = () => {
     if (isConnected) {
@@ -121,8 +134,36 @@ export function AdminHeader() {
         </Breadcrumb>
       </div>
 
-      {/* Right side: persistent network and printer status indicators */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      {/* Right side: persistent network, printer, and app control indicators */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        {/* PWA Install Button (When in browser & install prompt available) */}
+        {canInstall && !isStandalone && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={installApp}
+            className="h-9 px-2.5 rounded-xl text-xs font-bold border-cinnamon/40 text-cinnamon hover:bg-cinnamon/10 shadow-2xs gap-1.5 hidden md:inline-flex cursor-pointer"
+            title="Install RadhaCafe POS Application on this device"
+          >
+            <HugeiconsIcon icon={Download04Icon} size={14} />
+            <span>Install App</span>
+          </Button>
+        )}
+
+        {/* Focus Mode (Fullscreen Toggle) */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={toggleFullscreen}
+          className="h-9 w-9 p-0 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/80 cursor-pointer"
+          title={isFullscreen ? 'Exit Focus Mode' : 'Enter Focus Mode (Full Screen)'}
+          aria-label={isFullscreen ? 'Exit Focus Mode' : 'Enter Focus Mode'}
+        >
+          <HugeiconsIcon icon={isFullscreen ? Minimize01Icon : Maximize01Icon} size={16} />
+        </Button>
+
         {/* Network Connectivity Indicator */}
         {isNetworkOffline ? (
           <div className="h-9 px-2.5 rounded-xl inline-flex items-center justify-center gap-1.5 border text-xs font-semibold bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/40 shadow-2xs">
